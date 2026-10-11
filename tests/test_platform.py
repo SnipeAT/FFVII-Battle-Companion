@@ -92,15 +92,14 @@ class TestReleasePackage(unittest.TestCase):
                              ["FFVII_Companion.exe", "_internal/ffvii_companion/data/enemies.json",
                               "_internal/python311.dll"])
 
-    def test_third_party_notices_cover_the_bundle(self):
+    def test_notices_list_the_distributions_of_the_bundled_modules(self):
+        # Import names map to their distributions (cv2 -> opencv-python); the standard library and
+        # the app itself (under LICENSE.txt) have no entry; PyInstaller's bootloader is in every EXE
         from build_tools.package_release import bundled_distributions, third_party_notices
-        names = {d.metadata["Name"].lower().replace("_", "-") for d in bundled_distributions()}
-        for name in ("numpy", "onnxruntime", "opencv-python", "rapidocr-onnxruntime", "pywebview", "pythonnet",
-                     "fastapi", "uvicorn", "httptools", "pyinstaller"):
-            self.assertIn(name, names)
-        self.assertNotIn("ffvii-companion", names)
-        self.assertNotIn("httpx", names)  # dev extra only
-        text = third_party_notices("0.0.0")
+        dists = bundled_distributions({"numpy", "cv2", "onnxruntime", "webview", "ffvii_companion", "json"})
+        self.assertEqual([d.metadata["Name"].lower() for d in dists],
+                         ["numpy", "onnxruntime", "opencv-python", "pyinstaller", "pywebview"])
+        text = third_party_notices("0.0.0", dists)
         self.assertIn("==== Python ", text)
         self.assertIn("--- ThirdPartyNotices.txt ---", text)  # onnxruntime's, outside its .dist-info
 

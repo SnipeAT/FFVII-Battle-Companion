@@ -19,8 +19,6 @@ import sys
 import zipfile
 from pathlib import Path
 
-from packaging.requirements import Requirement
-
 ROOT = Path(__file__).resolve().parent.parent  # build_tools/ -> project root
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))  # run as a script: build_tools/ is on sys.path, not the root
@@ -33,32 +31,34 @@ def _canonical(name: str) -> str:
     return re.sub(r"[-_.]+", "-", name).lower()
 
 
-def bundled_distributions() -> list:
+def bundle_top_level_names(app_dir: Path) -> set:
     """
-    The installed distributions the EXE contains: the app's runtime dependencies, recursively
-    (requested extras such as uvicorn[standard] included, the dev extra not), and PyInstaller,
-    whose bootloader starts the EXE. A few may be left out of the bundle by the spec's excludes.
+    Top-level import names in a build: the modules in the EXE's PYZ archive, and the files and
+    folders in _internal (extension modules, packages kept as files). Read from the build itself,
+    since PyInstaller follows imports, not declared requirements (it adds pefile and setuptools,
+    and leaves out unused requirements such as tqdm).
     """
+    from PyInstaller.archive.readers import CArchiveReader
+    archive = CArchiveReader(str(app_dir / f"{APP_NAME}.exe"))
+    names = set()
+    for name, entry in archive.toc.items():
+        if entry[-1] == "z":  # the PYZ archive of the pure-Python modules
+            names |= {module.split(".")[0] for module in archive.open_embedded_archive(name).toc}
+    names |= {path.name.split(".")[0] for path in (app_dir / "_internal").iterdir()}
+    return names
+
+
+def bundled_distributions(top_level_names) -> list:
+    """
+    The installed distributions that provide these import names (standard library modules have
+    none), without the app itself, plus PyInstaller, whose bootloader starts the EXE.
+    """
+    owners = md.packages_distributions()
     found = {}
-    done = set()  # (canonical name, extra) pairs whose requirements were followed
-    todo = [("ffvii-companion", "")]
-    while todo:
-        name, extra = todo.pop()
-        key = _canonical(name)
-        if (key, extra) in done:
-            continue
-        done.add((key, extra))
-        try:
-            dist = found.get(key) or md.distribution(name)
-        except md.PackageNotFoundError:
-            continue  # a dependency for another platform or Python version
-        found[key] = dist
-        for spec in dist.requires or []:
-            req = Requirement(spec)
-            if req.marker is None or req.marker.evaluate({"extra": extra}):
-                todo.append((req.name, ""))
-                todo.extend((req.name, e) for e in req.extras)
-    found.pop("ffvii-companion", None)
+    for name in top_level_names:
+        for dist_name in owners.get(name, []):
+            if _canonical(dist_name) != "ffvii-companion":
+                found[_canonical(dist_name)] = md.distribution(dist_name)
     found["pyinstaller"] = md.distribution("pyinstaller")
     return [found[k] for k in sorted(found)]
 
@@ -98,7 +98,7 @@ def _license_texts(dist) -> list:
     return texts
 
 
-def third_party_notices(version: str) -> str:
+def third_party_notices(version: str, distributions) -> str:
     """THIRD_PARTY_LICENSES.txt: Python's license, then each bundled distribution's."""
     out = [
         f"Third-party software in FFVII_Companion {version}",
@@ -113,7 +113,7 @@ def third_party_notices(version: str) -> str:
             "Home page: https://www.python.org", ""]
     if python_license.exists():
         out += [python_license.read_text(encoding="utf-8", errors="replace").strip(), ""]
-    for dist in bundled_distributions():
+    for dist in distributions:
         out += [f"==== {dist.metadata['Name']} {dist.version} ====", f"License: {_license_summary(dist)}"]
         if _home_page(dist):
             out.append(f"Home page: {_home_page(dist)}")
@@ -159,6 +159,7 @@ def main() -> None:
         sys.exit(build.returncode)
 
     app_dir = ROOT / "dist" / APP_NAME
+    notices = third_party_notices(version, bundled_distributions(bundle_top_level_names(app_dir)))
     out = ROOT / "dist" / f"{APP_NAME}-{version}-windows-x64.zip"
     partial = out.with_name(out.name + ".partial")
     print(f"Packaging {out}...")
@@ -168,7 +169,7 @@ def main() -> None:
         zf.write(ROOT / "LICENSE", f"{APP_NAME}/LICENSE.txt")
         zf.write(ROOT / "README.md", f"{APP_NAME}/README.md")
         zf.write(ROOT / "Launch_LAN_iPad.bat", f"{APP_NAME}/Launch_LAN_iPad.bat")
-        zf.writestr(f"{APP_NAME}/THIRD_PARTY_LICENSES.txt", third_party_notices(version))
+        zf.writestr(f"{APP_NAME}/THIRD_PARTY_LICENSES.txt", notices)
         zf.comment = f"{APP_NAME} {version}, built from commit {commit}".encode()
     os.replace(partial, out)
     print(f"Release package: {out} ({out.stat().st_size / 1e6:.0f} MB), version {version}, commit {commit}")
