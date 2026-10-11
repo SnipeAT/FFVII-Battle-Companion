@@ -58,7 +58,7 @@ Measured on a recorded real battle session (150 frames from an FFNx 4K window, r
 ## Requirements
 
 - Windows 10 or 11 (64-bit)
-- Python 3.11+ (for running from source)
+- Python 3.11 or 3.12, only to run or build from source (the EXE contains its own Python). 3.13 and newer cannot install `rapidocr-onnxruntime` 1.4.4.
 - Final Fantasy VII PC (Steam edition, re-release, or 1998), optionally with 7th Heaven / FFNx
 - Microsoft Edge WebView2 Runtime (preinstalled on Windows 11) for the native desktop window
 
@@ -67,7 +67,7 @@ Measured on a recorded real battle session (150 frames from an FFNx 4K window, r
 ```powershell
 git clone https://github.com/SnipeAT/FFVII-Battle-Companion.git
 cd FFVII-Battle-Companion
-python -m venv .venv
+py -3.11 -m venv .venv                                  # Python 3.11 or 3.12 (see Requirements)
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"   # the app (editable) + tests and packaging (httpx, PyInstaller)
 ```
 

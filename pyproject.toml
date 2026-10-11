@@ -7,7 +7,8 @@ name = "ffvii-companion"
 dynamic = ["version"]
 description = "Real-time tactical battle companion for Final Fantasy VII (PC): battle-text OCR, enemy profiles, live dashboard"
 readme = "README.md"
-requires-python = ">=3.11"
+# Below 3.13: rapidocr-onnxruntime 1.4.4 (pinned below) supports Python 3.6 to 3.12
+requires-python = ">=3.11,<3.13"
 dependencies = [
     "fastapi>=0.110.0",
     "uvicorn[standard]>=0.28.0",
