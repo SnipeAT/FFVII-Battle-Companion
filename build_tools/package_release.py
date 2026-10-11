@@ -35,8 +35,8 @@ def bundle_top_level_names(app_dir: Path) -> set:
     """
     Top-level import names in a build: the modules in the EXE's PYZ archive, and the files and
     folders in _internal (extension modules, packages kept as files). Read from the build itself,
-    since PyInstaller follows imports, not declared requirements (it adds pefile and setuptools,
-    and leaves out unused requirements such as tqdm).
+    since PyInstaller follows imports, not declared requirements (setuptools comes in through
+    imports without being one, and unused requirements such as tqdm stay out).
     """
     from PyInstaller.archive.readers import CArchiveReader
     archive = CArchiveReader(str(app_dir / f"{APP_NAME}.exe"))

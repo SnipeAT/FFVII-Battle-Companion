@@ -25,7 +25,9 @@ datas += [d for d in collect_data_files('rapidocr_onnxruntime') if 'cls_infer' n
 # ffvii_companion package is included, so new modules need no entry here.
 hidden_imports = (
     collect_submodules('uvicorn') +
-    collect_submodules('webview') +
+    # Without webview.__pyinstaller: its build hook imports PyInstaller, whose code (GPL, apart
+    # from the bootloader) must not end up in the EXE
+    collect_submodules('webview', filter=lambda name: '__pyinstaller' not in name) +
     collect_submodules('rapidocr_onnxruntime') +
     collect_submodules('ffvii_companion') +
     [
