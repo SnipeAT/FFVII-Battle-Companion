@@ -60,6 +60,10 @@ a = Analysis(
     noarchive=False,
 )
 
+# OpenCV's FFmpeg video plugin (30 MB, LGPL FFmpeg): the app decodes no video, and cv2 loads the
+# plugin only for video capture
+a.binaries = [b for b in a.binaries if not os.path.basename(b[0]).lower().startswith('opencv_videoio_ffmpeg')]
+
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 manifest_xml = '''<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
