@@ -11,7 +11,13 @@ APP_NAME = "FFVII_Companion"
 # PyInstaller writes its work and output folders outside the project. The project lives in
 # OneDrive, and letting OneDrive sync (and race against) a 250 MB build that is deleted,
 # recreated or renamed can make it delete freshly built files afterwards.
-LOCAL_BUILD_ROOT = Path(os.environ.get("LOCALAPPDATA", tempfile.gettempdir())) / "FFVIIBuild"
+# FFVII_COMPANION_BUILD_ROOT names another build folder, e.g. to build a second copy of the
+# project without touching this one's build.
+BUILD_ROOT_ENV = "FFVII_COMPANION_BUILD_ROOT"
+DEFAULT_BUILD_ROOT = Path(os.environ.get("LOCALAPPDATA", tempfile.gettempdir())) / "FFVIIBuild"
+# The build deletes the build root before and after: a folder holding anything besides
+# PyInstaller's two folders is refused instead of wiped
+BUILD_ROOT_CONTENTS = {"work", "dist"}
 
 # Folders next to the packaged EXE that hold user data (settings, profile, logs, misdetection
 # reports); never purged.
@@ -94,46 +100,62 @@ def install_bundle(src: Path, dst: Path) -> None:
             path.rmdir()
 
 
+def get_build_root() -> Path:
+    override = os.environ.get(BUILD_ROOT_ENV)
+    return Path(override).resolve() if override else DEFAULT_BUILD_ROOT
+
+
 def build():
     root = Path(__file__).resolve().parent.parent  # build_tools/ -> project root
     spec_file = root / "build_tools" / "ffvii_companion.spec"
+    build_root = get_build_root()
 
     if not spec_file.exists():
         print(f"Error: Spec file not found at {spec_file}")
         sys.exit(1)
+    if build_root.is_dir():
+        foreign = sorted(p.name for p in build_root.iterdir() if p.name not in BUILD_ROOT_CONTENTS)
+        if foreign:
+            print(f"Error: the build folder {build_root} also holds {', '.join(foreign[:5])}. The build "
+                  f"deletes this folder: set {BUILD_ROOT_ENV} to a new or empty folder.")
+            sys.exit(1)
 
     print("=" * 65)
     print("  BUILDING NATIVE DESKTOP EXECUTABLE: FFVII COMPANION")
     print("=" * 65)
 
     # Thoroughly clean previous build artifacts (outside OneDrive)
-    if LOCAL_BUILD_ROOT.exists():
-        print(f"Cleaning previous build folder {LOCAL_BUILD_ROOT}...")
-        safe_rmtree(LOCAL_BUILD_ROOT)
+    if build_root.exists():
+        print(f"Cleaning previous build folder {build_root}...")
+        safe_rmtree(build_root)
 
     python_exe = sys.executable
     cmd = [python_exe, "-m", "PyInstaller", "--noconfirm", "--clean",
-           "--distpath", str(LOCAL_BUILD_ROOT / "dist"), "--workpath", str(LOCAL_BUILD_ROOT / "work"),
+           "--distpath", str(build_root / "dist"), "--workpath", str(build_root / "work"),
            str(spec_file)]
+    # This tree's code first: with a virtual environment whose editable install points at another
+    # copy of the project, PyInstaller would collect that copy's modules
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(root / "src"), env.get("PYTHONPATH")]))
 
     print(f"Executing: {' '.join(cmd)}")
-    result = subprocess.run(cmd, cwd=str(root))
+    result = subprocess.run(cmd, cwd=str(root), env=env)
 
     if result.returncode != 0:
-        safe_rmtree(LOCAL_BUILD_ROOT)
+        safe_rmtree(build_root)
         print("=" * 65)
         print("  BUILD FAILED! Check compiler output above.")
         print("  The previous dist/ build (if any) was left untouched.")
         print("=" * 65)
         sys.exit(result.returncode)
 
-    write_exe_config(LOCAL_BUILD_ROOT / "dist" / APP_NAME)
+    write_exe_config(build_root / "dist" / APP_NAME)
 
     # Install the fresh build into dist/ only after PyInstaller succeeded
     dist_app = root / "dist" / APP_NAME
     print(f"Installing build into {dist_app}...")
     try:
-        install_bundle(LOCAL_BUILD_ROOT / "dist" / APP_NAME, dist_app)
+        install_bundle(build_root / "dist" / APP_NAME, dist_app)
     except PermissionError as exc:
         print("=" * 65)
         print("  BUILD SUCCEEDED, BUT dist/ COULD NOT BE UPDATED")
@@ -141,7 +163,7 @@ def build():
         print("  If FFVII_Companion.exe is running, close it, then run this script again.")
         print("=" * 65)
         sys.exit(2)
-    safe_rmtree(LOCAL_BUILD_ROOT)
+    safe_rmtree(build_root)
 
     # Older versions of this script built inside the project (OneDrive); drop that work folder
     legacy_work = root / "build"

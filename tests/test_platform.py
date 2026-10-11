@@ -75,6 +75,40 @@ class TestBuildInstall(unittest.TestCase):
             self.assertFalse((dst / "_internal" / "server").exists())
             self.assertTrue((dst / "_internal" / "ffvii_companion" / "index.html").exists())
 
+    def test_build_uses_its_own_tree_and_the_build_root_override(self):
+        # A second copy of the project built with this project's venv collected this project's
+        # modules (editable install), and every build shared one build folder
+        import contextlib
+        import io
+        import tempfile
+        from build_tools import build_exe
+        with tempfile.TemporaryDirectory() as tmp:
+            build_root = Path(tmp) / "build"
+            with mock.patch.dict(os.environ, {build_exe.BUILD_ROOT_ENV: str(build_root)}), \
+                    mock.patch.object(build_exe.subprocess, "run", return_value=mock.Mock(returncode=1)) as run, \
+                    contextlib.redirect_stdout(io.StringIO()), self.assertRaises(SystemExit):
+                build_exe.build()
+        cmd, env = run.call_args.args[0], run.call_args.kwargs["env"]
+        self.assertEqual(cmd[cmd.index("--distpath") + 1], str(build_root.resolve() / "dist"))
+        tree_src = Path(build_exe.__file__).resolve().parent.parent / "src"
+        self.assertEqual(env["PYTHONPATH"].split(os.pathsep)[0], str(tree_src))
+
+    def test_build_refuses_a_build_root_with_other_files(self):
+        # The build deletes its build root, so a mistyped FFVII_COMPANION_BUILD_ROOT must not wipe
+        # a folder with other contents
+        import contextlib
+        import io
+        import tempfile
+        from build_tools import build_exe
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "notes.txt").write_text("keep")
+            with mock.patch.dict(os.environ, {build_exe.BUILD_ROOT_ENV: tmp}), \
+                    mock.patch.object(build_exe.subprocess, "run") as run, \
+                    contextlib.redirect_stdout(io.StringIO()), self.assertRaises(SystemExit):
+                build_exe.build()
+            self.assertTrue((Path(tmp) / "notes.txt").exists())
+        run.assert_not_called()
+
 
 class TestReleasePackage(unittest.TestCase):
     def test_release_leaves_out_the_builders_data(self):

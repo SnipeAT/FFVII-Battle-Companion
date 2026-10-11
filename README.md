@@ -332,7 +332,7 @@ The test package redirects all writable files (settings, player profile, reports
 .\.venv\Scripts\python.exe build_tools\build_exe.py
 ```
 
-or double-click `Rebuild_EXE.bat`. PyInstaller runs outside the project (`%LOCALAPPDATA%\FFVIIBuild`) so OneDrive never syncs the intermediate build. Only when it succeeds are the files copied into `dist\FFVII_Companion\` in place: no folder is deleted or renamed, settings and logs next to the EXE are kept, and a failed build leaves the previous executable working. Close the companion before rebuilding; its files are locked while it runs. Output: `dist\FFVII_Companion\FFVII_Companion.exe`, with `FFVII_Companion.exe.config` next to it, which lets the .NET runtime behind the window load its files even when Windows marked them as downloaded.
+or double-click `Rebuild_EXE.bat`. PyInstaller runs outside the project (`%LOCALAPPDATA%\FFVIIBuild`, or the folder named by the `FFVII_COMPANION_BUILD_ROOT` environment variable, which the build deletes before and after and therefore refuses when it holds other files) so OneDrive never syncs the intermediate build. The build always uses the code of the project copy it belongs to, even with a virtual environment set up for another copy. Only when it succeeds are the files copied into `dist\FFVII_Companion\` in place: no folder is deleted or renamed, settings and logs next to the EXE are kept, and a failed build leaves the previous executable working. Close the companion before rebuilding; its files are locked while it runs. Output: `dist\FFVII_Companion\FFVII_Companion.exe`, with `FFVII_Companion.exe.config` next to it, which lets the .NET runtime behind the window load its files even when Windows marked them as downloaded.
 
 ### Packaging a release
 
