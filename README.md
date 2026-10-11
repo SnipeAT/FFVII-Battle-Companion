@@ -6,6 +6,35 @@ This is a fan project, not affiliated with or endorsed by Square Enix. It only r
 
 ---
 
+## Getting started
+
+Windows 10 or 11 (64-bit) only. Pick one of the two ways below; both end with the same program.
+
+### Option 1: download the ready-made EXE (no Python needed)
+
+1. Open the [latest release](https://github.com/SnipeAT/FFVII-Battle-Companion/releases/latest) and download `FFVII_Companion-<version>-windows-x64.zip` from its **Assets**.
+2. Right-click the downloaded zip, choose **Properties**, tick **Unblock** at the bottom if it is there, and click **OK**. Windows marks downloaded files, and an unblocked zip extracts files it does not warn about or block.
+3. Extract the zip to a folder you can write to, for example `Documents`. Not `Program Files`: the companion saves its settings and logs next to the EXE.
+4. Double-click `FFVII_Companion.exe` in the extracted `FFVII_Companion` folder. If Windows SmartScreen says it protected your PC, click **More info**, then **Run anyway**: the EXE is not code-signed.
+5. Start the game and enter a battle: the companion finds the game window and reads the battle text by itself. See [Using it with 7th Heaven / FFNx](#using-it-with-7th-heaven--ffnx) for the dashboard, and [iPad, tablet or phone](#ipad-tablet-or-phone-local-wi-fi) to show it on another device (`Launch_LAN_iPad.bat` is in the same folder).
+
+To update, delete `FFVII_Companion.exe` and the `_internal` folder, then extract the new release into the same place: the `data`, `logs` and `reports` folders (your settings, profile, logs and reports) stay. To uninstall, delete the folder.
+
+### Option 2: build the EXE yourself from source
+
+1. Install [Python 3.11](https://www.python.org/downloads/windows/) (64-bit, with the "py launcher" option the installer selects by default). Python 3.12 also meets the requirements but is untested; 3.13 and newer cannot install the OCR package (`rapidocr-onnxruntime` 1.4.4 supports up to 3.12).
+2. Download **Source code (zip)** from the release's **Assets** and extract it (or clone the repository: `git clone https://github.com/SnipeAT/FFVII-Battle-Companion.git`).
+3. Open PowerShell in the extracted folder (right-click inside the folder, **Open in Terminal**) and run:
+   ```powershell
+   py -3.11 -m venv .venv
+   .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+   .\.venv\Scripts\python.exe build_tools\build_exe.py
+   ```
+   The first command creates a private Python environment in `.venv`, the second downloads the dependencies (about 400 MB), the third builds the EXE (a few minutes).
+4. Start `dist\FFVII_Companion\FFVII_Companion.exe`, or double-click `Launch_Desktop_App.bat`. Later rebuilds need only the third command, or a double-click on `Rebuild_EXE.bat`.
+
+---
+
 ## How it works
 
 ```
@@ -80,6 +109,7 @@ The dependencies are declared in `pyproject.toml`. The editable install (`-e`) m
 | Double-click launcher (recommended) | `Launch_Desktop_App.bat` - starts the packaged EXE if it exists, otherwise the app from source without a console |
 | iPad / LAN mode | `Launch_LAN_iPad.bat` - binds to `0.0.0.0:59314` and prints the URL to open on the tablet |
 | Packaged executable | `.\dist\FFVII_Companion\FFVII_Companion.exe` |
+| Release download | `FFVII_Companion.exe` in the extracted folder; `Launch_LAN_iPad.bat` next to it starts LAN mode |
 | Development | `.\.venv\Scripts\python.exe -m ffvii_companion` |
 
 Note: the launchers prefer `dist\FFVII_Companion\FFVII_Companion.exe`. After changing the source, rebuild it (`Rebuild_EXE.bat`) or the launchers keep running the previous build.
@@ -172,7 +202,7 @@ Settings, the player profile, misdetection reports and logs go to one data folde
 
 | Run | Data folder |
 | :--- | :--- |
-| Packaged EXE | Next to the executable: `dist\FFVII_Companion\`. Rebuilding the EXE keeps these subfolders. |
+| Packaged EXE | Next to the executable: the folder a release was extracted to, or `dist\FFVII_Companion\` for a build of your own. Rebuilding the EXE keeps these subfolders. |
 | From source (desktop app, preview server, tools) | `.dev_home\` in the project (git-ignored). Nothing else is written into the project. |
 | Tests | A temporary folder, deleted afterwards. |
 
@@ -182,7 +212,7 @@ The `FFVII_COMPANION_HOME` environment variable overrides the folder. Folders an
 
 ## iPad, tablet or phone (local Wi-Fi)
 
-1. Launch in LAN mode: double-click `Launch_LAN_iPad.bat` (or start the app with `--host 0.0.0.0`). The script prints your PC's address.
+1. Launch in LAN mode: double-click `Launch_LAN_iPad.bat`, in the project folder or next to `FFVII_Companion.exe` in a release download (or start the app with `--host 0.0.0.0`). The script prints your PC's address.
 2. Make sure the tablet is on the same network, then open `http://<YOUR_PC_IP>:59314` in Safari or Chrome. Find the address with `ipconfig` (IPv4 Address) if needed.
 3. Optional: in Safari tap **Share > Add to Home Screen** for a full-screen, borderless app.
 4. The first LAN launch may show a Windows Defender Firewall prompt: allow access on **Private networks**.
@@ -301,6 +331,16 @@ The test package redirects all writable files (settings, player profile, reports
 
 or double-click `Rebuild_EXE.bat`. PyInstaller runs outside the project (`%LOCALAPPDATA%\FFVIIBuild`) so OneDrive never syncs the intermediate build. Only when it succeeds are the files copied into `dist\FFVII_Companion\` in place: no folder is deleted or renamed, settings and logs next to the EXE are kept, and a failed build leaves the previous executable working. Close the companion before rebuilding; its files are locked while it runs. Output: `dist\FFVII_Companion\FFVII_Companion.exe`.
 
+### Packaging a release
+
+```powershell
+.\.venv\Scripts\python.exe build_tools\package_release.py
+```
+
+Builds the EXE as above, then writes `dist\FFVII_Companion-<version>-windows-x64.zip`: the build without the `data\`, `logs\` and `reports\` folders next to the EXE (your own settings, profile, logs and reports), plus `LICENSE.txt`, `README.md`, `Launch_LAN_iPad.bat` and `THIRD_PARTY_LICENSES.txt` (the licenses of Python and of the packages in the EXE). It refuses to run with uncommitted changes, so the zip always matches a commit; the zip's comment names it. The version comes from `__version__` in `src/ffvii_companion/__init__.py`.
+
+To publish it: tag the commit and push the tag (`git tag -a v<version> -m "Version <version>"`, then `git push origin v<version>`), then on GitHub open **Releases > Draft a new release**, choose the tag, attach the zip and click **Publish release**. GitHub adds the source code archives by itself.
+
 ## Version control
 
 The source is on GitHub: <https://github.com/SnipeAT/FFVII-Battle-Companion> (branch `main`). Its history starts with the first public commit on 2026-10-11; the development before it (from 2026-10-07) was not published. `.gitignore` excludes `.venv`, `dist`, `.dev_home` (settings, logs and reports of runs from source), recordings, videos and the maintainer's local files: `archive/` (old code) and the instructions and review queue of the AI agents that develop and review the project (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `review/`, `.claude/`).
@@ -351,7 +391,7 @@ FFVII-Battle-Companion/
 │       └── static/               # Dashboard (index.html, app.js, style.css)
 ├── tests/                        # unittest suite + recorded real-frame fixtures
 ├── tools/                        # Frame recorder, loop benchmark, synthetic frames, scene.bin enrichment
-├── build_tools/                  # build_exe.py + ffvii_companion.spec (PyInstaller)
+├── build_tools/                  # build_exe.py, package_release.py (release zip) + ffvii_companion.spec (PyInstaller)
 ├── pyproject.toml                # Package metadata and dependencies
 ├── Launch_Desktop_App.bat / Launch_LAN_iPad.bat / Rebuild_EXE.bat   # Double-click launchers
 ├── README.md / LICENSE / .gitignore                                 # This file, MIT License, ignore rules
@@ -360,7 +400,7 @@ FFVII-Battle-Companion/
 ├── .venv/                        # Python environment (the package is installed here in editable mode)
 ├── .dev_home/                    # Data folder of runs from source: data/, logs/, reports/
 ├── recordings/                   # Recordings for tools/benchmark_loop.py
-├── dist/FFVII_Companion/         # Packaged EXE, with its own data/, logs/, reports/
+├── dist/FFVII_Companion/         # Packaged EXE, with its own data/, logs/, reports/; release zips next to it
 └── archive/, CLAUDE.md, AGENTS.md, GEMINI.md, review/, .claude/   # The maintainer's local files
 ```
 

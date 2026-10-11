@@ -76,6 +76,35 @@ class TestBuildInstall(unittest.TestCase):
             self.assertTrue((dst / "_internal" / "ffvii_companion" / "index.html").exists())
 
 
+class TestReleasePackage(unittest.TestCase):
+    def test_release_leaves_out_the_builders_data(self):
+        # dist/FFVII_Companion/ also holds the settings, profile, logs and reports of whoever built
+        # it; a release zip must contain only the build (the bundle's own _internal/.../data stays)
+        import tempfile
+        from build_tools.package_release import release_files
+        with tempfile.TemporaryDirectory() as tmp:
+            app = Path(tmp)
+            for rel in ("FFVII_Companion.exe", "_internal/python311.dll", "_internal/ffvii_companion/data/enemies.json",
+                        "data/profile.json", "logs/companion.log", "reports/20261011-120000/manifest.json"):
+                (app / rel).parent.mkdir(parents=True, exist_ok=True)
+                (app / rel).write_text("x")
+            self.assertEqual(sorted(rel.as_posix() for _, rel in release_files(app)),
+                             ["FFVII_Companion.exe", "_internal/ffvii_companion/data/enemies.json",
+                              "_internal/python311.dll"])
+
+    def test_third_party_notices_cover_the_bundle(self):
+        from build_tools.package_release import bundled_distributions, third_party_notices
+        names = {d.metadata["Name"].lower().replace("_", "-") for d in bundled_distributions()}
+        for name in ("numpy", "onnxruntime", "opencv-python", "rapidocr-onnxruntime", "pywebview", "pythonnet",
+                     "fastapi", "uvicorn", "httptools", "pyinstaller"):
+            self.assertIn(name, names)
+        self.assertNotIn("ffvii-companion", names)
+        self.assertNotIn("httpx", names)  # dev extra only
+        text = third_party_notices("0.0.0")
+        self.assertIn("==== Python ", text)
+        self.assertIn("--- ThirdPartyNotices.txt ---", text)  # onnxruntime's, outside its .dist-info
+
+
 class TestScreenCapture(unittest.TestCase):
     def test_monitor_discovery(self):
         cap = ScreenCaptureEngine()

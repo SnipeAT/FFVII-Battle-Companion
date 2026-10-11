@@ -32,7 +32,11 @@ echo =================================================================
 echo Starting companion...
 echo.
 
-REM If compiled binary exists, launch it directly with --host 0.0.0.0
+REM The EXE next to this script (release download), or the compiled binary in dist\ (project folder)
+if exist "FFVII_Companion.exe" (
+    start "" "FFVII_Companion.exe" --host 0.0.0.0 %*
+    exit /b 0
+)
 if exist "dist\FFVII_Companion\FFVII_Companion.exe" (
     start "" "dist\FFVII_Companion\FFVII_Companion.exe" --host 0.0.0.0 %*
     exit /b 0
