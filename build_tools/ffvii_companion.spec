@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 # PyInstaller spec of the desktop app. Run through build_tools/build_exe.py (Rebuild_EXE.bat).
 import os
+import sys
 from pathlib import Path
 from PyInstaller.utils.hooks import collect_submodules
 
@@ -52,9 +53,12 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    # watchfiles is only used by uvicorn's --reload; tests/tools are development-only
+    # watchfiles is only used by uvicorn's --reload; tests/tools are development-only. setuptools
+    # and distutils come in only through cffi's compiler helpers (clr_loader uses cffi without
+    # them). Since Python 3.12 distutils is setuptools' copy, which PyInstaller aliases to the name
+    # distutils itself: excluding 'distutils' there fails the build, excluding setuptools drops both.
     excludes=['tkinter', 'matplotlib', 'scipy', 'unittest', 'test', 'tests', 'tools', 'build_tools', 'pydoc',
-              'pdb', 'distutils', 'watchfiles'],
+              'pdb', 'setuptools', 'watchfiles'] + (['distutils'] if sys.version_info < (3, 12) else []),
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
