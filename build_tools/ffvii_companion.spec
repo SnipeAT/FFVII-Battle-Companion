@@ -2,7 +2,7 @@
 # PyInstaller spec of the desktop app. Run through build_tools/build_exe.py (Rebuild_EXE.bat).
 import os
 from pathlib import Path
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.utils.hooks import collect_submodules
 
 block_cipher = None
 ROOT = Path(SPECPATH).resolve().parent  # build_tools/ -> project root
@@ -15,11 +15,11 @@ datas = [
     (str(PKG / 'data' / 'enemies.json'), 'ffvii_companion/data'),
     (str(PKG / 'data' / 'formations.json'), 'ffvii_companion/data'),
     (str(PKG / 'server' / 'static'), 'ffvii_companion/server/static'),
+    # The OCR models, with their license (Apache-2.0, unlike the rest of the app)
+    (str(PKG / 'ppocr' / 'ch_PP-OCRv4_det_infer.onnx'), 'ffvii_companion/ppocr'),
+    (str(PKG / 'ppocr' / 'ch_PP-OCRv4_rec_infer.onnx'), 'ffvii_companion/ppocr'),
+    (str(PKG / 'ppocr' / 'LICENSE.txt'), 'ffvii_companion/ppocr'),
 ]
-
-# Include RapidOCR ONNX models and yaml configuration.
-# The text-angle classifier model is never loaded (engine/ocr_engine.py runs det + rec only).
-datas += [d for d in collect_data_files('rapidocr_onnxruntime') if 'cls_infer' not in os.path.basename(d[0])]
 
 # Collect submodules to prevent runtime ImportError in frozen bundle. Every module of the
 # ffvii_companion package is included, so new modules need no entry here.
@@ -28,7 +28,6 @@ hidden_imports = (
     # Without webview.__pyinstaller: its build hook imports PyInstaller, whose code (GPL, apart
     # from the bootloader) must not end up in the EXE
     collect_submodules('webview', filter=lambda name: '__pyinstaller' not in name) +
-    collect_submodules('rapidocr_onnxruntime') +
     collect_submodules('ffvii_companion') +
     [
         'clr_loader',

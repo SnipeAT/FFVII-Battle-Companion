@@ -4,7 +4,8 @@ Packages a release of the desktop app for GitHub: dist/FFVII_Companion-<version>
 Builds the EXE with build_exe.py (which updates dist/FFVII_Companion/ as usual), then zips that
 build without the data folders next to the EXE (PRESERVED_DIRS: the settings, profile, logs and
 reports of whoever built it), together with LICENSE, README.md, the LAN launcher and
-THIRD_PARTY_LICENSES.txt (the license texts of Python and of the packages in the bundle).
+THIRD_PARTY_LICENSES.txt (the license texts of Python, the bundled OCR models and the packages in
+the bundle).
 Refuses to run with uncommitted changes, so every release is built from a commit; the zip's
 comment names it (and, with --allow-dirty, says the build had uncommitted changes).
 
@@ -27,6 +28,8 @@ from build_tools.build_exe import APP_NAME, PRESERVED_DIRS  # noqa: E402
 LICENSE_FILE = re.compile(r"^(LICEN[CS]E|COPYING|NOTICE|ThirdPartyNotices)", re.IGNORECASE)
 # The WebView2 SDK's license (from its NuGet package): pywebview ships the SDK's DLLs without it
 WEBVIEW2_LICENSE = Path(__file__).resolve().parent / "licenses" / "Microsoft.Web.WebView2.txt"
+# The OCR models and post-processing bundled in the app's own package (Apache-2.0, from RapidOCR)
+PPOCR_LICENSE = ROOT / "src" / "ffvii_companion" / "ppocr" / "LICENSE.txt"
 
 
 def _canonical(name: str) -> str:
@@ -116,6 +119,14 @@ def third_party_notices(version: str, distributions) -> str:
             "Home page: https://www.python.org", ""]
     if python_license.exists():
         out += [python_license.read_text(encoding="utf-8", errors="replace").strip(), ""]
+    # Part of the app's package, so no distribution of its own lists it
+    out += ["==== PP-OCRv4 models and post-processing from RapidOCR ====",
+            "Files: _internal/ffvii_companion/ppocr/ (ch_PP-OCRv4_det_infer.onnx, ch_PP-OCRv4_rec_infer.onnx: "
+            "PaddleOCR's PP-OCRv4 models in RapidOCR's ONNX conversion) and the module "
+            "ffvii_companion.ppocr.postprocess in FFVII_Companion.exe (adapted from rapidocr_onnxruntime 1.4.4)",
+            "License: Apache-2.0",
+            "Home page: https://github.com/RapidAI/RapidOCR (models: https://github.com/PaddlePaddle/PaddleOCR)", "",
+            "--- LICENSE ---", PPOCR_LICENSE.read_text(encoding="utf-8").strip(), ""]
     for dist in distributions:
         out += [f"==== {dist.metadata['Name']} {dist.version} ====", f"License: {_license_summary(dist)}"]
         if _home_page(dist):

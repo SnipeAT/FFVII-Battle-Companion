@@ -7,8 +7,7 @@ name = "ffvii-companion"
 dynamic = ["version"]
 description = "Real-time tactical battle companion for Final Fantasy VII (PC): battle-text OCR, enemy profiles, live dashboard"
 readme = "README.md"
-# Below 3.13: rapidocr-onnxruntime 1.4.4 (pinned below) supports Python 3.6 to 3.12
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.110.0",
     "uvicorn[standard]>=0.28.0",
@@ -21,9 +20,9 @@ dependencies = [
     "opencv-python>=4.8.0",
     "pillow>=10.2.0",
     "onnxruntime>=1.17.0",
-    # Pinned: engine/ocr_engine.py loads this package's bundled PP-OCRv4 models and reuses
-    # its DB post-processing / CTC decoding helpers, which are internal APIs.
-    "rapidocr-onnxruntime==1.4.4",
+    # ppocr/postprocess.py (text boxes from the detection map); RapidOCR excludes Shapely 2.0.4
+    "pyclipper>=1.2.0",
+    "shapely>=2.0,!=2.0.4",
 ]
 
 [project.optional-dependencies]
@@ -39,4 +38,4 @@ version = { attr = "ffvii_companion.__version__" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-ffvii_companion = ["data/*.json", "server/static/*"]
+ffvii_companion = ["data/*.json", "server/static/*", "ppocr/*.onnx", "ppocr/LICENSE.txt"]

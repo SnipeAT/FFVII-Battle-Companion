@@ -1,10 +1,40 @@
 """OCR engine tests on frames recorded from a real FFNx battle session (tests/fixtures/real)."""
+import json
+import sys
 import unittest
 
 from ffvii_companion.engine.calibration import DEFAULT_CONFIG
 from ffvii_companion.engine.detector import BattleDetector
 from ffvii_companion.engine.ocr_engine import OCREngine, create_session, DET_MODEL_PATH
-from tests.helpers import load_fixture_bgr, load_manifest
+from tests.helpers import FIXTURES_DIR, load_fixture_bgr, load_manifest
+
+# What the engine reads in every fixture frame, at the default detection size and at RapidOCR's
+# (1500). Recorded on 2026-10-11 with rapidocr_onnxruntime 1.4.4's own post-processing code, while
+# a test still checked that the engine's text matched RapidOCR's pipeline; after a deliberate
+# change of what the engine reads, re-record with: python -m tests.test_ocr_engine --record
+EXPECTED_OCR_PATH = FIXTURES_DIR / "ocr_expected.json"
+EXPECTED_OCR_LIMITS = (DEFAULT_CONFIG["det_limit_side_len"], 1500)
+
+
+def ocr_snapshot() -> dict:
+    """{det limit: {frame: [[text, score, [x0, y0, x1, y1]], ...]}} for every fixture frame, uncached."""
+    snapshot = {}
+    for limit in EXPECTED_OCR_LIMITS:
+        engine = OCREngine(threads=1, det_limit_side_len=limit)
+        snapshot[str(limit)] = {
+            name: [[l.text, round(l.score, 4), list(l.box)] for l in engine.run(load_fixture_bgr(name), use_cache=False).lines]
+            for name in sorted(load_manifest())
+        }
+    return snapshot
+
+
+def record_expected_ocr() -> None:
+    """Writes ocr_snapshot() to EXPECTED_OCR_PATH, one line per frame."""
+    blocks = []
+    for limit, frames in ocr_snapshot().items():
+        rows = ",\n".join(f"  {json.dumps(name)}: {json.dumps(lines, ensure_ascii=False)}" for name, lines in frames.items())
+        blocks.append(f' {json.dumps(limit)}: {{\n{rows}\n }}')
+    EXPECTED_OCR_PATH.write_text("{\n" + ",\n".join(blocks) + "\n}\n", encoding="utf-8")
 
 
 class _ShapeSpy:
@@ -97,19 +127,30 @@ class TestOCREngine(unittest.TestCase):
         self.assertIn("Devil Ride B", texts)
         self.assertNotIn("Devil Ride A", texts)
 
-    def test_matches_rapidocr_pipeline(self):
-        """With RapidOCR's effective detection size the engine reproduces RapidOCR's text output."""
-        from rapidocr_onnxruntime import RapidOCR
-        reference = RapidOCR(intra_op_num_threads=1, inter_op_num_threads=1)
-        reference.text_det.limit_type = "max"
-        engine = OCREngine(threads=1, det_limit_side_len=1500)
-        for name in ("prowler.png", "devil_ride_b.png", "victory_screen.png"):
-            img = load_fixture_bgr(name)
-            res, _ = reference(img, use_cls=False)
-            expected = [r[1] for r in (res or [])]
-            got = [l.text for l in engine.run(img, use_cache=False).lines if l.score >= 0.5]
-            self.assertEqual(got, expected, name)
+    def test_output_matches_the_recorded_ocr(self):
+        """
+        Every fixture frame reads as recorded in EXPECTED_OCR_PATH, so a change of the models, the
+        post-processing, ONNX Runtime or Python that changes what the engine reads shows up here.
+        The text must match exactly; boxes may move by 2 px and scores by 0.01 (floating-point
+        differences between CPUs and library versions).
+        """
+        expected = json.loads(EXPECTED_OCR_PATH.read_text(encoding="utf-8"))
+        actual = ocr_snapshot()
+        self.assertEqual(sorted(actual), sorted(expected))
+        for limit, frames in expected.items():
+            self.assertEqual(sorted(actual[limit]), sorted(frames), f"det limit {limit}: fixture frames")
+            for name, lines in frames.items():
+                with self.subTest(limit=limit, frame=name):
+                    got = actual[limit][name]
+                    self.assertEqual([line[0] for line in got], [line[0] for line in lines])
+                    for (text, score, box), (_, exp_score, exp_box) in zip(got, lines):
+                        self.assertAlmostEqual(score, exp_score, delta=0.01, msg=text)
+                        self.assertTrue(all(abs(a - b) <= 2 for a, b in zip(box, exp_box)), (text, box, exp_box))
 
 
 if __name__ == "__main__":
-    unittest.main()
+    if "--record" in sys.argv:
+        record_expected_ocr()
+        print(f"Wrote {EXPECTED_OCR_PATH}")
+    else:
+        unittest.main()

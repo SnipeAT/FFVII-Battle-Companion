@@ -139,6 +139,9 @@ class TestReleasePackage(unittest.TestCase):
         self.assertIn("==== Microsoft WebView2 SDK (in pywebview) ====", text)
         # Its BSD license asks binary redistributions to reproduce the notice itself, not a link
         self.assertIn("Copyright (C) Microsoft Corporation. All rights reserved.", text)
+        # The OCR models and post-processing in the app's own package are Apache-2.0, not MIT
+        self.assertIn("==== PP-OCRv4 models and post-processing from RapidOCR ====", text)
+        self.assertIn("Copyright (c) 2021 RapidOCR Authors. All rights reserved.", text)
 
     def test_build_writes_the_exe_config(self):
         # Files extracted from a downloaded zip that was not unblocked carry Zone.Identifier, and

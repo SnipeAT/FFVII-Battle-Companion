@@ -2,9 +2,10 @@ import os
 import sys
 from pathlib import Path
 
-# The ffvii_companion package folder. Its read-only resources (data/*.json, server/static/) sit
-# next to the code: src/ffvii_companion/ from source, <_MEIPASS>/ffvii_companion/ in the EXE
-# (PyInstaller sets __file__ of bundled modules to their path inside sys._MEIPASS).
+# The ffvii_companion package folder. Its read-only resources (data/*.json, server/static/, the
+# OCR models in ppocr/) sit next to the code: src/ffvii_companion/ from source,
+# <_MEIPASS>/ffvii_companion/ in the EXE (PyInstaller sets __file__ of bundled modules to their
+# path inside sys._MEIPASS).
 PACKAGE_DIR = Path(__file__).resolve().parent
 
 # Optional override for the writable data directory (settings, player profile, reports, logs).

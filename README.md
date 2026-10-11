@@ -23,9 +23,9 @@ To update, delete `FFVII_Companion.exe` and the `_internal` folder, then extract
 
 ### Option 2: build the EXE yourself from source
 
-1. Install [Python 3.11](https://www.python.org/downloads/windows/) (64-bit, with the "py launcher" option the installer selects by default). Python 3.12 also meets the requirements but is untested; 3.13 and newer cannot install the OCR package (`rapidocr-onnxruntime` 1.4.4 supports up to 3.12).
+1. Install [Python 3.11](https://www.python.org/downloads/windows/) (64-bit, with the "py launcher" option the installer selects by default). Python 3.12 to 3.14 also meet the requirements but are untested; 3.15 cannot install ONNX Runtime yet (no build for it).
 2. Download **Source code (zip)** from the release's **Assets** and extract it (or clone the repository: `git clone https://github.com/SnipeAT/FFVII-Battle-Companion.git`).
-3. Open PowerShell in the extracted folder (Windows 11: right-click inside the folder, **Open in Terminal**; Windows 10: Shift + right-click, **Open PowerShell window here**) and run the commands below. With Python 3.12, write `py -3.12` in the first one.
+3. Open PowerShell in the extracted folder (Windows 11: right-click inside the folder, **Open in Terminal**; Windows 10: Shift + right-click, **Open PowerShell window here**) and run the commands below. With another Python version, write it in the first one (for example `py -3.12`).
    ```powershell
    py -3.11 -m venv .venv
    .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
@@ -53,7 +53,7 @@ Module and data paths in this README are relative to the package folder `src/ffv
 
 1. **Capture.** `engine/window_finder.py` finds the FFVII window (title `FINAL FANTASY VII` or an `ff7*.exe` / `ffvii*.exe` process). `engine/capture_service.py` grabs only the calibrated region of interest (default: 60% of the width, rows 66%-84% of the height, where the targeted enemy name and the top of the battle menus appear).
 2. **Text-change gate.** `engine/text_gate.py` reduces the region to a tiny "bright, low-saturation pixel" signature (FFVII's menu and target text is white) and compares it with the signature from the last OCR pass. If no text-like pixels changed, OCR is skipped and the last result is reused. The animated 3D scene, colored gauges and the blue windows do not trigger OCR.
-3. **OCR.** `engine/ocr_engine.py` runs the PP-OCRv4 detection and recognition models shipped with `rapidocr-onnxruntime` in single-threaded ONNX Runtime sessions with thread spinning disabled. Recognition is cached per text box: boxes that did not move or change keep their text, and only new or changed boxes are recognized.
+3. **OCR.** `engine/ocr_engine.py` runs the PP-OCRv4 detection and recognition models (RapidOCR's ONNX conversion, bundled in `ppocr/`) in single-threaded ONNX Runtime sessions with thread spinning disabled. Recognition is cached per text box: boxes that did not move or change keep their text, and only new or changed boxes are recognized.
 4. **Parsing and matching.** `engine/detector.py` drops HUD labels, commands, party names and overlay text, extracts instance letters (`Devil Ride B` means at least two Devil Rides), and fuzzy-matches the remaining candidates against `data/enemies.json`.
 5. **Formation deduction.** `compendium.py` narrows the encounter using `data/formations.json`: it prunes impossible enemies, predicts formation partners, and detects Battle Square / Arena round changes (a new enemy that cannot share any formation with the current ones starts a new encounter).
 6. **Broadcast.** `server/main.py` pushes battle updates over the `/ws` WebSocket to every connected dashboard (`server/static/`). Requests from other web origins are rejected for anything that changes state.
@@ -90,7 +90,7 @@ Measured on a recorded real battle session (150 frames from an FFNx 4K window, r
 ## Requirements
 
 - Windows 10 or 11 (64-bit)
-- Python 3.11 or 3.12, only to run or build from source (the EXE contains its own Python). 3.13 and newer cannot install `rapidocr-onnxruntime` 1.4.4.
+- Python 3.11 to 3.14, only to run or build from source (the EXE contains its own Python). 3.15 cannot install `onnxruntime` yet (no build for it).
 - Final Fantasy VII PC (Steam edition, re-release, or 1998), optionally with 7th Heaven / FFNx
 - Microsoft Edge WebView2 Runtime (preinstalled on Windows 11) for the native desktop window
 
@@ -99,7 +99,7 @@ Measured on a recorded real battle session (150 frames from an FFNx 4K window, r
 ```powershell
 git clone https://github.com/SnipeAT/FFVII-Battle-Companion.git
 cd FFVII-Battle-Companion
-py -3.11 -m venv .venv                                  # Python 3.11 or 3.12 (see Requirements)
+py -3.11 -m venv .venv                                  # Python 3.11 to 3.14 (see Requirements)
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"   # the app (editable) + tests and packaging (httpx, PyInstaller)
 ```
 
@@ -312,7 +312,7 @@ Individual suites:
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest tests.test_capture_service -v   # state machine on recorded frames
-.\.venv\Scripts\python.exe -m unittest tests.test_ocr_engine -v        # OCR engine, cache, RapidOCR parity
+.\.venv\Scripts\python.exe -m unittest tests.test_ocr_engine -v        # OCR engine, cache, recorded OCR output
 .\.venv\Scripts\python.exe -m unittest tests.test_text_gate -v         # text-change gate
 .\.venv\Scripts\python.exe -m unittest tests.test_compendium -v        # matching, formations, steal formula
 .\.venv\Scripts\python.exe -m unittest tests.test_data_integrity -v    # enemies.json / formations.json checks
@@ -340,7 +340,7 @@ or double-click `Rebuild_EXE.bat`. PyInstaller runs outside the project (`%LOCAL
 .\.venv\Scripts\python.exe build_tools\package_release.py
 ```
 
-Builds the EXE as above, then writes `dist\FFVII_Companion-<version>-windows-x64.zip`: the build without the `data\`, `logs\` and `reports\` folders next to the EXE (your own settings, profile, logs and reports), plus `LICENSE.txt`, `README.md`, `Launch_LAN_iPad.bat` and `THIRD_PARTY_LICENSES.txt` (the licenses of Python and of the packages in the EXE). It refuses to run with uncommitted changes, so the zip always matches a commit; the zip's comment names it. The version comes from `__version__` in `src/ffvii_companion/__init__.py`.
+Builds the EXE as above, then writes `dist\FFVII_Companion-<version>-windows-x64.zip`: the build without the `data\`, `logs\` and `reports\` folders next to the EXE (your own settings, profile, logs and reports), plus `LICENSE.txt`, `README.md`, `Launch_LAN_iPad.bat` and `THIRD_PARTY_LICENSES.txt` (the licenses of Python, the OCR models and the packages in the EXE). It refuses to run with uncommitted changes, so the zip always matches a commit; the zip's comment names it. The version comes from `__version__` in `src/ffvii_companion/__init__.py`.
 
 To publish it: tag the commit and push the tag (`git tag -a v<version> -m "Version <version>"`, then `git push origin v<version>`), then on GitHub open **Releases > Draft a new release**, choose the tag, attach the zip and click **Publish release**. GitHub adds the source code archives by itself.
 
@@ -375,6 +375,7 @@ FFVII-Battle-Companion/
 │   ├── data/
 │   │   ├── enemies.json          # Enemy compendium
 │   │   └── formations.json       # Encounter formations
+│   ├── ppocr/                    # OCR models and their post-processing, from RapidOCR (Apache-2.0, see LICENSE.txt there)
 │   ├── engine/
 │   │   ├── capture_service.py    # Capture loop: text gate, OCR, battle state machine, adaptive sampling
 │   │   ├── ocr_engine.py         # Lean PP-OCRv4 det + rec engine (ONNX Runtime) with recognition cache
@@ -409,4 +410,4 @@ FFVII-Battle-Companion/
 
 ## License
 
-The code and documentation are released under the MIT License (see `LICENSE`). FINAL FANTASY VII is a registered trademark of Square Enix; the game's names, data and images remain theirs and are not covered by the MIT License. The enemy and formation data in `src/ffvii_companion/data/` was extracted from the game's files, and the frames in `tests/fixtures/real/` are screenshots of the game. The packaged EXE also contains Python and third-party packages under their own licenses: `THIRD_PARTY_LICENSES.txt` in the release zip lists them, with their license texts where the packages include them.
+The code and documentation are released under the MIT License (see `LICENSE`), except `src/ffvii_companion/ppocr/`: the OCR models (PaddleOCR's PP-OCRv4 in RapidOCR's ONNX conversion) and their post-processing code (adapted from RapidOCR) are under the Apache License 2.0, in `LICENSE.txt` in that folder. FINAL FANTASY VII is a registered trademark of Square Enix; the game's names, data and images remain theirs and are not covered by the MIT License. The enemy and formation data in `src/ffvii_companion/data/` was extracted from the game's files, and the frames in `tests/fixtures/real/` are screenshots of the game. The packaged EXE also contains Python and third-party packages under their own licenses: `THIRD_PARTY_LICENSES.txt` in the release zip lists them, with their license texts where the packages include them.

@@ -1,9 +1,9 @@
 """
 Lean OCR engine for the FFVII battle HUD.
 
-Runs the PP-OCRv4 detection (DBNet) and recognition (SVTR/CTC) ONNX models that
-ship with rapidocr_onnxruntime, reusing its DB post-processing and CTC decoding,
-but owning the ONNX Runtime sessions and the det -> rec orchestration:
+Runs RapidOCR's PP-OCRv4 detection (DBNet) and recognition (SVTR/CTC) ONNX models
+with its DB post-processing and CTC decoding (bundled in ffvii_companion/ppocr),
+but owns the ONNX Runtime sessions and the det -> rec orchestration:
 
 - Only the detection and recognition models are loaded. Battle text is always
   horizontal, so the text-angle classifier RapidOCR loads by default is skipped.
@@ -21,7 +21,8 @@ but owning the ONNX Runtime sessions and the det -> rec orchestration:
   of 6 (same text, less padded work).
 
 The pipeline (letterbox, preprocessing, box ordering, crop warping) otherwise
-mirrors RapidOCR 1.4.x so recognition output matches it.
+mirrors RapidOCR 1.4.x so recognition output matches it (tests/test_ocr_engine.py
+compares it with output recorded while the engine still used RapidOCR's own code).
 """
 from __future__ import annotations
 
@@ -37,15 +38,10 @@ import cv2
 import numpy as np
 import onnxruntime as ort
 
-import rapidocr_onnxruntime
-from rapidocr_onnxruntime.ch_ppocr_det.utils import DBPostProcess
-from rapidocr_onnxruntime.ch_ppocr_rec.utils import CTCLabelDecode
+from ffvii_companion.ppocr import DET_MODEL_PATH, REC_MODEL_PATH
+from ffvii_companion.ppocr.postprocess import CTCLabelDecode, DBPostProcess
 
 logger = logging.getLogger("ffvii-ocr")
-
-MODELS_DIR = Path(rapidocr_onnxruntime.__file__).resolve().parent / "models"
-DET_MODEL_PATH = MODELS_DIR / "ch_PP-OCRv4_det_infer.onnx"
-REC_MODEL_PATH = MODELS_DIR / "ch_PP-OCRv4_rec_infer.onnx"
 
 # Recognition input geometry (PP-OCRv4 rec, same as RapidOCR). Crops are recognized one at
 # a time: RapidOCR batches 6 and pads every crop to the widest one, which was ~18% slower on
@@ -175,7 +171,7 @@ class OCREngine:
         self._cache: List[_CacheEntry] = []
         self._post = DBPostProcess(
             thresh=0.3, box_thresh=0.5, max_candidates=1000,
-            unclip_ratio=1.6, score_mode="fast", use_dilation=True,
+            unclip_ratio=1.6, use_dilation=True,
         )
 
     # ------------------------------------------------------------------ setup
