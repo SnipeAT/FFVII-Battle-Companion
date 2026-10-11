@@ -409,4 +409,4 @@ FFVII-Battle-Companion/
 
 ## License
 
-The code and documentation are released under the MIT License (see `LICENSE`). FINAL FANTASY VII is a registered trademark of Square Enix; the game's names, data and images remain theirs and are not covered by the MIT License. The enemy and formation data in `src/ffvii_companion/data/` was extracted from the game's files, and the frames in `tests/fixtures/real/` are screenshots of the game. The packaged EXE also contains the third-party packages listed in `pyproject.toml`, under their own licenses.
+The code and documentation are released under the MIT License (see `LICENSE`). FINAL FANTASY VII is a registered trademark of Square Enix; the game's names, data and images remain theirs and are not covered by the MIT License. The enemy and formation data in `src/ffvii_companion/data/` was extracted from the game's files, and the frames in `tests/fixtures/real/` are screenshots of the game. The packaged EXE also contains Python and third-party packages under their own licenses: `THIRD_PARTY_LICENSES.txt` in the release zip lists them with their license texts.

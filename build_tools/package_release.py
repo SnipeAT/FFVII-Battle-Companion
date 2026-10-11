@@ -6,7 +6,7 @@ build without the data folders next to the EXE (PRESERVED_DIRS: the settings, pr
 reports of whoever built it), together with LICENSE, README.md, the LAN launcher and
 THIRD_PARTY_LICENSES.txt (the license texts of Python and of the packages in the bundle).
 Refuses to run with uncommitted changes, so every release is built from a commit; the zip's
-comment names it.
+comment names it (and, with --allow-dirty, says the build had uncommitted changes).
 
     .\\.venv\\Scripts\\python.exe build_tools\\package_release.py
 """
@@ -104,8 +104,9 @@ def third_party_notices(version: str, distributions) -> str:
         f"Third-party software in FFVII_Companion {version}",
         "",
         "FFVII_Companion.exe is built with PyInstaller. It contains Python and the packages below,",
-        "each under its own license; their license texts follow. The companion itself is under the",
-        "MIT License (LICENSE.txt).",
+        "each under its own license. The license texts follow where a package includes them;",
+        "otherwise its license and home page are named. The companion itself is under the MIT",
+        "License (LICENSE.txt).",
         "",
     ]
     python_license = Path(sys.base_prefix) / "LICENSE.txt"
@@ -123,6 +124,13 @@ def third_party_notices(version: str, distributions) -> str:
             texts = [("License", dist.metadata["License"])]
         for name, text in texts:
             out += [f"--- {name} ---", text.strip(), ""]
+        if _canonical(dist.metadata["Name"]) == "pywebview":
+            # pywebview's license covers its own code, not the Microsoft binaries it ships
+            out += ["==== Microsoft WebView2 SDK (in pywebview) ====",
+                    "Files: _internal/webview/lib/Microsoft.Web.WebView2.Core.dll, "
+                    "Microsoft.Web.WebView2.WinForms.dll and runtimes/*/native/WebView2Loader.dll",
+                    "License: Microsoft's license for the WebView2 SDK, "
+                    "https://www.nuget.org/packages/Microsoft.Web.WebView2", ""]
     return "\n".join(out) + "\n"
 
 
@@ -147,10 +155,11 @@ def main() -> None:
                         help="Package even with uncommitted changes (the zip then matches no commit)")
     args = parser.parse_args()
 
-    if not args.allow_dirty and _git("status", "--porcelain"):
+    dirty = bool(_git("status", "--porcelain"))
+    if dirty and not args.allow_dirty:
         sys.exit("Uncommitted changes: commit them first, so the release matches a commit "
                  "(or pass --allow-dirty).")
-    commit = _git("rev-parse", "--short", "HEAD")
+    commit = _git("rev-parse", "--short", "HEAD") + (" plus uncommitted changes" if dirty else "")
     init = (ROOT / "src" / "ffvii_companion" / "__init__.py").read_text(encoding="utf-8")
     version = re.search(r'__version__\s*=\s*"([^"]+)"', init).group(1)
 
