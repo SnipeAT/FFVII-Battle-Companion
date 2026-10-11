@@ -3,6 +3,8 @@ import json
 import sys
 import unittest
 
+import numpy as np
+
 from ffvii_companion.engine.calibration import DEFAULT_CONFIG
 from ffvii_companion.engine.detector import BattleDetector
 from ffvii_companion.engine.ocr_engine import OCREngine, create_session, DET_MODEL_PATH
@@ -102,6 +104,23 @@ class TestOCREngine(unittest.TestCase):
                 enemies = {e["name"]: e["count"] for e in detector.identify_enemies_from_lines(lines)}
                 self.assertEqual(enemies, expect["enemies"], f"lines={lines}")
                 self.assertEqual(detector.is_combat_hud_active(lines), expect["hud"], f"lines={lines}")
+
+    def test_degenerate_frames_read_as_nothing(self):
+        # The post-processing in ffvii_companion/ppocr is the project's own code now: blank, noisy
+        # and tiny frames (down to 1x1, and very short ones that get letterboxed) must not raise
+        rng = np.random.default_rng(0)
+        frames = {
+            "black": np.zeros((215, 1280, 3), np.uint8),
+            "white": np.full((215, 1280, 3), 255, np.uint8),
+            "noise": rng.integers(0, 256, (215, 1280, 3), dtype=np.uint8),
+            "1x1": np.zeros((1, 1, 3), np.uint8),
+            "1280x8": np.full((8, 1280, 3), 255, np.uint8),
+            "8x1280": np.full((1280, 8, 3), 255, np.uint8),
+        }
+        engine = OCREngine(threads=1)
+        for name, img in frames.items():
+            with self.subTest(frame=name):
+                self.assertEqual(engine.run(img, use_cache=False).lines, [])
 
     def test_cache_returns_identical_text(self):
         sequence = ["prowler.png", "kalm_fang_b.png", "kalm_fang_b.png", "hud_only.png", "devil_ride_a.png",

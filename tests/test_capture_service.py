@@ -207,6 +207,16 @@ class TestCaptureStateMachine(unittest.TestCase):
         self.assertEqual(self.service.observed_counts, {"Dragon": 1})
         self.assertEqual(self.service.combat_phase, "hunting")
 
+    def test_multi_part_boss_read_with_ocr_punctuation(self):
+        # OCR lines -> enemies -> encounter, as in process_frame: one Grosspanzer·Big read as
+        # "Grosspanzer-Big" became 7x, and the Grosspanzer·Mobile read next then looked like a new
+        # Battle Square round (no formation has seven Bigs) and reset the encounter
+        for line in ("Grosspanzer-Big", "Grosspanzer.Mobile"):
+            enemies = self.service.detector.identify_enemies_from_lines([line, "Attack", "HP", "MP"])
+            self.service._update_battle_state(enemies, True, True, self.cfg, 3)
+        counts = {e["name"]: e["count"] for e in self.service.current_enemies}
+        self.assertEqual(counts, {"Grosspanzerbig": 1, "Grosspanzermobile": 1})
+
     def test_compatible_partner_is_not_a_round_transition(self):
         prowler = dict(compendium.get_by_name("Prowler"))
         fang = dict(compendium.get_by_name("Kalm Fang"))
