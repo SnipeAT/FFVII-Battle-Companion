@@ -23,11 +23,11 @@ To update, delete `FFVII_Companion.exe` and the `_internal` folder, then extract
 
 ### Option 2: build the EXE yourself from source
 
-1. Install [Python 3.11](https://www.python.org/downloads/windows/) (64-bit, with the "py launcher" option the installer selects by default). Python 3.12 to 3.14 also meet the requirements but are untested; 3.15 cannot install ONNX Runtime yet (no build for it).
+1. Install [Python 3.14](https://www.python.org/downloads/windows/) (64-bit). With the Python install manager that python.org offers, that is `py install 3.14`; the traditional 3.14 installer works too (keep its "py launcher" option). Python 3.11 to 3.13 also meet the requirements but are untested; 3.15 cannot install ONNX Runtime yet (no build for it).
 2. Download **Source code (zip)** from the release's **Assets** and extract it (or clone the repository: `git clone https://github.com/SnipeAT/FFVII-Battle-Companion.git`).
 3. Open PowerShell in the extracted folder (Windows 11: right-click inside the folder, **Open in Terminal**; Windows 10: Shift + right-click, **Open PowerShell window here**) and run the commands below. With another Python version, write it in the first one (for example `py -3.12`).
    ```powershell
-   py -3.11 -m venv .venv
+   py -3.14 -m venv .venv
    .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
    .\.venv\Scripts\python.exe build_tools\build_exe.py
    ```
@@ -90,7 +90,7 @@ Measured on a recorded real battle session (150 frames from an FFNx 4K window, r
 ## Requirements
 
 - Windows 10 or 11 (64-bit)
-- Python 3.11 to 3.14, only to run or build from source (the EXE contains its own Python). 3.15 cannot install `onnxruntime` yet (no build for it).
+- Python 3.14, only to run or build from source (the EXE contains its own Python). 3.11 to 3.13 also work but are untested; 3.15 cannot install `onnxruntime` yet (no build for it).
 - Final Fantasy VII PC (Steam edition, re-release, or 1998), optionally with 7th Heaven / FFNx
 - Microsoft Edge WebView2 Runtime (preinstalled on Windows 11) for the native desktop window
 
@@ -99,7 +99,7 @@ Measured on a recorded real battle session (150 frames from an FFNx 4K window, r
 ```powershell
 git clone https://github.com/SnipeAT/FFVII-Battle-Companion.git
 cd FFVII-Battle-Companion
-py -3.11 -m venv .venv                                  # Python 3.11 to 3.14 (see Requirements)
+py -3.14 -m venv .venv                                  # Python 3.14 (see Requirements)
 .\.venv\Scripts\python.exe -m pip install -e ".[dev]"   # the app (editable) + tests and packaging (httpx, PyInstaller)
 ```
 

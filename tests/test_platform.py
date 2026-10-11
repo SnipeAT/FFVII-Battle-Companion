@@ -118,13 +118,13 @@ class TestReleasePackage(unittest.TestCase):
         from build_tools.package_release import release_files
         with tempfile.TemporaryDirectory() as tmp:
             app = Path(tmp)
-            for rel in ("FFVII_Companion.exe", "_internal/python311.dll", "_internal/ffvii_companion/data/enemies.json",
+            for rel in ("FFVII_Companion.exe", "_internal/python314.dll", "_internal/ffvii_companion/data/enemies.json",
                         "data/profile.json", "logs/companion.log", "reports/20261011-120000/manifest.json"):
                 (app / rel).parent.mkdir(parents=True, exist_ok=True)
                 (app / rel).write_text("x")
             self.assertEqual(sorted(rel.as_posix() for _, rel in release_files(app)),
                              ["FFVII_Companion.exe", "_internal/ffvii_companion/data/enemies.json",
-                              "_internal/python311.dll"])
+                              "_internal/python314.dll"])
 
     def test_notices_list_the_distributions_of_the_bundled_modules(self):
         # Import names map to their distributions (cv2 -> opencv-python); the standard library and
