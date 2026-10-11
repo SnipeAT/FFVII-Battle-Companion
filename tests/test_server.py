@@ -37,6 +37,11 @@ class TestRestApi(unittest.TestCase):
             self.assertEqual(again.status_code, 304, path)
             self.assertEqual(again.headers.get("cache-control"), "no-cache", path)
 
+    def test_api_version_is_the_package_version(self):
+        # The API used to carry its own copy of the version number
+        from ffvii_companion import __version__
+        self.assertEqual(self.client.get("/openapi.json").json()["info"]["version"], __version__)
+
     def test_dashboard_version_follows_the_files(self):
         import tempfile
         from pathlib import Path

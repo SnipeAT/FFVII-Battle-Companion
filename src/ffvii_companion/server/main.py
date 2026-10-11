@@ -17,6 +17,7 @@ from starlette.datastructures import Headers
 from starlette.websockets import WebSocketClose
 
 import asyncio
+from ffvii_companion import __version__
 from ffvii_companion.compendium import compendium
 from ffvii_companion.server.models import (
     Enemy, BattleState, StealCalcRequest, StealCalcResponse, DetectSimulateRequest, MisdetectionReportRequest
@@ -38,7 +39,7 @@ async def lifespan(app: FastAPI):
     if capture_service.is_running():
         capture_service.stop()
 
-app = FastAPI(title="FFVII Tactical Battle Companion", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="FFVII Tactical Battle Companion", version=__version__, lifespan=lifespan)
 
 
 class SameOriginGuard:
