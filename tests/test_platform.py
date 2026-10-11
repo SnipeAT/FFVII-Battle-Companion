@@ -103,6 +103,16 @@ class TestReleasePackage(unittest.TestCase):
         self.assertIn("==== Python ", text)
         self.assertIn("--- ThirdPartyNotices.txt ---", text)  # onnxruntime's, outside its .dist-info
 
+    def test_build_writes_the_exe_config(self):
+        # Files extracted from a downloaded zip that was not unblocked carry Zone.Identifier, and
+        # .NET then refused to load pywebview's Python.Runtime.dll: the EXE exited without a window
+        import tempfile
+        from build_tools.build_exe import write_exe_config
+        with tempfile.TemporaryDirectory() as tmp:
+            write_exe_config(Path(tmp))
+            config = (Path(tmp) / "FFVII_Companion.exe.config").read_text(encoding="utf-8")
+        self.assertIn('<loadFromRemoteSources enabled="true"/>', config)
+
     @unittest.skipUnless(os.name == "nt", "Win32 message box")
     def test_startup_error_is_shown_not_only_logged(self):
         # Windowed launches have no console: a failed window start used to exit silently

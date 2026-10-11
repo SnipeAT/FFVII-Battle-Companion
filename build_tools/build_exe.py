@@ -17,6 +17,22 @@ LOCAL_BUILD_ROOT = Path(os.environ.get("LOCALAPPDATA", tempfile.gettempdir())) /
 # reports); never purged.
 PRESERVED_DIRS = {"data", "logs", "reports"}
 
+# Configuration file next to the EXE, read by the .NET Framework that pywebview loads. Windows
+# Explorer marks every file it extracts from a downloaded zip that was not unblocked
+# (Zone.Identifier), and .NET refuses to load marked assemblies: Python.Runtime.dll then fails
+# and no window opens. loadFromRemoteSources lets it load them.
+EXE_CONFIG = """<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <runtime>
+    <loadFromRemoteSources enabled="true"/>
+  </runtime>
+</configuration>
+"""
+
+
+def write_exe_config(app_dir: Path) -> None:
+    (app_dir / f"{APP_NAME}.exe.config").write_text(EXE_CONFIG, encoding="utf-8")
+
 
 def safe_rmtree(target: Path, max_retries: int = 5, delay: float = 0.8):
     if not target.exists():
@@ -110,6 +126,8 @@ def build():
         print("  The previous dist/ build (if any) was left untouched.")
         print("=" * 65)
         sys.exit(result.returncode)
+
+    write_exe_config(LOCAL_BUILD_ROOT / "dist" / APP_NAME)
 
     # Install the fresh build into dist/ only after PyInstaller succeeded
     dist_app = root / "dist" / APP_NAME

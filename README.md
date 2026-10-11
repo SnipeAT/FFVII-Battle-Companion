@@ -13,7 +13,7 @@ Windows 10 or 11 (64-bit) only. Pick one of the two ways below; both end with th
 ### Option 1: download the ready-made EXE (no Python needed)
 
 1. Open the [latest release](https://github.com/SnipeAT/FFVII-Battle-Companion/releases/latest) and download `FFVII_Companion-<version>-windows-x64.zip` from its **Assets**.
-2. Right-click the downloaded zip, choose **Properties**, tick **Unblock** at the bottom if it is there, and click **OK**. Windows marks downloaded files, and an unblocked zip extracts files it does not warn about or block.
+2. Right-click the downloaded zip, choose **Properties**, tick **Unblock** at the bottom if it is there, and click **OK**. Windows marks downloaded files as coming from the internet; unblocking the zip before extracting it keeps that mark off the extracted files, so Windows asks fewer questions about them.
 3. Extract the zip to a folder you can write to, for example `Documents`. Not `Program Files`: the companion saves its settings and logs next to the EXE.
 4. Double-click `FFVII_Companion.exe` in the extracted `FFVII_Companion` folder. If Windows SmartScreen says it protected your PC, click **More info**, then **Run anyway**: the EXE is not code-signed.
    - If Windows says **Smart App Control** blocked it (Windows 11 with Smart App Control on), there is no "Run anyway": Smart App Control blocks unsigned programs until Microsoft's cloud service has assessed them, which can take a while after a new release. Try again later, or run the companion from source instead (Option 2, which then needs no EXE).
@@ -332,7 +332,7 @@ The test package redirects all writable files (settings, player profile, reports
 .\.venv\Scripts\python.exe build_tools\build_exe.py
 ```
 
-or double-click `Rebuild_EXE.bat`. PyInstaller runs outside the project (`%LOCALAPPDATA%\FFVIIBuild`) so OneDrive never syncs the intermediate build. Only when it succeeds are the files copied into `dist\FFVII_Companion\` in place: no folder is deleted or renamed, settings and logs next to the EXE are kept, and a failed build leaves the previous executable working. Close the companion before rebuilding; its files are locked while it runs. Output: `dist\FFVII_Companion\FFVII_Companion.exe`.
+or double-click `Rebuild_EXE.bat`. PyInstaller runs outside the project (`%LOCALAPPDATA%\FFVIIBuild`) so OneDrive never syncs the intermediate build. Only when it succeeds are the files copied into `dist\FFVII_Companion\` in place: no folder is deleted or renamed, settings and logs next to the EXE are kept, and a failed build leaves the previous executable working. Close the companion before rebuilding; its files are locked while it runs. Output: `dist\FFVII_Companion\FFVII_Companion.exe`, with `FFVII_Companion.exe.config` next to it, which lets the .NET runtime behind the window load its files even when Windows marked them as downloaded.
 
 ### Packaging a release
 
