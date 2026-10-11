@@ -36,7 +36,7 @@ to the project root. In a finding's Location, write the full path from the proje
 | `review/REVIEWER_PROMPT.md` | The prompt the user gives a reviewer to start a session | read | maintains |
 | `AGENTS.md`, `GEMINI.md` | Rules that other agents' tools load automatically | read | maintains |
 | `CLAUDE.md`, `README.md` | Architecture, behavior, commands | read | maintains |
-| Git history (`git log`, `git diff`, ...) | Every change since the baseline commit, with Claude's reasons | read-only commands (section 11) | commits |
+| Git history (`git log`, `git diff`, ...) | Every change since the first public commit (2026-10-11), with Claude's reasons | read-only commands (section 11) | commits |
 
 ## 3. Finding lifecycle
 
@@ -420,8 +420,8 @@ git log --oneline --follow -- src/ffvii_companion/data/enemies.json   # history 
 git grep -n "MAX_GATED_SKIPS"                         # search tracked files
 ```
 
-The history starts with the first public commit on 2026-10-11 (`git rev-list --max-parents=0
-HEAD`): `git log`, `git diff` and `git blame` reach back only to it. The commits before it, cited
+The history starts with the first public commit on 2026-10-11 (`git log --max-parents=0
+--oneline`): `git log`, `git diff` and `git blame` reach back only to it. The commits before it, cited
 in `review/RESOLVED.md`, were not published (see the Git note there).
 
 Fallback without Git (files changed since the date and time of the last session):

@@ -11,7 +11,7 @@ the full diff are in `archive/` on the user's computer, which is not published.
 
 Git: the project became a Git repository on 2026-10-08 (the sessions of 2026-10-07 have no commit)
 and was published on GitHub on 2026-10-11 with a new history. The public history starts with one
-commit (`git rev-list --max-parents=0 HEAD`) that holds the project as it was after the triage of
+commit (`git log --max-parents=0 --oneline`) that holds the project as it was after the triage of
 GEMINI 2026-10-09 23:30, without `archive/`. The commits cited in this file belong to the private
 development history before it, which was not published: `git show` cannot find them. The next
 session uses the first public commit as the last reviewed commit. The changes since the last
