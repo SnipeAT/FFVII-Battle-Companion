@@ -329,12 +329,15 @@ def main():
     register_desktop_window_getter(lambda: window)
 
     # Run native window loop (blocking on main thread)
+    window_failed = False
     try:
         webview.start(debug=args.debug)
     except Exception as e:
+        window_failed = True
         show_startup_error(f"The companion window could not be opened: {e}")
     finally:
-        logger.info("Window closed. Shutting down capture loop and server...")
+        logger.info("Shutting down capture loop and server..." if window_failed
+                    else "Window closed. Shutting down capture loop and server...")
         try:
             if capture_service.is_running():
                 capture_service.stop()
@@ -343,6 +346,8 @@ def main():
         server.should_exit = True
         server_thread.join(timeout=2.0)
         logger.info("Shutdown complete.")
+    if window_failed:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
