@@ -50,7 +50,7 @@ class PerformanceTracker:
             self.log_file_path.parent.mkdir(parents=True, exist_ok=True)
             if not self.log_file_path.exists():
                 with open(self.log_file_path, "w", encoding="utf-8") as f:
-                    f.write("# FFVII Auto Enemy ID - Performance Profiling Log\n")
+                    f.write("# FFVII Tactical Battle Companion - Performance Profiling Log\n")
                     f.write("# Format: Timestamp | Summary | Stage Breakdown | Resolution\n\n")
         except Exception as e:
             logger.warning(f"Failed to initialize performance log directory: {e}")
@@ -77,7 +77,7 @@ class PerformanceTracker:
             self.log_file_path.rename(dfn)
 
             with open(self.log_file_path, "w", encoding="utf-8") as f:
-                f.write("# FFVII Auto Enemy ID - Performance Profiling Log (Rotated)\n")
+                f.write("# FFVII Tactical Battle Companion - Performance Profiling Log (Rotated)\n")
                 f.write("# Format: Timestamp | Summary | Stage Breakdown | Resolution\n\n")
         except Exception as e:
             logger.warning(f"Error rotating performance log: {e}")

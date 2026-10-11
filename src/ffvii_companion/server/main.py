@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
     if capture_service.is_running():
         capture_service.stop()
 
-app = FastAPI(title="FFVII Auto Enemy Companion", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="FFVII Tactical Battle Companion", version="2.0.0", lifespan=lifespan)
 
 
 class SameOriginGuard:
