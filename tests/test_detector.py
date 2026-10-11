@@ -49,6 +49,35 @@ class TestLineParsing(unittest.TestCase):
     def test_exact_names_ending_in_digits_are_kept(self):
         self.assertEqual(BattleDetector.parse_enemy_line("Unknown 2")[0], "Unknown 2")
 
+    def test_names_with_punctuation_keep_their_last_letter(self):
+        # OCR reads the game's middle dot ("Grosspanzer·Big") as "-", ".", ":" or a space; the
+        # name's own last letter then became an instance letter: one Grosspanzer·Big showed as
+        # "7x" (g = G, the 7th letter) and Grosspanzer·Mobile as "5x" (e = E)
+        for line in ("Grosspanzer-Big", "Grosspanzer.Big", "Grosspanzer:Big", "Grosspanzer Big",
+                     "Grosspanzer-Mobile", "Jenova-LIFE", "Jenova LIFE"):
+            with self.subTest(line=line):
+                self.assertEqual(BattleDetector.parse_enemy_line(line), (line, None, 1))
+        # A real instance letter after such a name still counts
+        self.assertEqual(BattleDetector.parse_enemy_line("Grosspanzer-Mobile B"), ("Grosspanzer-Mobile", "B", 2))
+
+    def test_no_enemy_name_reads_as_an_instance_letter(self):
+        # Every name and in-game spelling, also with its middle dot as OCR reads it (Safer·Sephiroth
+        # and Jenova·DEATH became "8x", Jenova·LIFE "5x")
+        from ffvii_companion.compendium import compendium
+        spellings = set()
+        for enemy in compendium.get_all():
+            for name in (enemy["name"], enemy.get("display_name", enemy["name"])):
+                spellings.update(name.replace("·", sep) for sep in ("·", "-", ".", ":", " "))
+        for line in sorted(spellings):
+            with self.subTest(line=line):
+                self.assertIsNone(BattleDetector.parse_enemy_line(line)[1])
+
+    def test_glued_lowercase_letter_is_part_of_the_name(self):
+        # Instance letters are capitals; a lowercase a-h glued to a misread name is its own letter
+        for line in ("Grosspanzer Blg", "Bandersnateh"):
+            with self.subTest(line=line):
+                self.assertEqual(BattleDetector.parse_enemy_line(line), (line, None, 1))
+
 
 class TestEnemyIdentification(unittest.TestCase):
     def setUp(self):
@@ -61,6 +90,10 @@ class TestEnemyIdentification(unittest.TestCase):
         self.assertEqual(self.det.confidence_threshold, DEFAULT_CONFIG["confidence_threshold"])
         self.assertEqual(self.det.det_limit_side_len, DEFAULT_CONFIG["det_limit_side_len"])
         self.assertEqual(self.det.num_threads, DEFAULT_CONFIG["ocr_threads"])
+
+    def test_punctuated_name_counts_once(self):
+        enemies = self.det.identify_enemies_from_lines(["Grosspanzer-Big", "Attack", "HP", "MP"])
+        self.assertEqual({e["name"]: e["count"] for e in enemies}, {"Grosspanzerbig": 1})
 
     def test_detector_line_identification(self):
         enemies = self.det.identify_enemies_from_lines(["Trickplay", "Boundfat (Back row)", "Attack", "HP", "MP"])

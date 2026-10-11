@@ -198,6 +198,15 @@ class EnemyCompendium:
             return self._enemies_cache[self._name_map[target]]
         return None
 
+    def get_by_normalized_name(self, name: str) -> Optional[Dict[str, Any]]:
+        """
+        The enemy whose name, in-game spelling or OCR alias equals `name` apart from case and
+        punctuation: OCR reads the game's middle dot ("Grosspanzer·Big") as "-", ".", ":" or a
+        space. Nothing is stripped (no row designation or instance letter, unlike match_enemy).
+        """
+        target_id = self._normalized_name_map.get(self._normalize_text(name, strip_suffix=False))
+        return self._enemies_cache[target_id] if target_id else None
+
     def find_matching_formations(self, observed: Dict[str, int]) -> List[Dict[str, Any]]:
         """
         Filters all formations to those that contain all observed enemies with at least the observed counts.

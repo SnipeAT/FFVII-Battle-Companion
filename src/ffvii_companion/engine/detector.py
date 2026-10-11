@@ -175,14 +175,20 @@ class BattleDetector:
         # In FFVII, instance letters are single uppercase letters A-H (max 8 enemies in formation)
         instance_letter = None
         min_count = 1
-        exact_name = compendium.get_by_name(cleaned) is not None
+        # A whole enemy name keeps its last letter, also when OCR changed its punctuation
+        # ("Grosspanzer-Big" is not "Grosspanzer-Bi" + G, i.e. seven of them)
+        exact_name = compendium.get_by_normalized_name(cleaned) is not None
         letter_match = RE_INSTANCE_LETTER.search(cleaned)
         if letter_match and not exact_name:
             stem = cleaned[:letter_match.start()].strip()
             spaced = cleaned[letter_match.start()].isspace()
             # A letter glued to the name ("SweeperA", OCR dropped the space) only counts as an
-            # instance letter when the remaining stem is itself a known enemy name.
-            if spaced or compendium.get_by_name(stem) or compendium.match_enemy(stem):
+            # instance letter when it is a capital, as the game shows them (a glued lowercase a-h
+            # is the end of a misread name, "Grosspanzer Blg"), and the remaining stem is itself
+            # a known enemy name.
+            glued_ok = letter_match.group(1).isupper() and (
+                compendium.get_by_name(stem) is not None or compendium.match_enemy(stem) is not None)
+            if spaced or glued_ok:
                 instance_letter = letter_match.group(1).upper()
                 min_count = ord(instance_letter) - ord('A') + 1
                 cleaned = stem
