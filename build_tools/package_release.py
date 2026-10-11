@@ -25,6 +25,8 @@ if str(ROOT) not in sys.path:
 from build_tools.build_exe import APP_NAME, PRESERVED_DIRS  # noqa: E402
 
 LICENSE_FILE = re.compile(r"^(LICEN[CS]E|COPYING|NOTICE|ThirdPartyNotices)", re.IGNORECASE)
+# The WebView2 SDK's license (from its NuGet package): pywebview ships the SDK's DLLs without it
+WEBVIEW2_LICENSE = Path(__file__).resolve().parent / "licenses" / "Microsoft.Web.WebView2.txt"
 
 
 def _canonical(name: str) -> str:
@@ -129,8 +131,9 @@ def third_party_notices(version: str, distributions) -> str:
             out += ["==== Microsoft WebView2 SDK (in pywebview) ====",
                     "Files: _internal/webview/lib/Microsoft.Web.WebView2.Core.dll, "
                     "Microsoft.Web.WebView2.WinForms.dll and runtimes/*/native/WebView2Loader.dll",
-                    "License: Microsoft's license for the WebView2 SDK, "
-                    "https://www.nuget.org/packages/Microsoft.Web.WebView2", ""]
+                    "License: BSD-3-Clause (the WebView2 SDK's license, "
+                    "https://www.nuget.org/packages/Microsoft.Web.WebView2)", "",
+                    "--- LICENSE ---", WEBVIEW2_LICENSE.read_text(encoding="utf-8").strip(), ""]
     return "\n".join(out) + "\n"
 
 

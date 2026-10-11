@@ -103,6 +103,8 @@ class TestReleasePackage(unittest.TestCase):
         self.assertIn("==== Python ", text)
         self.assertIn("--- ThirdPartyNotices.txt ---", text)  # onnxruntime's, outside its .dist-info
         self.assertIn("==== Microsoft WebView2 SDK (in pywebview) ====", text)
+        # Its BSD license asks binary redistributions to reproduce the notice itself, not a link
+        self.assertIn("Copyright (C) Microsoft Corporation. All rights reserved.", text)
 
     def test_build_writes_the_exe_config(self):
         # Files extracted from a downloaded zip that was not unblocked carry Zone.Identifier, and
