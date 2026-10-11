@@ -23,7 +23,7 @@ To update, delete `FFVII_Companion.exe` and the `_internal` folder, then extract
 
 ### Option 2: build the EXE yourself from source
 
-1. Install [Python 3.14](https://www.python.org/downloads/windows/) (64-bit). With the Python install manager that python.org offers, that is `py install 3.14`; the traditional 3.14 installer works too (keep its "py launcher" option). Python 3.11 to 3.13 also meet the requirements but are untested; 3.15 cannot install ONNX Runtime yet (no build for it).
+1. Install [Python 3.14](https://www.python.org/downloads/windows/) (64-bit). With the Python install manager that python.org offers, that is `py install 3.14`; the traditional 3.14 installer works too (keep its "py launcher" option). Python 3.11 to 3.13 also meet the requirements, but only 3.14 is tested; 3.15 cannot install the dependencies yet (`onnxruntime`, `pyclipper` and `PyYAML` have no Windows build for it).
 2. Download **Source code (zip)** from the release's **Assets** and extract it (or clone the repository: `git clone https://github.com/SnipeAT/FFVII-Battle-Companion.git`).
 3. Open PowerShell in the extracted folder (Windows 11: right-click inside the folder, **Open in Terminal**; Windows 10: Shift + right-click, **Open PowerShell window here**) and run the commands below. With another Python version, write it in the first one (for example `py -3.12`).
    ```powershell
@@ -90,7 +90,7 @@ Measured on a recorded real battle session (150 frames from an FFNx 4K window, r
 ## Requirements
 
 - Windows 10 or 11 (64-bit)
-- Python 3.14, only to run or build from source (the EXE contains its own Python). 3.11 to 3.13 also work but are untested; 3.15 cannot install `onnxruntime` yet (no build for it).
+- Python 3.14, only to run or build from source (the EXE contains its own Python). 3.11 to 3.13 also meet the requirements, but only 3.14 is tested; 3.15 cannot install the dependencies yet (`onnxruntime`, `pyclipper` and `PyYAML` have no Windows build for it).
 - Final Fantasy VII PC (Steam edition, re-release, or 1998), optionally with 7th Heaven / FFNx
 - Microsoft Edge WebView2 Runtime (preinstalled on Windows 11) for the native desktop window
 
@@ -375,7 +375,7 @@ FFVII-Battle-Companion/
 │   ├── data/
 │   │   ├── enemies.json          # Enemy compendium
 │   │   └── formations.json       # Encounter formations
-│   ├── ppocr/                    # OCR models and their post-processing, from RapidOCR (Apache-2.0, see LICENSE.txt there)
+│   ├── ppocr/                    # OCR models and their post-processing from RapidOCR (Apache-2.0: the .onnx files, postprocess.py)
 │   ├── engine/
 │   │   ├── capture_service.py    # Capture loop: text gate, OCR, battle state machine, adaptive sampling
 │   │   ├── ocr_engine.py         # Lean PP-OCRv4 det + rec engine (ONNX Runtime) with recognition cache
@@ -410,4 +410,4 @@ FFVII-Battle-Companion/
 
 ## License
 
-The code and documentation are released under the MIT License (see `LICENSE`), except `src/ffvii_companion/ppocr/`: the OCR models (PaddleOCR's PP-OCRv4 in RapidOCR's ONNX conversion) and their post-processing code (adapted from RapidOCR) are under the Apache License 2.0, in `LICENSE.txt` in that folder. FINAL FANTASY VII is a registered trademark of Square Enix; the game's names, data and images remain theirs and are not covered by the MIT License. The enemy and formation data in `src/ffvii_companion/data/` was extracted from the game's files, and the frames in `tests/fixtures/real/` are screenshots of the game. The packaged EXE also contains Python and third-party packages under their own licenses: `THIRD_PARTY_LICENSES.txt` in the release zip lists them, with their license texts where the packages include them.
+The code and documentation are released under the MIT License (see `LICENSE`), except two third-party parts in `src/ffvii_companion/ppocr/`: the OCR models (the two `.onnx` files: PaddleOCR's PP-OCRv4 in RapidOCR's ONNX conversion) and their post-processing code (`postprocess.py`, adapted from RapidOCR) are under the Apache License 2.0, in `LICENSE.txt` in that folder. FINAL FANTASY VII is a registered trademark of Square Enix; the game's names, data and images remain theirs and are not covered by the MIT License. The enemy and formation data in `src/ffvii_companion/data/` was extracted from the game's files, and the frames in `tests/fixtures/real/` are screenshots of the game. The packaged EXE also contains Python and third-party packages under their own licenses: `THIRD_PARTY_LICENSES.txt` in the release zip lists them, with their license texts where the packages include them.
