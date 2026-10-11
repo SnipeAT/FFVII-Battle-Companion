@@ -10,8 +10,10 @@ from tests.helpers import FIXTURES_DIR, load_fixture_bgr, load_manifest
 
 # What the engine reads in every fixture frame, at the default detection size and at RapidOCR's
 # (1500). Recorded on 2026-10-11 with rapidocr_onnxruntime 1.4.4's own post-processing code, while
-# a test still checked that the engine's text matched RapidOCR's pipeline; after a deliberate
-# change of what the engine reads, re-record with: python -m tests.test_ocr_engine --record
+# a test still checked that the engine's text matched RapidOCR's pipeline; the frames added later
+# (field_menu_status*.png, prowler_wide_crop.png) with the bundled copy in ffvii_companion/ppocr,
+# whose output matched RapidOCR's on 2392 recorded frames. After a deliberate change of what the
+# engine reads, re-record with: python -m tests.test_ocr_engine --record
 EXPECTED_OCR_PATH = FIXTURES_DIR / "ocr_expected.json"
 EXPECTED_OCR_LIMITS = (DEFAULT_CONFIG["det_limit_side_len"], 1500)
 
@@ -130,9 +132,11 @@ class TestOCREngine(unittest.TestCase):
     def test_output_matches_the_recorded_ocr(self):
         """
         Every fixture frame reads as recorded in EXPECTED_OCR_PATH, so a change of the models, the
-        post-processing, ONNX Runtime or Python that changes what the engine reads shows up here.
-        The text must match exactly; boxes may move by 2 px and scores by 0.01 (floating-point
-        differences between CPUs and library versions).
+        post-processing, ONNX Runtime or Python shows up here when it changes what the engine reads
+        in these frames: battle text, field menus with small boxes (the minimum box size and the
+        box scoring) and prowler_wide_crop.png (the letterbox of very wide frames). The text must
+        match exactly; boxes may move by 2 px and scores by 0.01 (floating-point differences
+        between CPUs and library versions).
         """
         expected = json.loads(EXPECTED_OCR_PATH.read_text(encoding="utf-8"))
         actual = ocr_snapshot()

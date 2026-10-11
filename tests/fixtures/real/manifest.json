@@ -83,6 +83,23 @@
         "Zolokalter": 4
       },
       "hud": true
+    },
+    "field_menu_status.png": {
+      "source": "Field main menu (party status: LV, HP, MP, Limit Level, Gil, Time). Its small, faint boxes change with the OCR's box scoring.",
+      "enemies": {},
+      "hud": false
+    },
+    "field_menu_status_fading.png": {
+      "source": "The same menu while it fades out (dimmed text). Its smallest box (a single digit) depends on the OCR's minimum box size.",
+      "enemies": {},
+      "hud": false
+    },
+    "prowler_wide_crop.png": {
+      "source": "Rows 35-165 of prowler.png (1280x130, aspect 9.8): wider than 8:1, so the OCR engine letterboxes it, as it does the default capture region of a 32:9 screen (about 12:1).",
+      "enemies": {
+        "Prowler": 1
+      },
+      "hud": false
     }
   }
 }
