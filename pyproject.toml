@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ffvii-companion"
+dynamic = ["version"]
+description = "Real-time tactical battle companion for Final Fantasy VII (PC): battle-text OCR, enemy profiles, live dashboard"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.28.0",
+    "pydantic>=2.6.0",
+    "pywebview>=5.0",
+    "psutil>=5.9.0",
+    "rapidfuzz>=3.6.0",
+    "mss>=10.2.0",
+    "numpy>=1.26.0",
+    "opencv-python>=4.8.0",
+    "pillow>=10.2.0",
+    "onnxruntime>=1.17.0",
+    # Pinned: engine/ocr_engine.py loads this package's bundled PP-OCRv4 models and reuses
+    # its DB post-processing / CTC decoding helpers, which are internal APIs.
+    "rapidocr-onnxruntime==1.4.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "httpx>=0.27.0",     # FastAPI TestClient (tests/test_server.py)
+    "pyinstaller>=6.0",  # build_tools/build_exe.py, Rebuild_EXE.bat
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "ffvii_companion.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ffvii_companion = ["data/*.json", "server/static/*"]

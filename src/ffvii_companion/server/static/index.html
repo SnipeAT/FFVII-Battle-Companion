@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0d14">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>FFVII Tactical Battle Companion</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-left">
+      <div class="logo-mark">FFVII</div>
+      <div class="title-group">
+        <h1>TACTICAL COMPANION</h1>
+        <div class="subtitle">AUTOMATED ENEMY INTEL SYSTEM</div>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <div class="status-indicator">
+        <span class="status-dot" id="wsStatusDot"></span>
+        <span class="status-text" id="wsStatusText" role="status" aria-live="polite">CONNECTING...</span>
+      </div>
+      <div class="battle-title-banner" id="battleTitleBanner" role="status" aria-live="polite">
+        STATUS: AWAITING ENCOUNTER
+      </div>
+    </div>
+
+    <div class="header-right">
+      <search class="search-container" role="search">
+        <input 
+          type="search" 
+          id="enemySearchInput" 
+          placeholder="Manual Enemy Lookup..." 
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+          enterkeyhint="search"
+          role="combobox"
+          aria-expanded="false"
+          aria-autocomplete="list"
+          aria-controls="searchResultsDropdown"
+          aria-label="Search enemies by name"
+        />
+        <div class="search-results-dropdown" id="searchResultsDropdown" role="listbox"></div>
+      </search>
+      <button class="btn-capture" id="toggleCaptureBtn" title="Start/Stop the screen capture loop">
+        <span class="capture-dot" id="captureDot"></span>
+        <span id="captureBtnText">CAPTURE: OFF</span>
+      </button>
+      <button class="btn-secondary hidden" id="pinWindowBtn" title="Toggle Always on Top (Desktop Mode)">PIN: OFF</button>
+      <button class="btn-secondary" id="openSkillsBtn" title="Enemy Skill checklist">E.SKILL <span id="skillsCountText">0/24</span></button>
+      <button class="btn-secondary" id="openReportBtn" title="Save the capture region as a misdetection report">REPORT</button>
+      <button class="btn-secondary" id="openCalibBtn" title="Calibrate game window and ROI">CALIBRATION</button>
+      <button class="btn-secondary" id="clearBattleBtn" title="Clear current battle state">CLEAR</button>
+      <button class="btn-primary" id="toggleSimBtn" title="Open battle test simulator" aria-expanded="false" aria-controls="simDrawer">TEST HARNESS</button>
+    </div>
+  </header>
+
+  <!-- Simulation Control Drawer (Collapsible) -->
+  <aside class="sim-drawer hidden" id="simDrawer">
+    <div class="sim-header">
+      <span class="sim-title">BATTLE DETECTION SIMULATOR (TEST HARNESS)</span>
+      <button class="btn-close" id="closeSimBtn" aria-label="Close battle detection simulator">&times;</button>
+    </div>
+    <div class="sim-body">
+      <p class="sim-hint">Trigger mock enemy detections to test live WebSocket updates, steal math, and UI layout:</p>
+      <div class="preset-buttons" id="presetButtons">
+        <!-- Preset encounter buttons dynamically loaded -->
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Stage -->
+  <main class="main-stage">
+    <!-- Idle Banner when no battle active -->
+    <div class="idle-state" id="idleState">
+      <div class="radar-box">
+        <div class="radar-sweep"></div>
+      </div>
+      <h2>SCANNING FOR ACTIVE ENCOUNTER</h2>
+      <p>Target window or enemy text will appear here automatically when combat begins.</p>
+      <p class="idle-tip">Tip: Use the Manual Lookup bar or Test Harness above to preview enemy profiles.</p>
+    </div>
+
+    <!-- Encounter-wide tactics (EnemyCompendium.battle_summary) -->
+    <section class="battle-summary hidden" id="battleSummary" aria-label="Battle summary"></section>
+
+    <!-- Formation Partners Bar -->
+    <div class="partners-bar hidden" id="partnersBar">
+      <span class="partners-title">AREA FORMATION PARTNERS:</span>
+      <div class="partners-chips" id="partnersChips"></div>
+    </div>
+
+    <!-- Active Battle Enemies Grid -->
+    <div class="enemies-grid hidden" id="enemiesGrid">
+      <!-- Dynamic enemy cards rendered here -->
+    </div>
+  </main>
+
+  <!-- Calibration Modal -->
+  <dialog class="modal-dialog" id="calibModal">
+    <div class="modal-window" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3>SCREEN CAPTURE & ROI CALIBRATION</h3>
+        <button class="btn-close" id="closeCalibModalBtn" aria-label="Close Calibration Modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="calib-section">
+          <div class="calib-label">FFVII GAME WINDOW AUTO-DETECTION:</div>
+          <div class="window-status-box" id="windowStatusBox">
+            <span id="windowStatusText">Scanning...</span>
+            <button class="btn-secondary" id="rescanWindowBtn" style="padding: 4px 8px; font-size: 0.75rem;">RE-SCAN</button>
+          </div>
+        </div>
+
+        <div class="calib-section">
+          <div class="calib-label">TARGET MENU DETECTION PRESET:</div>
+          <div class="preset-select-grid" id="presetSelectGrid">
+            <button class="btn-preset-calib" data-preset="full_game_window">
+              <strong>Full Game Viewport</strong>
+              <span>Scans the whole game window (highest CPU cost; troubleshooting only)</span>
+            </button>
+            <button class="btn-preset-calib" data-preset="bottom_half_battle_ui">
+              <strong>Bottom Half (ATB & Menus)</strong>
+              <span>Focuses on lower 45% where battle menus sit</span>
+            </button>
+            <button class="btn-preset-calib active" data-preset="center_target_box">
+              <strong>Center Target Box (Modern / FFNx, Recommended)</strong>
+              <span>Target text centered above command bar (rows 66-84%, columns 20-80% of the window)</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="calib-section">
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 0.82rem; cursor: pointer;">
+            <input type="checkbox" id="autoAddPartnersCheckbox" style="width: 16px; height: 16px; cursor: pointer;" />
+            <span><strong>Auto-Include Formation Partners</strong>: When an enemy is targeted, automatically display the enemies that every possible formation includes. Partners that only might be present stay on the partners bar.</span>
+          </label>
+        </div>
+
+        <div class="calib-section">
+          <div class="calib-label">DIAGNOSTIC SNAPSHOT TEST:</div>
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 8px;">
+            Test what the OCR engine recognizes right now from the active screen region:
+          </p>
+          <button class="btn-secondary" id="testSnapshotBtn" style="width: 100%; margin-bottom: 8px;">CAPTURE DIAGNOSTIC TEST SNAPSHOT</button>
+          <div class="diagnostic-output hidden" id="diagnosticOutput">
+            <div id="diagDim"></div>
+            <div id="diagPerf" style="margin-top: 6px; font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent-gold); padding: 4px 8px; background: rgba(245, 158, 11, 0.1); border-radius: 4px;"></div>
+            <div id="diagLines" style="margin-top: 6px; font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent-cyan);"></div>
+            <div id="diagEnemies" style="margin-top: 6px; font-weight: 700; color: var(--accent-mako);"></div>
+          </div>
+        </div>
+
+        <div class="calib-section">
+          <div class="calib-label">ADAPTIVE SAMPLING & CPU CONTROL:</div>
+          <div style="background: var(--bg-card); padding: 8px 10px; border-radius: 4px; border: 1px solid var(--border-color); font-size: 0.78rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span style="color: var(--text-muted);">CURRENT CAPTURE STATE:</span>
+              <span id="calibSamplingPhase" style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-mako);">IDLE (0.50 FPS)</span>
+            </div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4;">
+              Three-phase adaptive sampling: <strong>IDLE</strong> <strong id="idleFpsText">0.5 FPS</strong> while exploring the field, <strong>HUNTING</strong> <strong id="activeFpsText">1.5 FPS</strong> on battle entry or when a new enemy appears (e.g. Battle Square), and <strong>SETTLED</strong> <strong id="settledFpsText">0.35 FPS</strong> once enemies are registered. OCR only runs when the on-screen text changes.
+            </div>
+          </div>
+        </div>
+
+        <div class="calib-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <div class="calib-label" style="margin-bottom: 0;">PERFORMANCE PROFILER & LATENCY LOGS:</div>
+            <button class="btn-secondary" id="refreshPerfBtn" style="padding: 2px 8px; font-size: 0.72rem;">REFRESH STATS</button>
+          </div>
+          <div id="perfStatsGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px;">
+            <div style="background: var(--bg-card); padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border-color); text-align: center;">
+              <div style="font-size: 0.68rem; color: var(--text-muted);">SCREEN GRAB</div>
+              <div id="perfStatGrab" style="font-family: var(--font-mono); font-size: 0.95rem; font-weight: 700; color: var(--accent-cyan);">-</div>
+            </div>
+            <div style="background: var(--bg-card); padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border-color); text-align: center;">
+              <div style="font-size: 0.68rem; color: var(--text-muted);">OCR TOTAL</div>
+              <div id="perfStatOcr" style="font-family: var(--font-mono); font-size: 0.95rem; font-weight: 700; color: var(--accent-gold);">-</div>
+            </div>
+            <div style="background: var(--bg-card); padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border-color); text-align: center;">
+              <div style="font-size: 0.68rem; color: var(--text-muted);">MATCH / DEDUCE</div>
+              <div id="perfStatMatch" style="font-family: var(--font-mono); font-size: 0.95rem; font-weight: 700; color: var(--accent-mako);">-</div>
+            </div>
+            <div style="background: var(--bg-card); padding: 6px 8px; border-radius: 4px; border: 1px solid var(--border-color); text-align: center;">
+              <div style="font-size: 0.68rem; color: var(--text-muted);">FRAME TOTAL</div>
+              <div id="perfStatTotal" style="font-family: var(--font-mono); font-size: 0.95rem; font-weight: 700; color: #ffffff;">-</div>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 6px;">
+            <span id="perfLifetimeStats">Lifetime: 0 frames | 0.0 FPS</span>
+            <button id="togglePerfLogsBtn" class="btn-secondary" style="padding: 2px 6px; font-size: 0.70rem;">VIEW LOG FILE</button>
+          </div>
+          <div id="perfLogsContainer" class="hidden" style="max-height: 120px; overflow-y: auto; background: #05070a; border: 1px solid var(--border-color); border-radius: 4px; padding: 6px; font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-muted); white-space: pre-wrap;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="saveCalibBtn">CLOSE</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Live Steal Calculator Modal/Drawer -->
+  <dialog class="modal-dialog" id="stealModal">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 id="stealModalTitle">STEAL PROBABILITY CALCULATOR</h3>
+        <button class="btn-close" id="closeStealModalBtn" aria-label="Close Steal Calculator">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="calc-row">
+          <label for="stealerLevelInput">Party Member Level:</label>
+          <input type="number" id="stealerLevelInput" min="1" max="99" value="15" inputmode="numeric" />
+        </div>
+        <p class="modal-hint">Level and Sneak Glove are saved for every dashboard and set the odds shown on the enemy cards.</p>
+        <div class="calc-row">
+          <label for="targetLevelInput">Enemy Level:</label>
+          <input type="number" id="targetLevelInput" min="1" max="99" value="14" inputmode="numeric" readonly />
+        </div>
+        <div class="calc-row">
+          <label for="sneakGloveCheckbox">Equipped Sneak Glove:</label>
+          <input type="checkbox" id="sneakGloveCheckbox" />
+        </div>
+        <div class="calc-result-box">
+          <div class="calc-result-label">Calculated Steal Chance:</div>
+          <div class="calc-result-percentage" id="calcResultPercent">0.0%</div>
+          <div class="calc-result-formula" id="calcResultFormula"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="recalcBtn">RECALCULATE</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Enemy Skill Checklist -->
+  <dialog class="modal-dialog" id="skillsModal">
+    <div class="modal-window" style="max-width: 560px;">
+      <div class="modal-header">
+        <h3>ENEMY SKILL CHECKLIST (<span id="skillsModalCount">0/24</span>)</h3>
+        <button class="btn-close" id="closeSkillsModalBtn" aria-label="Close Enemy Skill checklist">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-hint">Tick the skills your Enemy Skill materia has learned. Battles with an enemy that knows an unticked skill are highlighted. Sources are the enemies with the skill in their attack list; (M) means it is also in their Manipulate list.</p>
+        <ul class="skills-list" id="skillsList"></ul>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Misdetection Report -->
+  <dialog class="modal-dialog" id="reportModal">
+    <div class="modal-window" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3>REPORT A WRONG DETECTION</h3>
+        <button class="btn-close" id="closeReportModalBtn" aria-label="Close report dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-hint">Saves the capture region (last OCR frame and a fresh grab) with the recognized text into the <strong>reports</strong> folder, in the format of the test fixtures.</p>
+        <div class="report-shown" id="reportShownText"></div>
+        <label class="form-label" for="reportExpectedInput">Enemies actually on screen (optional)</label>
+        <input type="text" class="form-input" id="reportExpectedInput" maxlength="500" placeholder="e.g. Devil Ride x2, Kalm Fang" autocomplete="off" spellcheck="false" />
+        <label class="form-label" for="reportNoteInput">Note (optional)</label>
+        <textarea class="form-input" id="reportNoteInput" maxlength="1000" rows="3" placeholder="What went wrong?"></textarea>
+        <div class="report-result hidden" id="reportResult" role="status" aria-live="polite"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" id="saveReportBtn">SAVE REPORT</button>
+      </div>
+    </div>
+  </dialog>
+
+  <footer class="app-footer">
+    <div class="footer-right">
+      <span id="activeEnemiesCount">ENEMIES: 0</span>
+      <span class="divider">|</span>
+      <span id="lastUpdatedTime">LAST SYNC: --:--:--</span>
+    </div>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# Build output (build_tools/build_exe.py / PyInstaller)
+build/
+dist/
+
+# Settings, player profile, reports and logs of runs from source (src/ffvii_companion/paths.py)
+.dev_home/
+
+# Recordings and videos (large; any folder named recordings)
+recordings/
+*.mp4
+*.mkv
+
+# Claude Code per-machine settings
+.claude/settings.local.json
+
+# Old code from before the public release, kept on the maintainer's computer only
+archive/

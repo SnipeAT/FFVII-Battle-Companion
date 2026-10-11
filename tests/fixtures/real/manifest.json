@@ -1,0 +1,88 @@
+{
+  "source": "Recorded from the default center_target_box ROI (2304x388 of a 3840x2160 FFNx window) and downscaled with INTER_AREA to 1280 px wide, the size the OCR stage receives.",
+  "frames": {
+    "ally_target_cloud.png": {
+      "enemies": {},
+      "hud": true
+    },
+    "prowler.png": {
+      "enemies": {
+        "Prowler": 1
+      },
+      "hud": true
+    },
+    "kalm_fang_b.png": {
+      "enemies": {
+        "Kalm Fang": 2
+      },
+      "hud": true
+    },
+    "help_text_slash_all.png": {
+      "enemies": {},
+      "hud": true
+    },
+    "hud_only.png": {
+      "enemies": {},
+      "hud": true
+    },
+    "victory_screen.png": {
+      "enemies": {},
+      "hud": false
+    },
+    "field_no_text.png": {
+      "enemies": {},
+      "hud": false
+    },
+    "devil_ride_a.png": {
+      "enemies": {
+        "Devil Ride": 1
+      },
+      "hud": true
+    },
+    "devil_ride_b.png": {
+      "enemies": {
+        "Devil Ride": 2
+      },
+      "hud": true
+    },
+    "devil_ride_b_static_1.png": {
+      "enemies": {
+        "Devil Ride": 2
+      },
+      "hud": true
+    },
+    "devil_ride_b_static_2.png": {
+      "enemies": {
+        "Devil Ride": 2
+      },
+      "hud": true
+    },
+    "limit_menu_lv3.png": {
+      "source": "Capture region of a 2000x1125 screenshot (Unknown 3 battle, limit menu open, cursor on a limit), not downscaled: 1200x202.",
+      "enemies": {},
+      "hud": true
+    },
+    "materia_sneak_attack.png": {
+      "source": "Field materia screen: the HUD words Attack and HP inside ability names.",
+      "enemies": {},
+      "hud": false
+    },
+    "materia_sneak_attack_2.png": {
+      "source": "Field materia screen: the HUD word Attack inside two ability names.",
+      "enemies": {},
+      "hud": false
+    },
+    "limit_menu_lv1_evilhead_a.png": {
+      "enemies": {
+        "Evilhead": 1
+      },
+      "hud": true
+    },
+    "zolokalter_d_back_row.png": {
+      "enemies": {
+        "Zolokalter": 4
+      },
+      "hud": true
+    }
+  }
+}

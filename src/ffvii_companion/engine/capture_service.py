@@ -1,0 +1,755 @@
+import time
+import threading
+import logging
+from typing import Optional, Dict, Any, List, Callable, Tuple
+import numpy as np
+import cv2
+
+from ffvii_companion.engine.capture import ScreenCaptureEngine
+from ffvii_companion.engine.detector import BattleDetector
+from ffvii_companion.engine.window_finder import FFVIIWindowFinder
+from ffvii_companion.engine.calibration import calibration_manager
+from ffvii_companion.engine.profiler import perf_tracker
+from ffvii_companion.engine.text_gate import TextChangeGate
+from ffvii_companion.engine import win_qos
+from ffvii_companion.engine import detection_report
+from ffvii_companion.compendium import compendium
+
+logger = logging.getLogger("ffvii-capture-service")
+
+# Safety net for the text-change gate: OCR is forced after this many consecutive
+# gated (skipped) frames even if the gate saw no text change.
+MAX_GATED_SKIPS = {"hunting": 2, "settled": 4, "idle": 4}
+# Frames to stay in the hunting phase after a new enemy appears.
+HUNTING_BURST_FRAMES = 3
+# Frames to keep hunting while the battle HUD is visible but no enemy is registered.
+HUD_HUNTING_FRAMES = 4
+# Minimum seconds between repeated identical error log lines from the capture loop.
+ERROR_LOG_INTERVAL = 30.0
+
+
+class CaptureService:
+    def __init__(self, on_battle_detected: Optional[Callable] = None, on_battle_cleared: Optional[Callable] = None,
+                 on_phase_changed: Optional[Callable] = None):
+        self.on_battle_detected = on_battle_detected
+        self.on_battle_cleared = on_battle_cleared
+        # Fired (no arguments) when the sampling phase changes without an encounter broadcast,
+        # e.g. hunting -> settled. Encounter broadcasts already carry the current phase.
+        self.on_phase_changed = on_phase_changed
+
+        # Settings are read without fallbacks: get_config() always holds every DEFAULT_CONFIG key,
+        # and the defaults live only there (engine/calibration.py)
+        cfg = calibration_manager.get_config()
+        self.capture_engine = ScreenCaptureEngine(monitor_index=cfg["monitor_index"])
+        self.detector = BattleDetector(
+            num_threads=cfg["ocr_threads"],
+            det_limit_side_len=cfg["det_limit_side_len"],
+            confidence_threshold=cfg["confidence_threshold"],
+        )
+        self.window_finder = FFVIIWindowFinder()
+        self.text_gate = TextChangeGate()
+
+        self._running = False
+        self._stop_event = threading.Event()
+        self._thread: Optional[threading.Thread] = None
+        self._lock = threading.Lock()
+        self._state_lock = threading.Lock()
+        self._capture_lock = threading.Lock()
+
+        # Cumulative Battle State tracking
+        self.current_enemies: List[Dict[str, Any]] = []
+        self.current_battle_title: Optional[str] = None
+        self.observed_counts: Dict[str, int] = {}
+        self.empty_frames_count = 0
+        self.last_detection_time = 0.0
+        self.last_game_window: Optional[Dict[str, Any]] = None
+        self.last_recognized_lines: List[str] = []
+        # Frame of the last OCR pass (BGR, OCR input size), kept for misdetection reports
+        self.last_ocr_frame: Optional[np.ndarray] = None
+
+        # Text-change gate state: signature of the region at the last OCR pass
+        self._last_ocr_signature: Optional[np.ndarray] = None
+        self._frames_since_ocr: int = 0
+
+        # Downstream memoization cache on unchanged OCR text lines
+        self._last_downstream_lines_key: Optional[tuple] = None
+        self._last_downstream_enemies: List[Dict[str, Any]] = []
+        self._last_downstream_hud: bool = False
+
+        # Adaptive sampling rate and combat phase state
+        self.combat_phase: str = "idle"  # "idle", "hunting", "settled"
+        self.hunting_frames_remaining: int = 0
+        self.current_fps: float = 0.5
+
+        # Loop bookkeeping
+        self._qos_efficient: Optional[bool] = None
+        self._last_error: Tuple[str, float] = ("", 0.0)
+        self.ocr_frames = 0
+        self.gated_frames = 0
+
+    def is_running(self) -> bool:
+        return self._running
+
+    def start(self):
+        with self._lock:
+            if self._running:
+                return
+            self._stop_event.clear()
+            self._running = True
+            self._thread = threading.Thread(target=self._loop, daemon=True, name="FFVIICaptureLoop")
+            self._thread.start()
+            logger.info("FFVII Screen Capture service started.")
+
+    def stop(self):
+        with self._lock:
+            self._running = False
+            self._stop_event.set()
+        if self._thread and self._thread.is_alive() and self._thread is not threading.current_thread():
+            self._thread.join(timeout=2.0)
+        logger.info("FFVII Screen Capture service stopped.")
+
+    def get_status(self) -> Dict[str, Any]:
+        with self._state_lock:
+            enemies_copy = [dict(e) for e in self.current_enemies]
+            lines_copy = list(self.last_recognized_lines)
+            win_copy = dict(self.last_game_window) if self.last_game_window else None
+            last_det = self.last_detection_time
+            running = self._running
+            combat_phase = self.combat_phase
+            current_fps = self.current_fps
+            ocr_frames = self.ocr_frames
+            gated_frames = self.gated_frames
+
+        return {
+            "running": running,
+            "monitor_index": self.capture_engine.monitor_index,
+            "game_window_found": win_copy is not None,
+            "game_window": win_copy,
+            "active_enemy_names": [e["name"] for e in enemies_copy],
+            "last_recognized_lines": lines_copy,
+            "last_detection_time": last_det,
+            "combat_phase": combat_phase,
+            "current_fps": round(current_fps, 2),
+            "ocr_frames": ocr_frames,
+            "gated_frames": gated_frames,
+            "ocr_engine_loaded": self.detector.ocr_loaded,
+            "performance": perf_tracker.get_summary()
+        }
+
+    # ------------------------------------------------------------------ helpers
+    @staticmethod
+    def _phase_fps(cfg: Dict[str, Any], phase: str) -> float:
+        """Target sampling rate for a combat phase (idle / hunting / settled)."""
+        if phase == "hunting":
+            return max(0.5, cfg["active_fps"])
+        if phase == "settled":
+            return max(0.2, cfg["settled_fps"])
+        return max(0.2, cfg["idle_fps"])
+
+    def _sync_detector_settings(self, cfg: Dict[str, Any]):
+        det_limit = cfg["det_limit_side_len"]
+        if self.detector.det_limit_side_len != det_limit:
+            self.detector.set_det_limit_side_len(det_limit)
+        threads = cfg["ocr_threads"]
+        if self.detector.num_threads != threads:
+            self.detector.set_num_threads(threads)
+        self.detector.confidence_threshold = cfg["confidence_threshold"]
+
+    def _apply_thread_qos(self, efficient: bool):
+        """Switches the capture thread between EcoQoS (efficiency cores) and full speed."""
+        if self._qos_efficient is efficient:
+            return
+        win_qos.set_current_thread_qos(efficient=efficient, below_normal=True)
+        self._qos_efficient = efficient
+
+    def _log_error(self, message: str):
+        """Logs loop errors without flooding the log when the same error repeats every frame."""
+        now = time.monotonic()
+        last_msg, last_time = self._last_error
+        if message != last_msg or now - last_time >= ERROR_LOG_INTERVAL:
+            logger.error(message)
+            self._last_error = (message, now)
+
+    def _prepare_ocr_frame(self, frame_bgra: np.ndarray) -> np.ndarray:
+        """Centralized 1280x720 scaling and BGRA-to-BGR color conversion."""
+        h, w = frame_bgra.shape[:2]
+        max_w, max_h = 1280, 720
+        if w > max_w or h > max_h:
+            scale = min(max_w / w, max_h / h)
+            target_w = int(w * scale)
+            target_h = int(h * scale)
+            small_bgra = cv2.resize(frame_bgra, (target_w, target_h), interpolation=cv2.INTER_AREA)
+            return cv2.cvtColor(small_bgra, cv2.COLOR_BGRA2BGR)
+        return cv2.cvtColor(frame_bgra, cv2.COLOR_BGRA2BGR)
+
+    def _calculate_capture_bbox(self, win: Optional[Dict[str, Any]] = None) -> Dict[str, int]:
+        # left/top may be negative: monitors left of or above the primary one have negative
+        # virtual-screen coordinates, which mss accepts.
+        cfg = calibration_manager.get_config()
+        roi = cfg["roi"]
+
+        # Use passed window or try to locate FFVII window
+        target_win = win
+        if target_win is None and cfg["mode"] == "auto_window":
+            target_win = self.window_finder.find_ffvii_window()
+
+        if target_win:
+            with self._state_lock:
+                self.last_game_window = target_win
+            top = int(target_win["top"] + target_win["height"] * roi["top_pct"])
+            left = int(target_win["left"] + target_win["width"] * roi["left_pct"])
+            width = max(64, int(target_win["width"] * roi["width_pct"]))
+            height = max(64, int(target_win["height"] * roi["height_pct"]))
+            return {"top": top, "left": left, "width": width, "height": height}
+
+        # Fallback to monitor coordinates
+        with self._state_lock:
+            self.last_game_window = None
+        mon = self.capture_engine.monitors[self.capture_engine.monitor_index]
+        top = int(mon["top"] + mon["height"] * roi["top_pct"])
+        left = int(mon["left"] + mon["width"] * roi["left_pct"])
+        width = max(64, int(mon["width"] * roi["width_pct"]))
+        height = max(64, int(mon["height"] * roi["height_pct"]))
+        return {"top": top, "left": left, "width": width, "height": height}
+
+    def _grab(self, bbox: Dict[str, int]) -> np.ndarray:
+        """Grabs a screen region as a BGRA array (caller must hold _capture_lock)."""
+        return self.capture_engine.grab(bbox)
+
+    def _clear_battle_state(self) -> bool:
+        """Resets active battle tracking state. Returns True if a battle was previously active."""
+        with self._state_lock:
+            was_in_battle = bool(self.current_enemies) or self.combat_phase != "idle"
+            self.current_enemies = []
+            self.current_battle_title = None
+            self.observed_counts = {}
+            self.empty_frames_count = 0
+            self._frames_since_ocr = 0
+            self._last_ocr_signature = None
+            self.combat_phase = "idle"
+            self.hunting_frames_remaining = 0
+        return was_in_battle
+
+    def clear_battle(self) -> None:
+        """
+        Forgets the encounter collected so far (the dashboard's CLEAR) and fires on_battle_cleared:
+        the next sample starts a new encounter, so a cleared enemy comes back only when it is read
+        again, not along with the next new name. Waits for a sampling step in progress
+        (_capture_lock), so that step cannot broadcast the cleared enemies afterwards.
+        """
+        with self._capture_lock:
+            self._clear_battle_state()
+            self._sync_current_fps(calibration_manager.get_config())
+            self._fire_cleared()
+
+    def _sync_current_fps(self, cfg: Dict[str, Any]) -> str:
+        """Brings current_fps in line with the current phase and returns that phase."""
+        with self._state_lock:
+            phase = self.combat_phase
+            self.current_fps = self._phase_fps(cfg, phase)
+        return phase
+
+    def _note_window_missing(self, max_empty_frames: int) -> bool:
+        """FFVII is not running: counts toward clearing any battle state, including a hunting
+        phase that never registered an enemy. Returns True when the state was cleared."""
+        cleared = False
+        with self._state_lock:
+            self.last_game_window = None
+            if self.current_enemies or self.combat_phase != "idle":
+                self.empty_frames_count += 1
+                cleared = self.empty_frames_count >= max_empty_frames
+        if cleared:
+            self._clear_battle_state()
+        return cleared
+
+    def _fire_cleared(self):
+        if self.on_battle_cleared:
+            try:
+                self.on_battle_cleared()
+            except Exception as ex:
+                logger.error(f"Error in on_battle_cleared callback: {ex}")
+
+    def _fire_phase_changed(self):
+        if self.on_phase_changed:
+            try:
+                self.on_phase_changed()
+            except Exception as ex:
+                logger.error(f"Error in on_phase_changed callback: {ex}")
+
+    def capture_snapshot(self) -> Dict[str, Any]:
+        """Captures a single frame, runs OCR, and returns diagnostic results with performance metrics."""
+        t0 = time.perf_counter()
+
+        t_bbox = time.perf_counter()
+        bbox = self._calculate_capture_bbox()
+        window_find_ms = (time.perf_counter() - t_bbox) * 1000.0
+
+        with self._capture_lock:
+            # The capture loop is the usual place that syncs these; it may be stopped
+            self._sync_detector_settings(calibration_manager.get_config())
+            t_grab = time.perf_counter()
+            frame_bgra = self._grab(bbox)
+            grab_ms = (time.perf_counter() - t_grab) * 1000.0
+
+            t_cvt = time.perf_counter()
+            frame = self._prepare_ocr_frame(frame_bgra)
+            cvt_color_ms = (time.perf_counter() - t_cvt) * 1000.0
+
+            t_ocr = time.perf_counter()
+            # Diagnostics always recognize every box (no reuse of cached text)
+            lines = self.detector.detect_text_lines(frame, use_cache=False)
+            ocr_timing = dict(self.detector.last_ocr_timing)
+            ocr_total_ms = (time.perf_counter() - t_ocr) * 1000.0
+
+        t_match = time.perf_counter()
+        enemies = self.detector.identify_enemies_from_lines(lines)
+        match_ms = (time.perf_counter() - t_match) * 1000.0
+
+        total_frame_ms = (time.perf_counter() - t0) * 1000.0
+
+        perf_data = {
+            "window_find_ms": round(window_find_ms, 2),
+            "grab_ms": round(grab_ms, 2),
+            "cvt_color_ms": round(cvt_color_ms, 2),
+            "ocr_det_ms": ocr_timing.get("det_ms", 0.0),
+            "ocr_rec_ms": ocr_timing.get("rec_ms", 0.0),
+            "ocr_total_ms": round(ocr_total_ms, 2),
+            "ocr_boxes": ocr_timing.get("boxes", 0),
+            "match_ms": round(match_ms, 2),
+            "total_frame_ms": round(total_frame_ms, 2),
+            "effective_fps": round(1000.0 / total_frame_ms, 2) if total_frame_ms > 0 else 0.0
+        }
+
+        cfg = calibration_manager.get_config()
+        preset_name = cfg["target_menu_preset"]
+        perf_tracker.record_frame(
+            window_find_ms=window_find_ms,
+            grab_ms=grab_ms,
+            cvt_color_ms=cvt_color_ms,
+            ocr_det_ms=ocr_timing.get("det_ms", 0.0),
+            ocr_rec_ms=ocr_timing.get("rec_ms", 0.0),
+            ocr_total_ms=ocr_total_ms,
+            match_ms=match_ms,
+            total_frame_ms=total_frame_ms,
+            width=frame.shape[1],
+            height=frame.shape[0],
+            lines_count=len(lines),
+            enemies_count=len(enemies),
+            in_combat=len(enemies) > 0,
+            preset_name=preset_name,
+            ocr_ran=True,
+            phase="snapshot",
+        )
+
+        return {
+            "bbox": bbox,
+            "dimensions": {"width": frame.shape[1], "height": frame.shape[0]},
+            "recognized_lines": lines,
+            "matched_enemies": enemies,
+            "game_window": self.last_game_window,
+            "performance": perf_data
+        }
+
+    def _analyze_report_frame(self, frame_bgr: np.ndarray, in_battle: bool) -> Dict[str, Any]:
+        """Full OCR pass (no cached boxes) and matching on one frame (caller holds _capture_lock)."""
+        lines = self.detector.detect_text_lines(frame_bgr, use_cache=False)
+        enemies = self.detector.identify_enemies_from_lines(lines)
+        return {"image": frame_bgr, "lines": lines,
+                "detected": {e["name"]: e.get("count", 1) for e in enemies},
+                "hud": self.detector.is_combat_hud_active(lines, in_battle)}
+
+    def save_detection_report(self, expected_text: Optional[str] = None, note: Optional[str] = None,
+                              base_dir=None) -> Dict[str, Any]:
+        """
+        Saves a misdetection report (engine/detection_report.py): the frame of the last OCR pass
+        (last_ocr.png) and a fresh grab of the capture region (current.png), each with its OCR
+        lines and matches, plus the battle shown on the dashboard. A frame that is not available
+        (no OCR pass yet, game window gone) is left out; with neither, ReportError is raised.
+        """
+        with self._state_lock:
+            last_frame = self.last_ocr_frame
+            battle = {e["name"]: e.get("count", 1) for e in self.current_enemies}
+            in_battle = bool(self.current_enemies) or self.combat_phase != "idle"
+            game_window = dict(self.last_game_window) if self.last_game_window else None
+        cfg = calibration_manager.get_config()
+
+        current_frame = None
+        try:
+            bbox = self._calculate_capture_bbox()
+            with self._capture_lock:
+                current_frame = self._prepare_ocr_frame(self._grab(bbox))
+        except Exception as ex:
+            logger.warning(f"Misdetection report: could not grab the capture region: {ex}")
+
+        frames: Dict[str, Dict[str, Any]] = {}
+        with self._capture_lock:
+            if last_frame is not None:
+                frames["last_ocr.png"] = self._analyze_report_frame(last_frame, in_battle)
+            if current_frame is not None:
+                frames["current.png"] = self._analyze_report_frame(current_frame, in_battle)
+
+        context = {
+            "battle_on_dashboard": battle,
+            "roi": cfg["roi"],
+            "target_menu_preset": cfg["target_menu_preset"],
+            "game_window": game_window,
+        }
+        result = detection_report.write_report(frames, expected_text, note, context, base_dir=base_dir)
+        logger.info(f"Misdetection report saved to {result['path']}")
+        return result
+
+    def _deduce_with_cache(self, lines, in_battle: bool = False):
+        """Downstream memoization: cached parse of enemies and combat HUD on identical line tuples
+        (and battle state, which the HUD check depends on)."""
+        lines_key = (tuple(lines), in_battle)
+        if lines_key == self._last_downstream_lines_key:
+            return self._last_downstream_enemies, self._last_downstream_hud
+        detected_enemies = self.detector.identify_enemies_from_lines(lines)
+        is_combat_hud = self.detector.is_combat_hud_active(lines, in_battle)
+        self._last_downstream_lines_key = lines_key
+        self._last_downstream_enemies = detected_enemies
+        self._last_downstream_hud = is_combat_hud
+        return detected_enemies, is_combat_hud
+
+    # --------------------------------------------------------- state machine
+    def _decay_hunting_locked(self, settled_fps: float):
+        """Counts down the hunting burst; settles once enemies are registered (caller holds _state_lock)."""
+        if self.combat_phase != "hunting":
+            return
+        self.hunting_frames_remaining = max(0, self.hunting_frames_remaining - 1)
+        if self.hunting_frames_remaining == 0 and self.current_enemies:
+            logger.info(f"Enemies registered ({[e['name'] for e in self.current_enemies]}). "
+                        f"Reducing sample rate to settled mode ({settled_fps} FPS).")
+            self.combat_phase = "settled"
+
+    def _update_battle_state(self, detected_enemies: List[Dict[str, Any]], is_combat_hud: bool,
+                             ocr_ran: bool, cfg: Dict[str, Any], max_empty_frames: int
+                             ) -> Tuple[Optional[List[Dict[str, Any]]], Optional[str], bool]:
+        """
+        Applies one frame's detection result to the accumulated battle state and the
+        adaptive sampling phase. Returns (enemies_snapshot, battle_title, cleared):
+        a snapshot/title when the encounter changed and should be broadcast, and
+        cleared=True when the battle just ended.
+        """
+        auto_add_partners = cfg["auto_add_scene_partners"]
+        active_fps = self._phase_fps(cfg, "hunting")
+        settled_fps = self._phase_fps(cfg, "settled")
+        curr_enemies_snapshot = None
+        battle_title_to_broadcast = None
+
+        if detected_enemies:
+            with self._state_lock:
+                self.empty_frames_count = 0
+                self.last_detection_time = time.time()
+
+                if not ocr_ran and self.current_enemies and self.current_battle_title:
+                    # Steady state fast path: screen text is unchanged and battle is already registered.
+                    # Eliminates redundant formation deductions, allocations, and title formatting.
+                    self._decay_hunting_locked(settled_fps)
+                else:
+                    current_names = {e["name"] for e in self.current_enemies}
+                    detected_names = {e["name"] for e in detected_enemies}
+                    new_names = detected_names - current_names
+
+                    # Battle Square / Arena round transition detection:
+                    # If we have existing enemies and detected names contain a new enemy,
+                    # verify if the new enemy can legally co-exist in ANY formation with current enemies.
+                    if current_names and new_names:
+                        combined_counts = {**self.observed_counts}
+                        for e in detected_enemies:
+                            combined_counts[e["name"]] = max(e.get("count", 1), combined_counts.get(e["name"], 0))
+                        is_compatible = len(compendium.find_matching_formations(combined_counts)) > 0
+                        if not is_compatible and not (detected_names & current_names):
+                            logger.info(f"Battle Square round transition detected: {current_names} -> {detected_names}. Resetting encounter state.")
+                            self.current_enemies = []
+                            self.observed_counts = {}
+                            self.current_battle_title = None
+                            current_names = set()
+
+                    # Update observed enemy instance counts
+                    for e in detected_enemies:
+                        name = e["name"]
+                        detected_count = e.get("count", 1)
+                        self.observed_counts[name] = max(detected_count, self.observed_counts.get(name, 0))
+
+                    # Perform formation deduction against game encounter tables
+                    deduction = compendium.deduce_formation(self.observed_counts)
+                    allowed_enemies = deduction.get("allowed_enemies", set())
+                    certain_partners = deduction.get("certain_partners", [])
+
+                    # Prune any previously added enemies that are impossible in the deduced formation
+                    if allowed_enemies and len(self.current_enemies) > 0:
+                        pruned = [e for e in self.current_enemies if e["name"] in allowed_enemies]
+                        if len(pruned) != len(self.current_enemies):
+                            logger.info(f"Pruned invalid formation partners. Allowed: {allowed_enemies}")
+                            self.current_enemies = pruned
+                            self.observed_counts = {k: v for k, v in self.observed_counts.items() if k in allowed_enemies}
+
+                    existing_names = {e["name"] for e in self.current_enemies}
+                    added = False
+
+                    for e in detected_enemies:
+                        if e["name"] not in existing_names:
+                            self.current_enemies.append(dict(e))
+                            existing_names.add(e["name"])
+                            added = True
+
+                    # Auto-add only partners that every matching formation contains: an enemy that is
+                    # merely possible (e.g. Kalm Fang next to a Devil Ride that can also appear alone)
+                    # is offered on the dashboard's partners bar instead
+                    if auto_add_partners and certain_partners:
+                        for p in certain_partners:
+                            if p["name"] not in existing_names:
+                                self.current_enemies.append(dict(p))
+                                existing_names.add(p["name"])
+                                added = True
+
+                    # Attach latest counts to current_enemies; the instance letter follows the
+                    # count (a frame showing "B" raises the count to 2 and the letter to "B"), and
+                    # an enemy first read without its letter takes the letter of the same count
+                    detected_by_name = {d["name"]: d for d in detected_enemies}
+                    for e in self.current_enemies:
+                        count = self.observed_counts.get(e["name"])
+                        if count is None:
+                            continue
+                        seen = detected_by_name.get(e["name"])
+                        if (seen is not None and seen.get("count", 1) == count
+                                and (count != e.get("count") or e.get("instance_letter") is None)):
+                            e["instance_letter"] = seen.get("instance_letter")
+                        e["count"] = count
+
+                    # Build formation title with counts, names as the game writes them
+                    title_parts = []
+                    for e in self.current_enemies:
+                        c = e.get("count", 1)
+                        label = e.get("display_name") or e["name"]
+                        title_parts.append(f"{c}x {label}" if c > 1 else label)
+                    title = f"Battle: {', '.join(title_parts)}"
+
+                    should_broadcast = added or self.current_battle_title != title
+                    if should_broadcast:
+                        self.current_battle_title = title
+                        logger.info(f"Combat state updated (accumulated): {title}")
+                        curr_enemies_snapshot = [dict(e) for e in self.current_enemies]
+                        battle_title_to_broadcast = title
+
+                    # Adaptive sampling rate transitions
+                    if new_names:
+                        # New enemy appeared OR battle just started: boost to (or stay in) active hunting mode
+                        if self.combat_phase != "hunting":
+                            logger.info(f"Enemy detected ({new_names}). Increasing sample rate to {active_fps} FPS for fast identification.")
+                        self.combat_phase = "hunting"
+                        self.hunting_frames_remaining = HUNTING_BURST_FRAMES
+                    else:
+                        # Enemies already registered: decrement hunting burst and transition to settled
+                        self._decay_hunting_locked(settled_fps)
+
+            return curr_enemies_snapshot, battle_title_to_broadcast, False
+
+        if is_combat_hud:
+            # Battle HUD (HP/MP, commands, party members) is actively visible
+            # Retain combat memory during attack animations, limit breaks, and spell casts
+            with self._state_lock:
+                self.empty_frames_count = 0
+                if len(self.current_enemies) == 0:
+                    # In battle, but no enemy registered yet: hunt for enemies at increased sample rate
+                    if self.combat_phase != "hunting":
+                        logger.info(f"Combat HUD active. Increasing sample rate to {active_fps} FPS to identify enemies.")
+                    self.combat_phase = "hunting"
+                    self.hunting_frames_remaining = max(self.hunting_frames_remaining, HUD_HUNTING_FRAMES)
+                else:
+                    # In battle, enemies already registered: decrement hunting burst and settle
+                    self._decay_hunting_locked(settled_fps)
+            return None, None, False
+
+        # Neither enemies nor battle HUD are visible (victory summary or field map transition)
+        cleared = False
+        with self._state_lock:
+            if self.current_enemies or self.combat_phase != "idle":
+                self.empty_frames_count += 1
+                if self.empty_frames_count >= max_empty_frames:
+                    logger.info("Combat concluded (no combat HUD). Clearing encounter state and returning to idle sample rate.")
+                    cleared = True
+        if cleared:
+            self._clear_battle_state()
+        return None, None, cleared
+
+    def process_frame(self, frame_bgra: np.ndarray, cfg: Optional[Dict[str, Any]] = None,
+                      max_empty_frames: Optional[int] = None) -> Dict[str, Any]:
+        """
+        Runs one sampling step on a captured region (BGRA): text-change gate, OCR when
+        the text may have changed, enemy matching, battle state and phase transitions,
+        and the battle callbacks. Returns timings and the outcome of the step.
+        """
+        cfg = cfg if cfg is not None else calibration_manager.get_config()
+        with self._state_lock:
+            phase = self.combat_phase
+            in_battle = bool(self.current_enemies) or phase != "idle"
+        if max_empty_frames is None:
+            max_empty_frames = max(2, int(self._phase_fps(cfg, phase) * cfg["idle_timeout_seconds"]))
+
+        # 1. Text-change gate (sub-millisecond): skip OCR when the text-like pixels are unchanged
+        t_gate = time.perf_counter()
+        gate_enabled = cfg["text_gate"]
+        signature = self.text_gate.signature(frame_bgra) if gate_enabled else None
+        changed_px = -1
+        if (not gate_enabled or self._last_ocr_signature is None
+                or self._frames_since_ocr >= MAX_GATED_SKIPS.get(phase, 4)):
+            run_ocr = True
+        else:
+            changed_px = self.text_gate.changed_pixels(signature, self._last_ocr_signature)
+            run_ocr = changed_px >= self.text_gate.min_changed_px
+        gate_ms = (time.perf_counter() - t_gate) * 1000.0
+
+        # 2. OCR (or reuse of the last recognized lines)
+        cvt_color_ms = 0.0
+        ocr_total_ms = 0.0
+        ocr_timing = {"det_ms": 0.0, "rec_ms": 0.0, "boxes": 0, "recognized": 0, "reused": 0}
+        if run_ocr:
+            t_cvt = time.perf_counter()
+            frame = self._prepare_ocr_frame(frame_bgra)
+            cvt_color_ms = (time.perf_counter() - t_cvt) * 1000.0
+            t_ocr = time.perf_counter()
+            lines = self.detector.detect_text_lines(frame, use_cache=True)
+            ocr_total_ms = (time.perf_counter() - t_ocr) * 1000.0
+            ocr_timing = dict(self.detector.last_ocr_timing)
+            self._last_ocr_signature = signature
+            self._frames_since_ocr = 0
+            with self._state_lock:
+                self.last_recognized_lines = lines
+                self.last_ocr_frame = frame
+                self.ocr_frames += 1
+        else:
+            self._frames_since_ocr += 1
+            with self._state_lock:
+                lines = list(self.last_recognized_lines)
+                self.gated_frames += 1
+
+        # 3. Matching, deduction and adaptive phase transitions
+        t_match = time.perf_counter()
+        detected_enemies, is_combat_hud = self._deduce_with_cache(lines, in_battle)
+        snapshot, title, cleared = self._update_battle_state(detected_enemies, is_combat_hud, run_ocr, cfg, max_empty_frames)
+        phase_after = self._sync_current_fps(cfg)
+        match_ms = (time.perf_counter() - t_match) * 1000.0
+
+        # 4. Callbacks (outside of all locks). Encounter broadcasts carry the phase themselves;
+        # a phase change on its own (hunting -> settled) needs a dedicated notification.
+        if snapshot and self.on_battle_detected:
+            try:
+                self.on_battle_detected(snapshot, title)
+            except Exception as ex:
+                logger.error(f"Error in on_battle_detected callback: {ex}")
+        if cleared:
+            self._fire_cleared()
+        elif phase_after != phase and not snapshot:
+            self._fire_phase_changed()
+
+        return {
+            "ocr_ran": run_ocr,
+            "gate_changed_px": changed_px,
+            "lines": lines,
+            "enemies": detected_enemies,
+            "combat_hud": is_combat_hud,
+            "broadcast": snapshot is not None,
+            "cleared": cleared,
+            "gate_ms": gate_ms,
+            "cvt_color_ms": cvt_color_ms,
+            "ocr_total_ms": ocr_total_ms,
+            "ocr_timing": ocr_timing,
+            "match_ms": match_ms,
+        }
+
+    # ------------------------------------------------------------------ loop
+    def _loop(self):
+        # Below-normal priority always; EcoQoS (efficiency cores) outside the hunting phase.
+        # Keeps the background OCR loop off the performance cores FFVII runs on, while
+        # still identifying new enemies at full speed.
+        cpu_prev = time.thread_time()
+        wall_prev = time.monotonic()
+
+        while self._running:
+            start_time = time.monotonic()
+            cfg = calibration_manager.get_config()
+            self._sync_detector_settings(cfg)
+            mode = cfg["mode"]
+
+            current_phase = self._sync_current_fps(cfg)
+            fps = self._phase_fps(cfg, current_phase)
+            self._apply_thread_qos(efficient=bool(cfg["eco_mode"]) and current_phase != "hunting")
+
+            max_empty_frames = max(2, int(fps * cfg["idle_timeout_seconds"]))
+
+            try:
+                t_loop0 = time.perf_counter()
+
+                # If in auto_window mode, check for FFVII window first
+                if mode == "auto_window":
+                    t_bbox = time.perf_counter()
+                    win = self.window_finder.find_ffvii_window()
+                    window_find_ms = (time.perf_counter() - t_bbox) * 1000.0
+
+                    if not win:
+                        if self._note_window_missing(max_empty_frames):
+                            self._sync_current_fps(cfg)
+                            self._fire_cleared()
+                        # FFVII is not running: sleep on stop event
+                        scan_int = getattr(self.window_finder, "_scan_interval", 1.0)
+                        if self._stop_event.wait(scan_int):
+                            break
+                        continue
+
+                    bbox = self._calculate_capture_bbox(win)
+                else:
+                    t_bbox = time.perf_counter()
+                    bbox = self._calculate_capture_bbox()
+                    window_find_ms = (time.perf_counter() - t_bbox) * 1000.0
+
+                with self._capture_lock:
+                    t_grab = time.perf_counter()
+                    frame_bgra = self._grab(bbox)
+                    grab_ms = (time.perf_counter() - t_grab) * 1000.0
+                    outcome = self.process_frame(frame_bgra, cfg, max_empty_frames)
+
+                total_frame_ms = (time.perf_counter() - t_loop0) * 1000.0
+                cpu_now = time.thread_time()
+                wall_now = time.monotonic()
+                with self._state_lock:
+                    active_count = len(self.current_enemies)
+                    phase_after = self.combat_phase
+                timing = outcome["ocr_timing"]
+                perf_tracker.record_frame(
+                    window_find_ms=window_find_ms,
+                    grab_ms=grab_ms,
+                    cvt_color_ms=outcome["cvt_color_ms"],
+                    ocr_det_ms=timing.get("det_ms", 0.0),
+                    ocr_rec_ms=timing.get("rec_ms", 0.0),
+                    ocr_total_ms=outcome["ocr_total_ms"],
+                    match_ms=outcome["match_ms"],
+                    total_frame_ms=total_frame_ms,
+                    width=frame_bgra.shape[1],
+                    height=frame_bgra.shape[0],
+                    lines_count=len(outcome["lines"]),
+                    enemies_count=active_count,
+                    in_combat=active_count > 0,
+                    preset_name=cfg["target_menu_preset"],
+                    ocr_ran=outcome["ocr_ran"],
+                    gate_ms=outcome["gate_ms"],
+                    cpu_ms=(cpu_now - cpu_prev) * 1000.0,
+                    interval_ms=(wall_now - wall_prev) * 1000.0,
+                    phase=phase_after,
+                )
+                cpu_prev, wall_prev = cpu_now, wall_now
+
+            except Exception as e:
+                self._log_error(f"Error in capture loop: {e}")
+
+            # Sleep until the next sample at the rate of the phase this step ended in, so a
+            # battle starting from idle is hunted at once and settled sleeps its full interval.
+            # Nothing is grabbed between samples: settled_fps is the real sampling rate.
+            with self._state_lock:
+                fps = self._phase_fps(cfg, self.combat_phase)
+            elapsed = time.monotonic() - start_time
+            if self._stop_event.wait(max(0.01, (1.0 / fps) - elapsed)):
+                break
+
+capture_service = CaptureService()
