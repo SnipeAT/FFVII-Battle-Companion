@@ -25,7 +25,7 @@ To update, delete `FFVII_Companion.exe` and the `_internal` folder, then extract
 
 1. Install [Python 3.11](https://www.python.org/downloads/windows/) (64-bit, with the "py launcher" option the installer selects by default). Python 3.12 also meets the requirements but is untested; 3.13 and newer cannot install the OCR package (`rapidocr-onnxruntime` 1.4.4 supports up to 3.12).
 2. Download **Source code (zip)** from the release's **Assets** and extract it (or clone the repository: `git clone https://github.com/SnipeAT/FFVII-Battle-Companion.git`).
-3. Open PowerShell in the extracted folder (right-click inside the folder, **Open in Terminal**) and run:
+3. Open PowerShell in the extracted folder (Windows 11: right-click inside the folder, **Open in Terminal**; Windows 10: Shift + right-click, **Open PowerShell window here**) and run the commands below. With Python 3.12, write `py -3.12` in the first one.
    ```powershell
    py -3.11 -m venv .venv
    .\.venv\Scripts\python.exe -m pip install -e ".[dev]"
@@ -34,7 +34,7 @@ To update, delete `FFVII_Companion.exe` and the `_internal` folder, then extract
    The first command creates a private Python environment in `.venv`, the second downloads the dependencies (about 400 MB), the third builds the EXE (a few minutes).
 4. Start `dist\FFVII_Companion\FFVII_Companion.exe`, or double-click `Launch_Desktop_App.bat`. Later rebuilds need only the third command, or a double-click on `Rebuild_EXE.bat`.
 
-Smart App Control treats an EXE you build like a downloaded one. Where it blocks the EXE, skip the third command and run the companion from the Python environment instead (Python itself is code-signed): `.\.venv\Scripts\pythonw.exe -m ffvii_companion`, or double-click `Launch_Desktop_App.bat` (it uses the environment when no EXE was built).
+Smart App Control treats an EXE you build like a downloaded one. Where it blocks the EXE, run the companion from the Python environment instead (Python itself is code-signed): `.\.venv\Scripts\pythonw.exe -m ffvii_companion`. `Launch_Desktop_App.bat` does the same only when no EXE was built (it prefers `dist\FFVII_Companion\FFVII_Companion.exe`), so to use it, skip the third command or delete the `dist` folder.
 
 ---
 
@@ -137,7 +137,7 @@ Note: the launchers prefer `dist\FFVII_Companion\FFVII_Companion.exe`. After cha
 ## Using it with 7th Heaven / FFNx
 
 1. Start your modded game from 7th Heaven as usual (borderless or windowed both work; exclusive fullscreen may capture black frames).
-2. Start the companion (`Launch_Desktop_App.bat` or `Launch_LAN_iPad.bat`). Move the window to your second monitor or pin it on top.
+2. Start the companion (`FFVII_Companion.exe` from a release, or `Launch_Desktop_App.bat` / `Launch_LAN_iPad.bat`). Move the window to your second monitor or pin it on top.
 3. **CAPTURE: LIVE** glows green while the loop runs; the label shows the current phase.
 4. In battle, open a command's target menu: the targeted name (`Custom Sweeper B`, `Devil Ride`) is recognized and its card appears. Instance letters raise the enemy count.
 5. With one enemy identified, the **Formation Partners** bar lists enemies that can appear with it in that encounter; click one to add its card. Enable **Auto-Include Formation Partners** in Calibration to add the partners that are certain (in every matching formation) automatically.
