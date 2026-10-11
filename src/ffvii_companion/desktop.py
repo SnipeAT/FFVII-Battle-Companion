@@ -71,6 +71,22 @@ def setup_file_logging() -> None:
     except Exception as e:
         logger.warning(f"File logging unavailable: {e}")
 
+
+def show_startup_error(message: str) -> None:
+    """
+    Logs a fatal startup error and shows it in a message box: windowed launches (pythonw, the
+    packaged EXE) have no console, so the companion would otherwise exit without a word.
+    """
+    logger.error(message)
+    if sys.platform == "win32":
+        try:
+            import ctypes
+            log_file = get_user_data_dir() / "logs" / "companion.log"
+            ctypes.windll.user32.MessageBoxW(
+                None, f"{message}\n\nDetails: {log_file}", "FFVII Tactical Battle Companion", 0x10)  # MB_ICONERROR
+        except Exception:
+            pass
+
 def is_port_in_use(port: int, host: str = "127.0.0.1") -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.settimeout(0.3)
@@ -276,7 +292,7 @@ def main():
     health_url = f"http://127.0.0.1:{port}/api/health"
     logger.info(f"Starting companion server on http://{args.host}:{port} ...")
     if not wait_for_server(health_url, timeout=6.0):
-        logger.error("Timed out waiting for server to start.")
+        show_startup_error(f"The companion server did not start on port {port} within 6 seconds.")
         sys.exit(1)
 
     logger.info("Companion server running successfully.")
@@ -316,7 +332,7 @@ def main():
     try:
         webview.start(debug=args.debug)
     except Exception as e:
-        logger.error(f"Error in webview lifecycle: {e}")
+        show_startup_error(f"The companion window could not be opened: {e}")
     finally:
         logger.info("Window closed. Shutting down capture loop and server...")
         try:

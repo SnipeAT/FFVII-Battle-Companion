@@ -103,6 +103,15 @@ class TestReleasePackage(unittest.TestCase):
         self.assertIn("==== Python ", text)
         self.assertIn("--- ThirdPartyNotices.txt ---", text)  # onnxruntime's, outside its .dist-info
 
+    @unittest.skipUnless(os.name == "nt", "Win32 message box")
+    def test_startup_error_is_shown_not_only_logged(self):
+        # Windowed launches have no console: a failed window start used to exit silently
+        from ffvii_companion import desktop
+        with mock.patch("ctypes.windll.user32.MessageBoxW") as box, self.assertLogs("ffvii-desktop", "ERROR"):
+            desktop.show_startup_error("The companion window could not be opened: boom")
+        self.assertIn("could not be opened: boom", box.call_args.args[1])
+        self.assertIn("companion.log", box.call_args.args[1])
+
 
 class TestScreenCapture(unittest.TestCase):
     def test_monitor_discovery(self):
