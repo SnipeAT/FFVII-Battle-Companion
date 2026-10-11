@@ -16,6 +16,7 @@ Windows 10 or 11 (64-bit) only. Pick one of the two ways below; both end with th
 2. Right-click the downloaded zip, choose **Properties**, tick **Unblock** at the bottom if it is there, and click **OK**. Windows marks downloaded files, and an unblocked zip extracts files it does not warn about or block.
 3. Extract the zip to a folder you can write to, for example `Documents`. Not `Program Files`: the companion saves its settings and logs next to the EXE.
 4. Double-click `FFVII_Companion.exe` in the extracted `FFVII_Companion` folder. If Windows SmartScreen says it protected your PC, click **More info**, then **Run anyway**: the EXE is not code-signed.
+   - If Windows says **Smart App Control** blocked it (Windows 11 with Smart App Control on), there is no "Run anyway": Smart App Control blocks unsigned programs until Microsoft's cloud service has assessed them, which can take a while after a new release. Try again later, or run the companion from source instead (Option 2, which then needs no EXE).
 5. Start the game and enter a battle: the companion finds the game window and reads the battle text by itself. See [Using it with 7th Heaven / FFNx](#using-it-with-7th-heaven--ffnx) for the dashboard, and [iPad, tablet or phone](#ipad-tablet-or-phone-local-wi-fi) to show it on another device (`Launch_LAN_iPad.bat` is in the same folder).
 
 To update, delete `FFVII_Companion.exe` and the `_internal` folder, then extract the new release into the same place: the `data`, `logs` and `reports` folders (your settings, profile, logs and reports) stay. To uninstall, delete the folder.
@@ -32,6 +33,8 @@ To update, delete `FFVII_Companion.exe` and the `_internal` folder, then extract
    ```
    The first command creates a private Python environment in `.venv`, the second downloads the dependencies (about 400 MB), the third builds the EXE (a few minutes).
 4. Start `dist\FFVII_Companion\FFVII_Companion.exe`, or double-click `Launch_Desktop_App.bat`. Later rebuilds need only the third command, or a double-click on `Rebuild_EXE.bat`.
+
+Smart App Control treats an EXE you build like a downloaded one. Where it blocks the EXE, skip the third command and run the companion from the Python environment instead (Python itself is code-signed): `.\.venv\Scripts\pythonw.exe -m ffvii_companion`, or double-click `Launch_Desktop_App.bat` (it uses the environment when no EXE was built).
 
 ---
 
