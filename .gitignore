@@ -16,8 +16,12 @@ recordings/
 *.mp4
 *.mkv
 
-# Claude Code per-machine settings
-.claude/settings.local.json
+# The maintainer's AI agent instructions, review queue and Claude Code settings (local only)
+/CLAUDE.md
+/AGENTS.md
+/GEMINI.md
+/review/
+.claude/
 
 # Old code from before the public release, kept on the maintainer's computer only
 archive/

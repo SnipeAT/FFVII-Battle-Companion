@@ -303,11 +303,11 @@ or double-click `Rebuild_EXE.bat`. PyInstaller runs outside the project (`%LOCAL
 
 ## Version control
 
-The source is on GitHub: <https://github.com/SnipeAT/FFVII-Battle-Companion> (branch `main`). Its history starts with the first public commit on 2026-10-11; the development before it (from 2026-10-07) was not published, so the commit hashes `review/RESOLVED.md` cites from before that date cannot be looked up. `.gitignore` excludes `.venv`, `dist`, `.dev_home` (settings, logs and reports of runs from source), recordings, videos and `archive/` (old code kept on the maintainer's computer only).
+The source is on GitHub: <https://github.com/SnipeAT/FFVII-Battle-Companion> (branch `main`). Its history starts with the first public commit on 2026-10-11; the development before it (from 2026-10-07) was not published. `.gitignore` excludes `.venv`, `dist`, `.dev_home` (settings, logs and reports of runs from source), recordings, videos and the maintainer's local files: `archive/` (old code) and the instructions and review queue of the AI agents that develop and review the project (`CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `review/`, `.claude/`).
 
 If your copy is in OneDrive or another synced folder, keep the Git database outside it, as the maintainer does: syncing thousands of small object files can corrupt a repository. `git clone --separate-git-dir <folder outside OneDrive> https://github.com/SnipeAT/FFVII-Battle-Companion.git` puts the database in that folder and leaves a `.git` file in the project that points to it.
 
-Claude commits each finished change once the tests pass. Useful commands:
+Useful commands:
 
 ```powershell
 git log --oneline -15          # recent commits
@@ -315,10 +315,6 @@ git status --short             # uncommitted changes
 git diff HEAD~1 --stat         # files changed by the last commit
 git show <commit> -- <path>    # one file's change in a commit
 ```
-
-## Code review by other AI agents
-
-Claude Code is the primary developer (`CLAUDE.md`). Other AI agents only review: they follow `AGENTS.md` and `review/PROTOCOL.md`, run the tests and read-only checks (including read-only Git commands such as `git log` and `git diff`), and add findings to `review/FINDINGS.md` without changing anything else. Each session records the commit it reviewed, so the next one starts from `git diff <that commit>`. When asked, Claude commits the reviewer's findings as they were filed, verifies each one, fixes it with a test or closes it with a reason, records it in `review/RESOLVED.md` (with the fix commit), and commits. To start a review session, give an agent the prompt in `review/REVIEWER_PROMPT.md`.
 
 ---
 
@@ -356,17 +352,16 @@ FFVII-Battle-Companion/
 ├── tests/                        # unittest suite + recorded real-frame fixtures
 ├── tools/                        # Frame recorder, loop benchmark, synthetic frames, scene.bin enrichment
 ├── build_tools/                  # build_exe.py + ffvii_companion.spec (PyInstaller)
-├── review/                       # Review protocol, open and resolved findings from secondary AI reviewers
 ├── pyproject.toml                # Package metadata and dependencies
 ├── Launch_Desktop_App.bat / Launch_LAN_iPad.bat / Rebuild_EXE.bat   # Double-click launchers
-├── README.md / CLAUDE.md / AGENTS.md / GEMINI.md                    # Docs and agent instructions
-├── LICENSE / .gitignore          # MIT License, ignore rules
+├── README.md / LICENSE / .gitignore                                 # This file, MIT License, ignore rules
 │
 │   Not in the repository (git-ignored):
 ├── .venv/                        # Python environment (the package is installed here in editable mode)
 ├── .dev_home/                    # Data folder of runs from source: data/, logs/, reports/
 ├── recordings/                   # Recordings for tools/benchmark_loop.py
-└── dist/FFVII_Companion/         # Packaged EXE, with its own data/, logs/, reports/
+├── dist/FFVII_Companion/         # Packaged EXE, with its own data/, logs/, reports/
+└── archive/, CLAUDE.md, AGENTS.md, GEMINI.md, review/, .claude/   # The maintainer's local files
 ```
 
 ## License
