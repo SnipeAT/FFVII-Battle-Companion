@@ -6717,7 +6717,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Any spell cast on it is countered with Sewer Tsunami on the party, and it also uses Sewer Tsunami on its own every few turns. Lick inflicts Sadness, which slows Limit gauges. Cross-slash can paralyze it, and a paralyzed Aps cannot counter."
+    "notes": "Opens with Sewer Tsunami on the party. Any spell makes it use Sewer Tsunami twice over its next turns, and so does dropping below 1/3 HP (once). Otherwise it uses Tail Attack or Lick, which inflicts Sadness and slows Limit gauges. Cross-slash can paralyze it, and a paralyzed Aps cannot counter."
   },
   {
     "id": "sahagin",
@@ -8512,7 +8512,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Defeat Dark Nation first: it casts Barrier and MBarrier on Rufus, cutting your damage. Rufus acts often and his shotgun hits one member hard, so keep Restore ready."
+    "notes": "Cloud fights alone. Defeat Dark Nation first: it casts Barrier and MBarrier, cutting your damage. Keep Cloud healed with Cure or Potions."
   },
   {
     "id": "dark-nation",
@@ -8557,7 +8557,7 @@
       "Bite"
     ],
     "enemy_skills": [],
-    "notes": "Casts Barrier and MBarrier on itself and Rufus. Defeat it first; magic ignores its back-row position."
+    "notes": "Casts Barrier and MBarrier to cut your damage. Defeat it first; magic ignores its back-row position."
   },
   {
     "id": "motor-ball",
@@ -8622,7 +8622,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Opens with Highway on the whole party, then cycles Arm Attack on the highest-HP member, Twin Burner (Fire, whole party) and Rolling Fire (strong Fire). Below 1/8 HP it goes straight to its flamethrower attacks. Use Bolt, link Elemental with Fire in armor, and keep party-wide healing ready."
+    "notes": "Starts with Arm Attack on the highest-HP member, then cycles Twin Burner, Deadly Wheel and Rolling Fire, all on the whole party. Below 1/8 HP it goes straight to its flamethrower attacks. Use Bolt, link Elemental with Fire in armor, and keep party-wide healing ready."
   },
   {
     "id": "midgar-zolom",
@@ -12175,7 +12175,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Yuffie fights alone. Can inflict Fury, which raises damage taken but fills her Limit gauge faster. Low HP, so attack and heal quickly."
+    "notes": "Yuffie fights alone. Mostly uses Beak. Below half HP he counters with Rage Bomber, which inflicts Fury (faster Limit gauge, but she misses more); he also uses it while poisoned, so don't poison him."
   },
   {
     "id": "chekhov",
@@ -12230,7 +12230,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Yuffie fights alone. Stare Down delays her turns; a Jem Ring blocks it. Bio still works while she is slowed."
+    "notes": "Yuffie fights alone. Opens with Stare Down, which paralyzes, and counters any magic with it again, so equip a Jem Ring. Below half HP he drains her with Absorb."
   },
   {
     "id": "staniv",
@@ -12285,7 +12285,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Yuffie fights alone. Only uses regular attacks, so Counter Attack materia speeds the fight up."
+    "notes": "Yuffie fights alone. Alternates Ironball with War Cry (Sadness) and may counter with Iron Attack when nearly dead. Counter Attack materia speeds the fight up."
   },
   {
     "id": "godo",
@@ -12345,7 +12345,7 @@
         "manipulate": false
       }
     ],
-    "notes": "Yuffie fights alone. Uses gravity attacks that take a share of her HP, Trine, and Mini, which only Remedy or Cornucopia removes. Late in the fight he heals with Cure2, but poison damage does not trigger it, so Bio works well. Learn Trine with Enemy Skill."
+    "notes": "Yuffie fights alone. Uses gravity attacks that take a share of her HP, Trine, and Mini (Remedy or Cornucopia cures it). Late in the fight he heals with Cure2, but poison damage does not trigger it, so Bio works well. Learn Trine with Enemy Skill."
   },
   {
     "id": "toxic-frog",
@@ -13028,7 +13028,7 @@
         "manipulate": false
       }
     ],
-    "notes": "Casts Reflect on itself once its MP allows, so lean on physical attacks and Limit Breaks once it is up. Aqualung hits the whole party; bring Enemy Skill to learn it. Its extra and special attacks get more frequent at 75%, 50% and 25% HP."
+    "notes": "Counters magic by casting Reflect on itself while it has MP, so lean on physical attacks and Limit Breaks. Aqualung hits the whole party; bring Enemy Skill to learn it. Its extra and special attacks get more frequent at 75%, 50% and 25% HP."
   },
   {
     "id": "acrophies",
@@ -14349,7 +14349,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Two heads act separately and absorb different elements, so all-target Fire or Ice heals one of them. Every few hits each head counters with Tremor on the party. When one head dies the other breathes on the whole party at once, so heal before finishing either head."
+    "notes": "Two heads act separately and absorb different elements, so all-target Fire or Ice heals one of them. Every few hits each head counters with Tremor on the party. Each head breathes on the whole party as it dies, so heal before finishing either head."
   },
   {
     "id": "schizo(left)",
@@ -14410,7 +14410,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Two heads act separately and absorb different elements, so all-target Fire or Ice heals one of them. Every few hits each head counters with Tremor on the party. When one head dies the other breathes on the whole party at once, so heal before finishing either head."
+    "notes": "Two heads act separately and absorb different elements, so all-target Fire or Ice heals one of them. Every few hits each head counters with Tremor on the party. Each head breathes on the whole party as it dies, so heal before finishing either head."
   },
   {
     "id": "jenovadeath",
@@ -17358,7 +17358,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Defeat Jamar Armor first; its Materia Jammer interferes with your materia. Proud Clod fires machine guns and beams, and once damaged enough adds Beam Cannon on the whole party. Big Guard and Regen keep the fight safe."
+    "notes": "While Jamar Armor stands, Proud Clod can use Materia Jammer to put Reflect on one member (a Ribbon blocks it), so destroy Jamar Armor first. Proud Clod fires machine guns and beams, and once damaged enough adds Beam Cannon on the whole party. Big Guard and Regen keep the fight safe."
   },
   {
     "id": "jamar-armor",
@@ -17416,7 +17416,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Proud Clod's support unit. Its Materia Jammer interferes with your materia, so defeat it first, then focus Proud Clod."
+    "notes": "Proud Clod's support unit; it has no attacks of its own. While it stands, Proud Clod can use Materia Jammer to put Reflect on a member, so defeat it first, then focus Proud Clod."
   },
   {
     "id": "soldier-1st",
@@ -17779,7 +17779,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Revives its arms, so focus the main body. The body can inflict Confusion and the right arm hits hard. Ribbons make this fight much easier."
+    "notes": "Its right arm hits hard and revives almost immediately, so focus the main body. The fight inflicts Confusion, Sleep and Silence; Ribbons make it much easier."
   },
   {
     "id": "lifeform-hojo-n",
@@ -18940,7 +18940,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Starts a countdown that ends in Ultima on the party, so defeat it before the count runs out. Its tentacle attacks hit hard and can Silence."
+    "notes": "Below 15,000 HP it starts a countdown and then casts Ultima, which ends the fight with no EXP or AP, so defeat it before the count runs out. Its tentacle attacks hit hard and can Silence."
   },
   {
     "id": "bizarrosephiroth",
@@ -18999,7 +18999,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Bizarro Energy restores a large share of its HP almost every turn, so put your heaviest damage on the main body each turn rather than its parts.",
+    "notes": "Its Core restores a large share of the main body's HP almost every turn, so put your heaviest damage on the main body, or defeat the Core if the healing outpaces you.",
     "variants": [
       {
         "enemy_ids": [
@@ -19378,7 +19378,7 @@
         "manipulate": false
       }
     ],
-    "notes": "Equip Ribbons: Pale Horse, Doom and Break inflict statuses, and DeSpell strips your buffs. Super Nova hits the whole party. Use Big Guard, Regen, and your strongest summons and Limits; Shadow Flare can be learned here."
+    "notes": "Equip Ribbons: Pale Horse, Break and his wing attack inflict statuses, and DeSpell strips your buffs. Super Nova hits the whole party. Use Big Guard, Regen, and your strongest summons and Limits; Shadow Flare can be learned here."
   },
   {
     "id": "sephiroth",
@@ -19743,7 +19743,7 @@
         "manipulate": false
       }
     ],
-    "notes": "Cannot be damaged until it plants its tentacles in the sand. Whirlsand removes a member from the battle for good but cannot target the last active character, so start with two members KO'd and revive them once the tentacles are down. Not immune to Paralyze or Stop: Dazers and Hades help."
+    "notes": "Cannot be damaged until it plants its tentacles in the sand. Whirlsand removes a member from the battle for good but cannot target the last active character, so start with two members KO'd and revive them once the tentacles are down. Not immune to Paralysis: Dazers stop its attacks."
   },
   {
     "id": "ruby's-tentacle",
