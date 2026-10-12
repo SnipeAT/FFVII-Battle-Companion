@@ -173,9 +173,29 @@ class TestEnemyData(unittest.TestCase):
         self.assertIn("Materia", self.by_name["Rapps"]["notes"])
 
     def test_boss_notes_avoid_corrected_claims(self):
-        # GEMINI-20261012-02 and -04: a Ribbon does not stop Reflect, and Big Bomber hits one member
-        self.assertNotIn("(a Ribbon", self.by_name["Proud Clod"]["notes"])
-        self.assertIn("Big Bomber at one member", self.by_name["Air Buster"]["notes"])
+        # Claims checked against the decoded AI scripts and attack data in scene.bin. The checks
+        # look for the claim, not the old wording (CLAUDE-20261012-B07: rewordings of the old
+        # claims passed).
+        import re
+        notes = {name: self.by_name[name]["notes"] for name in
+                 ("Proud Clod", "Air Buster", "Lost Number", "Jenovasynthesis", "Motor Ball")}
+        # GEMINI-20261012-02: a Ribbon does not stop Materia Jammer's Reflect
+        for sentence in re.split(r"(?<=[.;])\s+", notes["Proud Clod"]):
+            if "Ribbon" in sentence:
+                self.assertIn("not", sentence, sentence)
+        # GEMINI-20261012-04: Big Bomber hits one member, not the party
+        self.assertIn("Big Bomber at one member", notes["Air Buster"])
+        self.assertNotRegex(notes["Air Buster"], r"Big Bomber[^.]*\b(party|all|everyone)\b")
+        # GEMINI-20261012-03: the hit that takes it below half HP picks the form
+        self.assertIn("magic leaves the red magic form", notes["Lost Number"])
+        self.assertIn("physical leaves the purple physical form", notes["Lost Number"])
+        # CLAUDE-20261012-B05: its attacks inflict Fury, Sadness, Poison and Stop, never Silence
+        self.assertNotIn("Silence", notes["Jenovasynthesis"])
+        for status in ("Fury", "Sadness", "Stop"):
+            self.assertIn(status, notes["Jenovasynthesis"])
+        # CLAUDE-20261012-B10: Arm Attack comes back in every cycle, not only at the start
+        self.assertNotIn("Starts with Arm Attack", notes["Motor Ball"])
+        self.assertIn("cycle", notes["Motor Ball"])
 
 
 class TestFormationData(unittest.TestCase):
