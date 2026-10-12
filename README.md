@@ -198,7 +198,7 @@ Open **CALIBRATION** in the header:
 | `auto_add_scene_partners` | `false` | Automatically add formation partners that are certain: enemies that every formation matching the enemies seen so far contains. Merely possible partners stay on the partners bar. |
 | `allowed_hosts` | `[]` | Extra host names the dashboard may be opened under, such as a name your router gives the PC (`["gaming-pc.lan"]`); `["*"]` allows any name. IP addresses, `localhost` and the PC's own name (also with `.local`) always work. Only a hand edit of the file changes it (the API refuses it); restart the companion afterwards. See the security note under "iPad, tablet or phone". |
 
-Values are validated: the API rejects invalid settings (HTTP 422), and out-of-range values in a hand-edited file are clamped on load. The defaults are the ones in this table (`DEFAULT_CONFIG` in `engine/calibration.py`); the file in the data folder holds only what was saved from the dashboard or edited by hand.
+Values are validated: the API rejects invalid settings (HTTP 422), and out-of-range values in a hand-edited file are clamped on load. The defaults are the ones in this table (`DEFAULT_CONFIG` in `engine/calibration.py`); the file in the data folder holds only what was saved from the dashboard or edited by hand, so a default that a later version changes reaches you unless you set that value yourself. Files saved by version 2.0.4 or earlier hold every value: delete a line to go back to its default. A save that fails (for example while another program holds the file) changes nothing, and the dashboard shows the old value again.
 
 ### Where files are saved
 

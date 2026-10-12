@@ -119,6 +119,20 @@ class TestRestApi(unittest.TestCase):
         finally:
             config["allowed_hosts"] = []
 
+    def test_failed_saves_answer_503_and_change_nothing(self):
+        # CLAUDE-20261012-A04: a failed save answered 500 but kept the new value in memory
+        from unittest import mock
+        from ffvii_companion.engine.player_profile import player_profile
+        level = player_profile.get()["party_level"]
+        idle_fps = calibration_manager.get_config()["idle_fps"]
+        failing = mock.patch("os.replace", side_effect=PermissionError("held by another program"))
+        with failing:
+            self.assertEqual(self.client.post("/api/profile", json={"party_level": level % 98 + 1}).status_code, 503)
+            self.assertEqual(self.client.post("/api/calibration/config", json={"idle_fps": 4.0}).status_code, 503)
+            self.assertEqual(self.client.post("/api/calibration/preset/full_game_window").status_code, 503)
+        self.assertEqual(self.client.get("/api/profile").json()["party_level"], level)
+        self.assertEqual(calibration_manager.get_config()["idle_fps"], idle_fps)
+
     def test_allowed_hosts_cannot_be_changed_through_the_api(self):
         resp = self.client.post("/api/calibration/config", json={"allowed_hosts": ["*"]})
         self.assertEqual(resp.status_code, 422)

@@ -77,7 +77,8 @@ class PlayerProfile:
         data = json.loads(json.dumps(DEFAULT_PROFILE))
         if self.file_path.exists():
             try:
-                with open(self.file_path, "r", encoding="utf-8") as f:
+                # utf-8-sig: Notepad ("UTF-8 with BOM") and PowerShell 5.1 write a byte order mark
+                with open(self.file_path, "r", encoding="utf-8-sig") as f:
                     stored = json.load(f)
                 if isinstance(stored, dict):
                     data.update(validate_profile(stored, clamp=True))
@@ -85,25 +86,32 @@ class PlayerProfile:
                 logger.warning(f"Could not read profile {self.file_path}: {e}. Using defaults.")
         return data
 
-    def _save(self):
-        """Writes the profile atomically (temp file + replace)."""
+    def _save(self, data: Dict[str, Any]):
+        """Writes the profile atomically (temp file + replace). Raises OSError when the file
+        cannot be written (for example while another program holds it)."""
         self.file_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.file_path.with_suffix(".json.tmp")
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(self._data, f, indent=2)
-        os.replace(tmp, self.file_path)
+        try:
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            os.replace(tmp, self.file_path)
+        except OSError:
+            tmp.unlink(missing_ok=True)
+            raise
 
     def get(self) -> Dict[str, Any]:
         with self._lock:
             return json.loads(json.dumps(self._data))
 
     def update(self, changes: Dict[str, Any]) -> Dict[str, Any]:
-        """Validates, applies and persists a partial profile. Raises ProfileValidationError on bad input."""
+        """Validates, persists and applies a partial profile. Raises ProfileValidationError on bad
+        input and OSError when the file cannot be written (the profile then stays as it was)."""
         clean = validate_profile(changes)
         with self._lock:
             if clean:
-                self._data.update(clean)
-                self._save()
+                data = {**self._data, **clean}
+                self._save(data)
+                self._data = data
             return json.loads(json.dumps(self._data))
 
 

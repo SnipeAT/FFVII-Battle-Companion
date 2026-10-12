@@ -466,6 +466,8 @@ async def update_profile(changes: Dict[str, Any]):
         profile = player_profile.update(changes)
     except ProfileValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
+    except OSError as exc:
+        raise HTTPException(status_code=503, detail=f"The profile could not be saved: {exc}")
     await manager.broadcast({"type": "PROFILE_UPDATE", "data": profile})
     await manager.broadcast(battle_message(current_battle_snapshot()))
     return profile
@@ -582,11 +584,16 @@ def update_calibration(settings: Dict[str, Any]):
         updated = calibration_manager.update_config(settings)
     except ConfigValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
+    except OSError as exc:
+        raise HTTPException(status_code=503, detail=f"The settings could not be saved: {exc}")
     return {"status": "updated", "config": updated}
 
 @app.post("/api/calibration/preset/{preset_key}")
 def apply_preset_endpoint(preset_key: str):
-    res = calibration_manager.apply_preset(preset_key)
+    try:
+        res = calibration_manager.apply_preset(preset_key)
+    except OSError as exc:
+        raise HTTPException(status_code=503, detail=f"The settings could not be saved: {exc}")
     if not res:
         raise HTTPException(status_code=400, detail="Invalid preset key")
     return {"status": "preset_applied", "config": res}

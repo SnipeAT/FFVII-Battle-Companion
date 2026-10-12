@@ -174,58 +174,76 @@ def validate_settings(settings: Dict[str, Any], clamp: bool = False) -> Dict[str
 
 
 class CalibrationManager:
+    """
+    The settings: DEFAULT_CONFIG with the user's saved values over it (`config`). The file holds
+    only the saved values (`_saved`: set from the dashboard or by hand), so a default that a
+    later version changes reaches every user who did not set that value themselves.
+    """
     def __init__(self, file_path: Path = CALIBRATION_FILE):
         self.file_path = file_path
         self._lock = threading.Lock()
-        self.config: Dict[str, Any] = self._load()
+        self._saved: Dict[str, Any] = self._load()
+        self.config: Dict[str, Any] = json.loads(json.dumps(DEFAULT_CONFIG))  # deep copy so the defaults stay pristine
+        self.config.update(self._saved)
 
     def _load(self) -> Dict[str, Any]:
-        cfg = json.loads(json.dumps(DEFAULT_CONFIG))  # deep copy so the defaults stay pristine
         if self.file_path.exists():
             try:
-                with open(self.file_path, "r", encoding="utf-8") as f:
+                # utf-8-sig: Notepad ("UTF-8 with BOM") and PowerShell 5.1 write a byte order mark
+                with open(self.file_path, "r", encoding="utf-8-sig") as f:
                     data = json.load(f)
-                # Merge defaults with validated (clamped) file values
-                cfg.update(validate_settings(data, clamp=True))
+                if not isinstance(data, dict):
+                    raise ValueError("the file does not hold an object")
+                # Validated (clamped) file values
+                return validate_settings(data, clamp=True)
             except Exception as e:
                 logger.warning(f"Could not read calibration file {self.file_path}: {e}. Using defaults.")
-        return cfg
+        return {}
 
-    def save(self):
-        """Writes the configuration atomically (temp file + replace) to avoid torn files."""
+    def _write(self, saved: Dict[str, Any]):
+        """Writes the saved values atomically (temp file + replace) to avoid torn files. Raises
+        OSError when the file cannot be written (for example while another program holds it)."""
         self.file_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.file_path.with_suffix(".json.tmp")
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(self.config, f, indent=2)
-        os.replace(tmp, self.file_path)
+        try:
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(saved, f, indent=2)
+            os.replace(tmp, self.file_path)
+        except OSError:
+            tmp.unlink(missing_ok=True)
+            raise
+
+    def _apply(self, changes: Dict[str, Any]):
+        """Saves the changes, then applies them: when the save fails (OSError), nothing changes."""
+        saved = {**self._saved, **changes}
+        self._write(saved)
+        self._saved = saved
+        self.config.update(json.loads(json.dumps(changes)))  # no dict shared with _saved
 
     def get_config(self) -> Dict[str, Any]:
         return self.config
 
     def update_config(self, new_settings: Dict[str, Any]) -> Dict[str, Any]:
-        """Validates, applies and persists settings. Raises ConfigValidationError on bad input."""
+        """Validates, persists and applies settings. Raises ConfigValidationError on bad input and
+        OSError when the file cannot be written (the settings then stay as they were)."""
         file_only = sorted(FILE_ONLY_KEYS.intersection(new_settings))
         if file_only:
             raise ConfigValidationError(f"{', '.join(file_only)} can only be changed in the settings file")
         filtered = validate_settings(new_settings, clamp=False)
         with self._lock:
             if filtered:
-                self.config.update(filtered)
-                self.save()
+                self._apply(filtered)
             return self.config
 
     def apply_preset(self, preset_key: str) -> Optional[Dict[str, Any]]:
+        """Selects a capture region preset; None for an unknown key. Raises OSError like update_config."""
         if preset_key in PRESETS:
             preset = PRESETS[preset_key]
             with self._lock:
-                self.config["target_menu_preset"] = preset_key
-                self.config["roi"] = {
-                    "top_pct": preset["top_pct"],
-                    "left_pct": preset["left_pct"],
-                    "width_pct": preset["width_pct"],
-                    "height_pct": preset["height_pct"]
-                }
-                self.save()
+                self._apply({
+                    "target_menu_preset": preset_key,
+                    "roi": {key: preset[key] for key in ROI_KEYS},
+                })
                 return self.config
         return None
 
