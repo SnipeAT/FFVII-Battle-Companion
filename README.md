@@ -32,7 +32,7 @@ To update, delete `FFVII_Companion.exe` and the `_internal` folder, then extract
    .\.venv\Scripts\python.exe build_tools\build_exe.py
    ```
    The first command creates a private Python environment in `.venv`, the second downloads the dependencies (about 400 MB), the third builds the EXE (a few minutes).
-4. Start `dist\FFVII_Companion\FFVII_Companion.exe`, or double-click `Launch_Desktop_App.bat`. Later rebuilds need only the third command, or a double-click on `Rebuild_EXE.bat`.
+4. Start `dist\FFVII_Companion\FFVII_Companion.exe`, or double-click `Launch_Desktop_App.bat`. Later rebuilds need only the third command.
 
 Smart App Control treats an EXE you build like a downloaded one. Where it blocks the EXE, run the companion from the Python environment instead (Python itself is code-signed): `.\.venv\Scripts\pythonw.exe -m ffvii_companion`. `Launch_Desktop_App.bat` does the same only when no EXE was built (it prefers `dist\FFVII_Companion\FFVII_Companion.exe`), so to use it, skip the third command or delete the `dist` folder.
 
@@ -115,7 +115,7 @@ The dependencies are declared in `pyproject.toml`. The editable install (`-e`) m
 | Release download | `FFVII_Companion.exe` in the extracted folder; `Launch_LAN_iPad.bat` next to it starts LAN mode |
 | Development | `.\.venv\Scripts\python.exe -m ffvii_companion` |
 
-Note: the launchers prefer `dist\FFVII_Companion\FFVII_Companion.exe`. After changing the source, rebuild it (`Rebuild_EXE.bat`) or the launchers keep running the previous build.
+Note: the launchers prefer `dist\FFVII_Companion\FFVII_Companion.exe`. After changing the source, rebuild it (`build_tools\build_exe.py`) or the launchers keep running the previous build.
 
 ### Command-line flags
 
@@ -332,7 +332,7 @@ The test package redirects all writable files (settings, player profile, reports
 .\.venv\Scripts\python.exe build_tools\build_exe.py
 ```
 
-or double-click `Rebuild_EXE.bat`. PyInstaller runs outside the project (`%LOCALAPPDATA%\FFVIIBuild`, or the folder named by the `FFVII_COMPANION_BUILD_ROOT` environment variable, which the build deletes before and after and therefore refuses when it holds other files) so OneDrive never syncs the intermediate build. The build always uses the code of the project copy it belongs to, even with a virtual environment set up for another copy. Only when it succeeds are the files copied into `dist\FFVII_Companion\` in place: no folder is deleted or renamed, settings and logs next to the EXE are kept, and a failed build leaves the previous executable working. Close the companion before rebuilding; its files are locked while it runs. Output: `dist\FFVII_Companion\FFVII_Companion.exe`, with `FFVII_Companion.exe.config` next to it, which lets the .NET runtime behind the window load its files even when Windows marked them as downloaded.
+PyInstaller runs outside the project (`%LOCALAPPDATA%\FFVIIBuild`, or the folder named by the `FFVII_COMPANION_BUILD_ROOT` environment variable, which the build deletes before and after and therefore refuses when it holds other files) so OneDrive never syncs the intermediate build. The build always uses the code of the project copy it belongs to, even with a virtual environment set up for another copy. Only when it succeeds are the files copied into `dist\FFVII_Companion\` in place: no folder is deleted or renamed, settings and logs next to the EXE are kept, and a failed build leaves the previous executable working. Close the companion before rebuilding; its files are locked while it runs. Output: `dist\FFVII_Companion\FFVII_Companion.exe`, with `FFVII_Companion.exe.config` next to it, which lets the .NET runtime behind the window load its files even when Windows marked them as downloaded.
 
 ### Packaging a release
 
@@ -397,7 +397,7 @@ FFVII-Battle-Companion/
 ├── tools/                        # Frame recorder, loop benchmark, synthetic frames, scene.bin enrichment
 ├── build_tools/                  # build_exe.py, package_release.py (release zip), ffvii_companion.spec (PyInstaller), licenses/
 ├── pyproject.toml                # Package metadata and dependencies
-├── Launch_Desktop_App.bat / Launch_LAN_iPad.bat / Rebuild_EXE.bat   # Double-click launchers
+├── Launch_Desktop_App.bat / Launch_LAN_iPad.bat                     # Double-click launchers
 ├── README.md / LICENSE / .gitignore                                 # This file, MIT License, ignore rules
 │
 │   Not in the repository (git-ignored):
@@ -405,7 +405,7 @@ FFVII-Battle-Companion/
 ├── .dev_home/                    # Data folder of runs from source: data/, logs/, reports/
 ├── recordings/                   # Recordings for tools/benchmark_loop.py
 ├── dist/FFVII_Companion/         # Packaged EXE, with its own data/, logs/, reports/; release zips next to it
-└── archive/, CLAUDE.md, AGENTS.md, GEMINI.md, review/, .claude/   # The maintainer's local files
+└── archive/, CLAUDE.md, AGENTS.md, GEMINI.md, review/, .claude/, Rebuild_EXE.bat   # The maintainer's local files
 ```
 
 ## License
