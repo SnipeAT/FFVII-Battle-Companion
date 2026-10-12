@@ -20,10 +20,9 @@ logger = logging.getLogger("ffvii-capture-service")
 # Safety net for the text-change gate: OCR is forced after this many consecutive
 # gated (skipped) frames even if the gate saw no text change.
 MAX_GATED_SKIPS = {"hunting": 2, "settled": 4, "idle": 4}
-# Frames to stay in the hunting phase after a new enemy appears.
+# Frames to stay in the hunting phase after a new enemy appears. While the battle HUD shows
+# without a registered enemy, hunting lasts as long as the HUD does.
 HUNTING_BURST_FRAMES = 3
-# Frames to keep hunting while the battle HUD is visible but no enemy is registered.
-HUD_HUNTING_FRAMES = 4
 # Minimum seconds between repeated identical error log lines from the capture loop.
 ERROR_LOG_INTERVAL = 30.0
 
@@ -150,6 +149,12 @@ class CaptureService:
         if phase == "settled":
             return max(0.2, cfg["settled_fps"])
         return max(0.2, cfg["idle_fps"])
+
+    @classmethod
+    def _max_empty_frames(cls, cfg: Dict[str, Any], phase: str) -> int:
+        """Samples without enemies or HUD after which the battle clears: idle_timeout_seconds at
+        the phase's sampling rate (at least 2)."""
+        return max(2, int(cls._phase_fps(cfg, phase) * cfg["idle_timeout_seconds"]))
 
     def _sync_detector_settings(self, cfg: Dict[str, Any]):
         det_limit = cfg["det_limit_side_len"]
@@ -577,7 +582,6 @@ class CaptureService:
                     if self.combat_phase != "hunting":
                         logger.info(f"Combat HUD active. Increasing sample rate to {active_fps} FPS to identify enemies.")
                     self.combat_phase = "hunting"
-                    self.hunting_frames_remaining = max(self.hunting_frames_remaining, HUD_HUNTING_FRAMES)
                 else:
                     # In battle, enemies already registered: decrement hunting burst and settle
                     self._decay_hunting_locked(settled_fps)
@@ -607,7 +611,7 @@ class CaptureService:
             phase = self.combat_phase
             in_battle = bool(self.current_enemies) or phase != "idle"
         if max_empty_frames is None:
-            max_empty_frames = max(2, int(self._phase_fps(cfg, phase) * cfg["idle_timeout_seconds"]))
+            max_empty_frames = self._max_empty_frames(cfg, phase)
 
         # 1. Text-change gate (sub-millisecond): skip OCR when the text-like pixels are unchanged
         t_gate = time.perf_counter()
@@ -699,10 +703,9 @@ class CaptureService:
             mode = cfg["mode"]
 
             current_phase = self._sync_current_fps(cfg)
-            fps = self._phase_fps(cfg, current_phase)
             self._apply_thread_qos(efficient=bool(cfg["eco_mode"]) and current_phase != "hunting")
 
-            max_empty_frames = max(2, int(fps * cfg["idle_timeout_seconds"]))
+            max_empty_frames = self._max_empty_frames(cfg, current_phase)
 
             try:
                 t_loop0 = time.perf_counter()

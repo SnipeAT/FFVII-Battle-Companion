@@ -511,6 +511,8 @@ class TestCaptureLoopLifecycle(unittest.TestCase):
             service.stop()  # times out: the step is blocked
             self.assertTrue(old.is_alive())
             service.start()
+            time.sleep(0.2)
+            self.assertEqual(service.calls, [old], "the new loop waits for the old one's step")
             service.release.set()
             self._wait_for(lambda: not old.is_alive())
             self._wait_for(lambda: any(t is not old for t in service.calls))
@@ -537,6 +539,124 @@ class TestCaptureLoopLifecycle(unittest.TestCase):
         self.assertEqual(len(applied), 2)
         self.assertIsNot(applied[0], applied[1])
 
+
+
+class TestDocumentedLoopBehavior(unittest.TestCase):
+    """Behavior that CLAUDE.md and README promise and that mutations of the code passed every
+    test (CLAUDE-20261012-B08)."""
+
+    def setUp(self):
+        self.service = CaptureService()
+        self.cfg = make_config()
+
+    def test_documented_constants(self):
+        from ffvii_companion.engine.capture_service import HUNTING_BURST_FRAMES
+        self.assertEqual(MAX_GATED_SKIPS, {"hunting": 2, "settled": 4, "idle": 4})
+        self.assertEqual(HUNTING_BURST_FRAMES, 3)
+
+    def test_battle_clears_after_idle_timeout(self):
+        self.cfg["idle_timeout_seconds"] = 6.0
+        self.assertEqual(CaptureService._max_empty_frames(self.cfg, "hunting"), 9)   # 1.5 FPS
+        self.assertEqual(CaptureService._max_empty_frames(self.cfg, "idle"), 3)      # 0.5 FPS
+        self.assertEqual(CaptureService._max_empty_frames(self.cfg, "settled"), 2)   # 0.35 FPS
+        # process_frame without an explicit limit uses the same one: 2 s at 1.5 FPS = 3 samples
+        self.cfg["idle_timeout_seconds"] = 2.0
+        prowler = dict(compendium.get_by_name("Prowler"))
+        self.service._update_battle_state([prowler], True, True, self.cfg, 3)
+        self.assertEqual(self.service.combat_phase, "hunting")
+        cleared_at = None
+        for step in range(1, 8):
+            if self.service.process_frame(load_fixture_bgra("field_no_text.png"), self.cfg)["cleared"]:
+                cleared_at = step
+                break
+        self.assertEqual(cleared_at, 3)
+
+    def test_overlapping_names_are_not_a_new_round(self):
+        devil_rides = {**compendium.get_by_name("Devil Ride"), "count": 2}
+        devil_ride = {**compendium.get_by_name("Devil Ride"), "count": 1}
+        dragon = dict(compendium.get_by_id("dragon"))
+        self.service._update_battle_state([devil_rides], True, True, self.cfg, 3)
+        # Dragon shares no formation with Devil Ride, but a Devil Ride is still on screen: no new
+        # round, so the two Devil Rides seen before are kept
+        self.service._update_battle_state([devil_ride, dragon], True, True, self.cfg, 3)
+        self.assertEqual(self.service.observed_counts.get("Devil Ride"), 2)
+
+    def test_instance_letter_follows_the_count(self):
+        def read(line):
+            enemies = self.service.detector.identify_enemies_from_lines([line, "Attack", "HP", "MP"])
+            self.service._update_battle_state(enemies, True, True, self.cfg, 3)
+            return [(e["count"], e["instance_letter"]) for e in self.service.current_enemies]
+
+        # a misread letter ("H": no formation has 8 Devil Rides) raises the count to 2 without
+        # a letter; "A" belongs to count 1 and must not become the letter of 2
+        self.assertEqual(read("Devil Ride H"), [(2, None)])
+        self.assertEqual(read("Devil Ride A"), [(2, None)])
+        self.assertEqual(read("Devil Ride B"), [(2, "B")])
+        self.assertEqual(read("Devil Ride A"), [(2, "B")])
+
+    def test_new_enemy_restarts_the_hunting_burst(self):
+        from ffvii_companion.engine.capture_service import HUNTING_BURST_FRAMES
+        prowler = dict(compendium.get_by_name("Prowler"))
+        fang = dict(compendium.get_by_name("Kalm Fang"))
+        self.service._update_battle_state([prowler], True, True, self.cfg, 3)
+        self.service._update_battle_state([prowler], True, True, self.cfg, 3)
+        self.assertEqual(self.service.hunting_frames_remaining, HUNTING_BURST_FRAMES - 1)
+        self.service._update_battle_state([prowler, fang], True, True, self.cfg, 3)
+        self.assertEqual(self.service.hunting_frames_remaining, HUNTING_BURST_FRAMES)
+
+    def test_clear_runs_ocr_on_the_next_sample(self):
+        frame = load_fixture_bgra("prowler.png")
+        self.assertTrue(self.service.process_frame(frame, self.cfg)["ocr_ran"])
+        self.assertFalse(self.service.process_frame(frame, self.cfg)["ocr_ran"])  # gated
+        self.service.clear_battle()
+        # the cleared enemy is read again at once, not after the gate's safety net
+        self.assertTrue(self.service.process_frame(frame, self.cfg)["ocr_ran"])
+
+    def _run_loop_once(self, phase_after_step):
+        """Runs one step of _loop (custom_roi, frame and step faked) and returns the QoS it set
+        and the sleep it chose."""
+        from ffvii_companion.engine import capture_service as module
+
+        class OneStep(threading.Event):
+            timeouts = []
+
+            def wait(self, timeout=None):
+                self.timeouts.append(timeout)
+                self.set()
+                return True
+
+        def step(frame, cfg, max_empty_frames):
+            with self.service._state_lock:
+                self.service.combat_phase = phase_after_step
+            return {"ocr_timing": {}, "cvt_color_ms": 0.0, "ocr_total_ms": 0.0, "match_ms": 0.0,
+                    "lines": [], "ocr_ran": True, "gate_ms": 0.0}
+
+        qos = []
+        cfg = make_config(mode="custom_roi")
+        self.service._calculate_capture_bbox = lambda win=None: {"top": 0, "left": 0, "width": 8, "height": 8}
+        self.service._grab = lambda bbox: load_fixture_bgra("prowler.png")
+        self.service.process_frame = step
+        stop = OneStep()
+        with mock.patch.object(calibration_manager, "get_config", return_value=cfg),                 mock.patch.object(module.win_qos, "set_current_thread_qos",
+                                  side_effect=lambda **kw: qos.append(kw["efficient"])):
+            self.service._loop(stop)
+        return qos, stop.timeouts[0]
+
+    def test_loop_leaves_ecoqos_while_hunting(self):
+        self.service.combat_phase = "hunting"
+        qos, _ = self._run_loop_once("hunting")
+        self.assertEqual(qos, [False])
+        self.service.combat_phase = "idle"
+        qos, _ = self._run_loop_once("idle")
+        self.assertEqual(qos, [True])
+
+    def test_loop_sleeps_at_the_rate_of_the_phase_the_step_ended_in(self):
+        # idle (0.5 FPS) -> a step that starts hunting (1.5 FPS): the next sample comes after
+        # about 0.67 s, not 2 s
+        self.service.combat_phase = "idle"
+        _, sleep = self._run_loop_once("hunting")
+        self.assertLess(sleep, 1.0 / 1.5 + 0.01)
+        self.assertGreater(sleep, 0.3)
 
 if __name__ == "__main__":
     unittest.main()

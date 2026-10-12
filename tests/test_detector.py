@@ -183,6 +183,32 @@ class TestMisreadNames(unittest.TestCase):
                 self.assertEqual([(e["id"], e["count"]) for e in found], [(enemy_id, 1)])
 
 
+class TestDetectorGuards(unittest.TestCase):
+    """Guards that mutations removed without a failing test (CLAUDE-20261012-B09)."""
+
+    def test_only_letters_a_to_h_are_instance_letters(self):
+        # a formation holds at most 8 enemies, so the game's letters stop at H
+        self.assertEqual(BattleDetector.parse_enemy_line("Grunt K")[1:], (None, 1))
+        det = BattleDetector()
+        self.assertEqual([e["count"] for e in det.identify_enemies_from_lines(["Grunt K"])], [1])
+
+    def test_field_menu_lines_rule_out_the_hud(self):
+        # the field menu shows HP / MP and party names next to lines only it has
+        for line in ("LIMIT LEVEL", "NEXT LEVEL", "MATERIA", "EQUIP", "SAVE"):
+            with self.subTest(line=line):
+                self.assertFalse(BattleDetector.is_combat_hud_active(["Cloud", "HP", "MP", line]))
+        self.assertTrue(BattleDetector.is_combat_hud_active(["Cloud", "HP", "MP"]))
+
+    def test_low_confidence_lines_are_dropped(self):
+        from unittest import mock
+        import numpy as np
+        from ffvii_companion.engine.ocr_engine import OCRLine, OCRResult
+        det = BattleDetector(confidence_threshold=0.45)
+        result = OCRResult(lines=[OCRLine("Prowler", 0.9, (0, 0, 1, 1)), OCRLine("Grunt", 0.3, (0, 0, 1, 1))])
+        with mock.patch.object(det._ocr, "run", return_value=result):
+            self.assertEqual(det.detect_text_lines(np.zeros((8, 8, 3), np.uint8)), ["Prowler"])
+
+
 class TestCombatHud(unittest.TestCase):
     def test_hud_detection(self):
         self.assertTrue(BattleDetector.is_combat_hud_active(["HP", "MP"]))
