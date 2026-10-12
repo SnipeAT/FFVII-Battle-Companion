@@ -1,5 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
-# PyInstaller spec of the desktop app. Run through build_tools/build_exe.py (Rebuild_EXE.bat).
+# PyInstaller spec of the desktop app. Run through build_tools/build_exe.py.
 import os
 import sys
 from pathlib import Path

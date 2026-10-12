@@ -23,5 +23,8 @@ recordings/
 /review/
 .claude/
 
+# The maintainer's rebuild shortcut (local only; contributors run build_tools/build_exe.py)
+/Rebuild_EXE.bat
+
 # Old code from before the public release, kept on the maintainer's computer only
 archive/
