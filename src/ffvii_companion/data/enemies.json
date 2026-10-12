@@ -4772,7 +4772,7 @@
         "manipulate": false
       }
     ],
-    "notes": null,
+    "notes": "Flees after a few turns and must be chased across the world map, ramming it with the Highwind to start each fight. Ultima Beam hits the whole party. Its final act is Shadow Flare on whoever lands the killing blow; give that character Enemy Skill to learn it.",
     "variants": [
       {
         "enemy_ids": [
@@ -5653,7 +5653,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Search Scope only marks the next target and does no damage. When it raises its tail, stop attacking: any hit while the tail is up triggers Tail Laser on the whole party. Defend or heal until the tail lowers, then go back to Bolt and attacks."
   },
   {
     "id": "grashtrike",
@@ -6281,7 +6281,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Turns to face whoever hit it last, and hits to its back deal far more damage. Have Cloud strike first so Barret and Tifa get its back, then keep alternating. Counters with Bodyblow, uses Big Bomber on the party early on, and stops turning below 20% HP."
   },
   {
     "id": "hedgehog-pie",
@@ -6717,7 +6717,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Any spell cast on it is countered with Sewer Tsunami on the party, and it also uses Sewer Tsunami on its own every few turns. Lick inflicts Sadness, which slows Limit gauges. Cross-slash can paralyze it, and a paralyzed Aps cannot counter."
   },
   {
     "id": "sahagin",
@@ -7321,7 +7321,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null,
+    "notes": "Pyramid traps an ally, who then counts as KO'd; if everyone is trapped the battle is lost. Free them by attacking the Pyramid with another character. Lightning hits draw an Electro-mag Rod counter, which can paralyze. When fought with other Turks, the battle ends as soon as one Turk falls.",
     "variants": [
       {
         "enemy_ids": [
@@ -8287,7 +8287,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Revives its Opt minions with Reanimagic, so ignore them and focus on H0512; they vanish when it dies. Shady Breath poisons the party and Keyclaw targets poisoned members, so cure Poison and heal everyone at once with All plus Restore."
   },
   {
     "id": "sample-h0512-opt",
@@ -8394,7 +8394,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Only Barret's attacks, Limits and magic reach it; use Bolt. Below two thirds HP it switches to Main Artillery on the whole party, and below one third it charges for two turns before Wave Artillery, its strongest attack. Heli Gunner follows straight after, so heal before finishing it."
   },
   {
     "id": "heli-gunner",
@@ -8512,7 +8512,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Defeat Dark Nation first: it casts Barrier and MBarrier on Rufus, cutting your damage. Rufus acts often and his shotgun hits one member hard, so keep Restore ready."
   },
   {
     "id": "dark-nation",
@@ -8557,7 +8557,7 @@
       "Bite"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Casts Barrier and MBarrier on itself and Rufus. Defeat it first; magic ignores its back-row position."
   },
   {
     "id": "motor-ball",
@@ -8622,7 +8622,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Opens with Highway on the whole party, then cycles Arm Attack on the highest-HP member, Twin Burner (Fire, whole party) and Rolling Fire (strong Fire). Below 1/8 HP it goes straight to its flamethrower attacks. Use Bolt, link Elemental with Fire in armor, and keep party-wide healing ready."
   },
   {
     "id": "midgar-zolom",
@@ -8956,7 +8956,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Flies, so only ranged attackers (Barret, Yuffie, Long Range materia) or magic reach it. Waterball traps a member in a bubble that hurts every turn; break it with magic, since the bubble is immune to physical attacks. Below 50% HP it adds Big Wave on the party, and it uses Big Wave once more as it dies."
   },
   {
     "id": "waterpolo",
@@ -9180,7 +9180,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Casts Stop on one member, then uses Gas on whoever is stopped. Tail Laser hits the whole party and often comes twice in one turn, so keep everyone's HP up with Restore."
   },
   {
     "id": "search-crown",
@@ -9777,7 +9777,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Barret fights alone. Dyne uses Needle Gun, adds S-Mine below 75% HP and Molotov Cocktail below 25%, and may throw one last Molotov as he falls. Let him fill Barret's Limit gauge, heal with items when low, and finish with Limits."
   },
   {
     "id": "kimara-bug",
@@ -10165,7 +10165,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null,
+    "notes": "Will not attack Tifa unless everyone else is down. Heals allies with Cure2, can cast MBarrier, and Grand Spark hits one member hard. With the Attack Squad, clear the soldiers so melee can reach him. When fought with other Turks, the battle ends as soon as one Turk falls.",
     "variants": [
       {
         "enemy_ids": [
@@ -10690,7 +10690,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Possesses a party member and casts Fire2 on them, leaving after three turns or when the host dies. All Soul Fires die as soon as Gi Nattak is defeated, so you can ignore them."
   },
   {
     "id": "gi-nattak",
@@ -10752,7 +10752,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Undead: Cure, Potions and other healing damage it. Two Soul Fires possess party members and cast Fire2 on their host for three turns. Defeating Gi Nattak first destroys any remaining Soul Fires, so focus him and avoid Fire."
   },
   {
     "id": "dorky-face",
@@ -11266,7 +11266,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null,
+    "notes": "Has a physical side and a magic side. Use magic and Enemy Skills while it fights physically, then physical attacks and Limits once it turns to its magic side, which resists magic. Its punches hit one member very hard.",
     "variants": [
       {
         "enemy_ids": [
@@ -11723,7 +11723,7 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": "Trine hits the whole party (learn it with Enemy Skill), Hell Combo hits one member hard, and it heals itself with Cure2. Its special attacks come more often as its HP drops, so set Big Guard and keep All plus Restore ready."
   },
   {
     "id": "palmer",
@@ -11778,7 +11778,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Mostly harmless. Mako Gun casts Fire2, Ice2 or Bolt2 on a random member, and he can inflict Sadness. Attack with your strongest moves to finish quickly."
   },
   {
     "id": "jayjujayme",
@@ -12006,7 +12006,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Yuffie fights alone. Aero3 hits hard and can finish her when she is low, so heal early. Scorpion Tail can poison and often comes twice in one turn."
   },
   {
     "id": "attack-squad",
@@ -12120,7 +12120,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Yuffie fights alone. His spells hit hard early but he runs out of power, so set Big Guard and outlast him."
   },
   {
     "id": "shake",
@@ -12175,7 +12175,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Yuffie fights alone. Can inflict Fury, which raises damage taken but fills her Limit gauge faster. Low HP, so attack and heal quickly."
   },
   {
     "id": "chekhov",
@@ -12230,7 +12230,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Yuffie fights alone. Stare Down delays her turns; a Jem Ring blocks it. Bio still works while she is slowed."
   },
   {
     "id": "staniv",
@@ -12285,7 +12285,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Yuffie fights alone. Only uses regular attacks, so Counter Attack materia speeds the fight up."
   },
   {
     "id": "godo",
@@ -12345,7 +12345,7 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": "Yuffie fights alone. Uses gravity attacks that take a share of her HP, Trine, and Mini, which only Remedy or Cornucopia removes. Late in the fight he heals with Cure2, but poison damage does not trigger it, so Bio works well. Learn Trine with Enemy Skill."
   },
   {
     "id": "toxic-frog",
@@ -12631,7 +12631,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Hits very hard: Cave-in and Demon Rush hit the whole party, and Petrif-Eye inflicts gradual Petrify. Its special attacks come more often as its HP drops. Use Big Guard and Regen, keep Soft or Ribbons ready, and let the damage build Limit Breaks."
   },
   {
     "id": "8-eye",
@@ -12735,7 +12735,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Usually opens with Red Dragon Breath; it and Dragon Fang each hit one member hard. Set Big Guard, heal often, and use Ice or physical attacks."
   },
   {
     "id": "boundfat",
@@ -13028,7 +13028,7 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": "Casts Reflect on itself once its MP allows, so lean on physical attacks and Limit Breaks once it is up. Aqualung hits the whole party; bring Enemy Skill to learn it. Its extra and special attacks get more frequent at 75%, 50% and 25% HP."
   },
   {
     "id": "acrophies",
@@ -14349,7 +14349,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Two heads act separately and absorb different elements, so all-target Fire or Ice heals one of them. Every few hits each head counters with Tremor on the party. When one head dies the other breathes on the whole party at once, so heal before finishing either head."
   },
   {
     "id": "schizo(left)",
@@ -14410,7 +14410,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Two heads act separately and absorb different elements, so all-target Fire or Ice heals one of them. Every few hits each head counters with Tremor on the party. When one head dies the other breathes on the whole party at once, so heal before finishing either head."
   },
   {
     "id": "jenovadeath",
@@ -14467,7 +14467,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Silences one member early, so bring Echo Screens or a Ribbon. Tropic Wind hits the whole party, and its Red Light comes more often as its HP drops."
   },
   {
     "id": "roulette-cannon",
@@ -15509,7 +15509,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Lapis Laser hits the whole party hard and comes more often as its HP drops. Each arm can grab a member, who is out of action until that arm is destroyed or Carry Armor dies. Use all-target Bolt magic, Big Guard and Regen."
   },
   {
     "id": "right-arm",
@@ -17298,7 +17298,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Fought with Reno and Rude; the battle ends as soon as any one Turk falls. Each Turk resists or absorbs different elements, so check each card before using all-target elemental magic. Non-elemental attacks such as Ultima or Bahamut are safest."
   },
   {
     "id": "proud-clod",
@@ -17358,7 +17358,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Defeat Jamar Armor first; its Materia Jammer interferes with your materia. Proud Clod fires machine guns and beams, and once damaged enough adds Beam Cannon on the whole party. Big Guard and Regen keep the fight safe."
   },
   {
     "id": "jamar-armor",
@@ -17416,7 +17416,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Proud Clod's support unit. Its Materia Jammer interferes with your materia, so defeat it first, then focus Proud Clod."
   },
   {
     "id": "soldier-1st",
@@ -17629,7 +17629,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Summons Poodler Sample and Bad Rap Sample and brings them back when they fall, so ignore them and attack Hojo directly; defeating him ends this stage."
   },
   {
     "id": "bad-rap-sample",
@@ -17779,7 +17779,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Revives its arms, so focus the main body. The body can inflict Confusion and the right arm hits hard. Ribbons make this fight much easier."
   },
   {
     "id": "lifeform-hojo-n",
@@ -17837,7 +17837,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Relies on status attacks rather than damage. With Ribbons equipped it is barely a threat, so hit it with your strongest attacks."
   },
   {
     "id": "gargoyle",
@@ -18940,7 +18940,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Starts a countdown that ends in Ultima on the party, so defeat it before the count runs out. Its tentacle attacks hit hard and can Silence."
   },
   {
     "id": "bizarrosephiroth",
@@ -18999,7 +18999,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null,
+    "notes": "Bizarro Energy restores a large share of its HP almost every turn, so put your heaviest damage on the main body each turn rather than its parts.",
     "variants": [
       {
         "enemy_ids": [
@@ -19378,7 +19378,7 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": "Equip Ribbons: Pale Horse, Doom and Break inflict statuses, and DeSpell strips your buffs. Super Nova hits the whole party. Use Big Guard, Regen, and your strongest summons and Limits; Shadow Flare can be learned here."
   },
   {
     "id": "sephiroth",
@@ -19429,7 +19429,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Final one-on-one with Cloud, who starts with a full Limit gauge. Any attack wins."
   },
   {
     "id": "scissors",
@@ -19680,7 +19680,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Immune to physical attacks at first. When it starts counting down to Diamond Flash it opens up to physical hits, so switch to attacks and Limits then. Diamond Flash hits the whole party and can Silence, so set Big Guard and heal before the count runs out."
   },
   {
     "id": "ruby-weapon",
@@ -19743,7 +19743,7 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": "Cannot be damaged until it plants its tentacles in the sand. Whirlsand removes a member from the battle for good but cannot target the last active character, so start with two members KO'd and revive them once the tentacles are down. Not immune to Paralyze or Stop: Dazers and Hades help."
   },
   {
     "id": "ruby's-tentacle",
@@ -19795,7 +19795,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Ruby Weapon cannot be damaged until these are planted in the sand. Focus the main body rather than the tentacles."
   },
   {
     "id": "emerald-weapon",
@@ -19860,7 +19860,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Without Underwater materia the fight has a 20-minute timer. Aire Tam Storm deals 1111 damage per equipped materia to each character, so keep everyone at 8 or fewer. Emerald Beam hits the whole party and removes Regen."
   },
   {
     "id": "leg",
@@ -19974,6 +19974,6 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": "Emerald Weapon's eyes: blue eyes fire damaging lasers and orange eyes drain MP. The fight is won by defeating Emerald Weapon itself."
   }
 ]
