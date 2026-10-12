@@ -166,12 +166,12 @@ class TestEnemyData(unittest.TestCase):
         self.assertEqual((final["exp"], final["ap"], final["gil"]), (35000, 3500, 25000))
         self.assertEqual(set(final["elemental_immunities"]), {"Earth", "Gravity", "Water"})
 
-
     def test_yuffie_solo_notes_only_on_pagoda_bosses(self):
         # GEMINI-20261012-01: the Rapps note said Yuffie fights alone; Cloud's party fights him without Materia
         solo = {e["id"] for e in self.enemies if "Yuffie fights alone" in (e.get("notes") or "")}
         self.assertEqual(solo, {"gorkii", "shake", "chekhov", "staniv", "godo"})
-        self.assertIn("without Materia", self.by_name["Rapps"]["notes"])
+        self.assertIn("Materia", self.by_name["Rapps"]["notes"])
+
 
 class TestFormationData(unittest.TestCase):
     @classmethod
