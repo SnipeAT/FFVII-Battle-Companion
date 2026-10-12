@@ -196,6 +196,7 @@ Open **CALIBRATION** in the header:
 | `text_gate` | `true` | Skip OCR when the text in the region has not changed. |
 | `eco_mode` | `true` | Run the capture thread on efficiency cores outside the hunting phase. |
 | `auto_add_scene_partners` | `false` | Automatically add formation partners that are certain: enemies that every formation matching the enemies seen so far contains. Merely possible partners stay on the partners bar. |
+| `allowed_hosts` | `[]` | Extra host names the dashboard may be opened under, such as a name your router gives the PC (`["gaming-pc.lan"]`); `["*"]` allows any name. IP addresses, `localhost` and the PC's own name (also with `.local`) always work. Only a hand edit of the file changes it (the API refuses it); restart the companion afterwards. See the security note under "iPad, tablet or phone". |
 
 Values are validated: the API rejects invalid settings (HTTP 422), and out-of-range values in a hand-edited file are clamped on load. The defaults are the ones in this table (`DEFAULT_CONFIG` in `engine/calibration.py`); the file in the data folder holds only what was saved from the dashboard or edited by hand.
 
@@ -222,7 +223,7 @@ The `FFVII_COMPANION_HOME` environment variable overrides the folder. Folders an
 
 After an update of the companion, a dashboard left open on the tablet reloads itself when it reconnects, so it never runs the old version against the new server.
 
-Security note: in LAN mode every device on your network can open the dashboard and use its controls (start/stop capture, calibration, diagnostic snapshots of the capture region). There is no login, so only use LAN mode on a network you trust. Web pages from other sites cannot use the companion: the server sends no cross-origin (CORS) headers, so they cannot read its responses, and it rejects state-changing requests and WebSocket connections whose `Origin` does not match the server.
+Security note: in LAN mode every device on your network can open the dashboard and use its controls (start/stop capture, calibration, diagnostic snapshots of the capture region). There is no login, so only use LAN mode on a network you trust. Web pages from other sites cannot use the companion: the server sends no cross-origin (CORS) headers, so they cannot read its responses, and it rejects state-changing requests and WebSocket connections whose `Origin` does not match the server. It also answers only requests addressed to an IP address, `localhost` or the PC's name: a web page that points its own domain name at your PC (DNS rebinding) would otherwise count as the same site. A home router does not protect against that, because the page runs in your own browser. `allowed_hosts` in the settings file adds names; `["*"]` turns this check off.
 
 ---
 

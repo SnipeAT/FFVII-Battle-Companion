@@ -34,6 +34,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "ocr_threads": 1,            # ONNX Runtime threads per OCR session (1 = lowest CPU impact)
     "text_gate": True,           # Skip OCR when the text in the capture region has not changed
     "eco_mode": True,            # Run OCR on efficiency cores (EcoQoS) outside the hunting phase
+    "allowed_hosts": [],         # Host names the server answers besides IP addresses, localhost and the PC's name ("*": any); settings file only
 }
 
 PRESETS = {
@@ -80,6 +81,10 @@ NUMERIC_RANGES = {
 INTEGER_KEYS = {"det_limit_side_len", "monitor_index", "ocr_threads"}
 BOOLEAN_KEYS = {"auto_add_scene_partners", "text_gate", "eco_mode"}
 ROI_KEYS = ("top_pct", "left_pct", "width_pct", "height_pct")
+# Settings that only a hand edit of the file can change, not the API: allowed_hosts decides which
+# requests the server answers at all, so a request must not be able to widen it.
+FILE_ONLY_KEYS = {"allowed_hosts"}
+MAX_ALLOWED_HOSTS = 32
 
 
 class ConfigValidationError(ValueError):
@@ -115,6 +120,19 @@ def _coerce_roi(value: Any) -> Dict[str, float]:
     return roi
 
 
+def _coerce_hosts(value: Any) -> list:
+    if not isinstance(value, list) or len(value) > MAX_ALLOWED_HOSTS:
+        raise ConfigValidationError(f"allowed_hosts must be a list of at most {MAX_ALLOWED_HOSTS} host names")
+    hosts = []
+    for item in value:
+        if not isinstance(item, str) or not item.strip() or len(item) > 253:
+            raise ConfigValidationError("allowed_hosts entries must be host names")
+        host = item.strip().lower().rstrip(".")
+        if host and host not in hosts:
+            hosts.append(host)
+    return hosts
+
+
 def validate_settings(settings: Dict[str, Any], clamp: bool = False) -> Dict[str, Any]:
     """
     Validates and normalizes a (partial) settings dict.
@@ -142,6 +160,8 @@ def validate_settings(settings: Dict[str, Any], clamp: bool = False) -> Dict[str
                 clean[key] = value
             elif key == "roi":
                 clean[key] = _coerce_roi(value)
+            elif key == "allowed_hosts":
+                clean[key] = _coerce_hosts(value)
             elif key == "target_menu_preset":
                 if not isinstance(value, str) or len(value) > 64:
                     raise ConfigValidationError("target_menu_preset must be a short string")
@@ -184,6 +204,9 @@ class CalibrationManager:
 
     def update_config(self, new_settings: Dict[str, Any]) -> Dict[str, Any]:
         """Validates, applies and persists settings. Raises ConfigValidationError on bad input."""
+        file_only = sorted(FILE_ONLY_KEYS.intersection(new_settings))
+        if file_only:
+            raise ConfigValidationError(f"{', '.join(file_only)} can only be changed in the settings file")
         filtered = validate_settings(new_settings, clamp=False)
         with self._lock:
             if filtered:

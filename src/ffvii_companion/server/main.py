@@ -1,5 +1,7 @@
 import hashlib
+import ipaddress
 import json
+import socket
 import time
 import logging
 import threading
@@ -42,15 +44,54 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="FFVII Tactical Battle Companion", version=__version__, lifespan=lifespan)
 
 
+def _host_name(host_header: str) -> str:
+    """The host name of a Host header ("Name:59314", "[::1]:59314"), lowercased, without the port
+    or a trailing dot; empty when it cannot be parsed."""
+    try:
+        return (urlsplit("//" + host_header).hostname or "").rstrip(".")
+    except ValueError:
+        return ""
+
+
+def is_allowed_host(host_header: str, allowed_hosts: List[str]) -> bool:
+    """
+    Whether a request sent to this Host may be answered. A DNS-rebinding web page reaches the
+    companion under its own host name (one it points at 127.0.0.1 after the page loaded), so the
+    browser sends that name as Host and as Origin, which then match: only the Host shows it. The
+    dashboard is always opened under an IP address, localhost (or a *.localhost name, which
+    browsers resolve to the PC themselves) or the PC's name (also with ".local", as tablets find
+    it on the LAN); allowed_hosts (settings file) adds names, "*" allows any.
+    """
+    if "*" in allowed_hosts:
+        return True
+    name = _host_name(host_header)
+    if not name:
+        return False
+    try:
+        ipaddress.ip_address(name)
+        return True
+    except ValueError:
+        pass
+    if name == "localhost" or name.endswith(".localhost") or name in _PC_NAMES:
+        return True
+    return name in allowed_hosts
+
+
+_PC_NAMES = {socket.gethostname().lower(), socket.gethostname().lower() + ".local"}
+
+
 class SameOriginGuard:
     """
-    Rejects browser requests from other web origins that could change state:
-    unsafe HTTP methods (POST, ...) and WebSocket connections whose Origin header
-    does not match the Host they were sent to. Browsers do not apply CORS to
-    simple POSTs or WebSockets, so without this check any web page open on the
-    PC (or LAN) could stop capture, switch presets or drive the /ws socket.
-    Requests without an Origin header (CLI simulator, scripts, tests) and all
-    same-origin dashboard requests pass through unchanged.
+    Rejects requests that web pages of other sites could send:
+    - every request (and WebSocket) sent to a host name that is not allowed (is_allowed_host):
+      a DNS-rebinding page would otherwise be same-origin with the companion and could read
+      every response, not only change state;
+    - unsafe HTTP methods (POST, ...) and WebSocket connections whose Origin header does not
+      match the Host they were sent to. Browsers do not apply CORS to simple POSTs or
+      WebSockets, so without this check any web page open on the PC (or LAN) could stop
+      capture, switch presets or drive the /ws socket.
+    Requests without an Origin header (CLI simulator, scripts, tests) and all same-origin
+    dashboard requests to an allowed host pass through unchanged.
     """
     SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 
@@ -60,10 +101,16 @@ class SameOriginGuard:
     async def __call__(self, scope, receive, send):
         if scope["type"] in ("http", "websocket"):
             headers = Headers(scope=scope)
+            host = headers.get("host", "")
             origin = headers.get("origin")
             unsafe = scope["type"] == "websocket" or scope.get("method", "GET") not in self.SAFE_METHODS
-            if origin and unsafe and urlsplit(origin).netloc.lower() != headers.get("host", "").lower():
-                logger.warning(f"Rejected cross-origin {scope['type']} request from {origin!r}")
+            reason = None
+            if not is_allowed_host(host, calibration_manager.get_config()["allowed_hosts"]):
+                reason = f"to host {host[:100]!r} (not an allowed host, see allowed_hosts)"
+            elif origin and unsafe and urlsplit(origin).netloc.lower() != host.lower():
+                reason = f"from {origin[:100]!r}"
+            if reason:
+                logger.warning(f"Rejected cross-origin {scope['type']} request {reason}")
                 if scope["type"] == "websocket":
                     await WebSocketClose(code=1008)(scope, receive, send)
                 else:
@@ -75,7 +122,7 @@ class SameOriginGuard:
 # No CORS middleware: the dashboard is always served by this same server (desktop window,
 # browser, or iPad on the LAN), so cross-origin access is never needed. Leaving it off
 # prevents unrelated web pages from reading screen OCR results; SameOriginGuard blocks
-# them from changing state.
+# them from changing state, and DNS-rebinding pages from reaching the server at all.
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(SameOriginGuard)
 
