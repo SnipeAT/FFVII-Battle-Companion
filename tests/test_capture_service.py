@@ -217,6 +217,24 @@ class TestCaptureStateMachine(unittest.TestCase):
         counts = {e["name"]: e["count"] for e in self.service.current_enemies}
         self.assertEqual(counts, {"Grosspanzerbig": 1, "Grosspanzermobile": 1})
 
+    def test_item_named_like_an_enemy_is_not_a_new_round(self):
+        # CLAUDE-20261012-B01: the battle Item menu is inside the capture region; a highlighted
+        # Grenade replaced the encounter, and the next target read lost the instance count
+        frames = (["Devil Ride B", "Attack", "HP", "MP"], ["otion", "Grenade", "HP", "MP"],
+                  ["Right arm", "X-Potion", "HP", "MP"], ["Devil Ride", "ttack", "Mime", "HP", "MP"])
+        titles = []
+        for lines in frames:
+            enemies = self.service.detector.identify_enemies_from_lines(lines)
+            _, title, _ = self.service._update_battle_state(enemies, True, True, self.cfg, 3)
+            titles.append(title)
+        self.assertEqual({e["name"]: e["count"] for e in self.service.current_enemies}, {"Devil Ride": 2})
+        self.assertEqual([t for t in titles if t], ["Battle: 2x Devil Ride"])
+        # A battle against Grenades still registers them
+        self.service._clear_battle_state()
+        enemies = self.service.detector.identify_enemies_from_lines(["Grenade", "Attack", "HP", "MP"])
+        self.service._update_battle_state(enemies, True, True, self.cfg, 3)
+        self.assertEqual([e["name"] for e in self.service.current_enemies], ["Grenade"])
+
     def test_compatible_partner_is_not_a_round_transition(self):
         prowler = dict(compendium.get_by_name("Prowler"))
         fang = dict(compendium.get_by_name("Kalm Fang"))

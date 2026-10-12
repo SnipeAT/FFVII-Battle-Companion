@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 
 from ffvii_companion.engine.capture import ScreenCaptureEngine
-from ffvii_companion.engine.detector import BattleDetector
+from ffvii_companion.engine.detector import BattleDetector, ITEM_NAMED_ENEMIES
 from ffvii_companion.engine.window_finder import FFVIIWindowFinder
 from ffvii_companion.engine.calibration import calibration_manager
 from ffvii_companion.engine.profiler import perf_tracker
@@ -460,6 +460,17 @@ class CaptureService:
                     current_names = {e["name"] for e in self.current_enemies}
                     detected_names = {e["name"] for e in detected_enemies}
                     new_names = detected_names - current_names
+
+                    # Items named like enemies: the battle Item menu lists them inside the capture
+                    # region. One that cannot join the current enemies is that menu, not a new
+                    # round (a highlighted Grenade used to replace the battle and its counts).
+                    if current_names and new_names & ITEM_NAMED_ENEMIES:
+                        menu_items = {n for n in new_names & ITEM_NAMED_ENEMIES
+                                      if not compendium.find_matching_formations({**self.observed_counts, n: 1})}
+                        if menu_items:
+                            detected_enemies = [e for e in detected_enemies if e["name"] not in menu_items]
+                            detected_names -= menu_items
+                            new_names -= menu_items
 
                     # Battle Square / Arena round transition detection:
                     # If we have existing enemies and detected names contain a new enemy,

@@ -69,6 +69,10 @@ BATTLE_STOP_WORDS = {
     "HOURGLASS", "WARP", "TENT"
 }
 
+# Enemies named like items (compendium names). The battle Item menu shows them in the capture
+# region, so they are not stop words; the capture loop ignores one that cannot join the battle.
+ITEM_NAMED_ENEMIES = {"Grenade", "Right Arm"}
+
 RE_LEADING_MODIFIERS = re.compile(r"^[+*>\-#\.\s]+")
 RE_DIGITS_AND_SYMBOLS = re.compile(r"^[0-9\s/%\.:\-,+*#]+$")
 RE_ROW_DESIGNATION = re.compile(r"\s*[\(\[]?(?:back|front)(?:\s*row)?[\)\]]?", re.IGNORECASE)
