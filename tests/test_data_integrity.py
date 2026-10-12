@@ -172,6 +172,11 @@ class TestEnemyData(unittest.TestCase):
         self.assertEqual(solo, {"gorkii", "shake", "chekhov", "staniv", "godo"})
         self.assertIn("Materia", self.by_name["Rapps"]["notes"])
 
+    def test_boss_notes_avoid_corrected_claims(self):
+        # GEMINI-20261012-02 and -04: a Ribbon does not stop Reflect, and Big Bomber hits one member
+        self.assertNotIn("(a Ribbon", self.by_name["Proud Clod"]["notes"])
+        self.assertIn("Big Bomber at one member", self.by_name["Air Buster"]["notes"])
+
 
 class TestFormationData(unittest.TestCase):
     @classmethod

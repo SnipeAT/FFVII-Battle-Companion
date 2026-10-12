@@ -6281,7 +6281,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Turns to face whoever hit it last, and hits to its back deal far more damage. Have Cloud strike first so Barret and Tifa get its back, then keep alternating. Counters with Bodyblow, uses Big Bomber on the party early on, and stops turning below 20% HP."
+    "notes": "Hits to its back deal far more damage, and each one draws a counter: usually it turns and uses Bodyblow on the attacker, otherwise it fires Rear Gun. On its own turns it faces the member it targets, so alternate attackers to keep reaching its back. Fires Big Bomber at one member up to 4 times, then switches to Energy Ball and Rear Gun. Below 20% HP it can no longer turn."
   },
   {
     "id": "hedgehog-pie",
@@ -11266,7 +11266,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Has a physical side and a magic side. Use magic and Enemy Skills while it fights physically, then physical attacks and Limits once it turns to its magic side, which resists magic. Its punches hit one member very hard.",
+    "notes": "Starts half physical, half magic. Below half HP it becomes the form that matches the hit that got it there: magic leaves the red magic form, which resists magic and casts spells, and physical leaves the purple physical form, which resists physical attacks and hits one member for 2000 or more with Lost Blow. Finish the first half with magic, then use physical attacks and Limits.",
     "variants": [
       {
         "enemy_ids": [
@@ -17358,7 +17358,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "While Jamar Armor stands, Proud Clod can use Materia Jammer to put Reflect on one member (a Ribbon blocks it), so destroy Jamar Armor first. Proud Clod fires machine guns and beams, and once damaged enough adds Beam Cannon on the whole party. Big Guard and Regen keep the fight safe."
+    "notes": "While Jamar Armor stands, Proud Clod can use Materia Jammer to put Reflect on one member, and a Ribbon does not stop it, so destroy Jamar Armor first. Proud Clod fires machine guns and beams, and once damaged enough adds Beam Cannon on the whole party. Big Guard and Regen keep the fight safe."
   },
   {
     "id": "jamar-armor",
