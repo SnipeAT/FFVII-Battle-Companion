@@ -441,11 +441,14 @@ class TestCaptureLoopLifecycle(unittest.TestCase):
         service = CaptureService()
         errors = []
 
+        states = []
+
         def worker():
             try:
                 service._apply_thread_qos(True)
                 service._apply_thread_qos(False)
                 service._apply_thread_qos(False)
+                states.append(service._thread_qos.efficient)
             except Exception as exc:  # pragma: no cover - failure path
                 errors.append(exc)
 
@@ -453,7 +456,68 @@ class TestCaptureLoopLifecycle(unittest.TestCase):
         t.start()
         t.join()
         self.assertEqual(errors, [])
-        self.assertFalse(service._qos_efficient)
+        self.assertEqual(states, [False])
+
+    def _blocking_service(self):
+        """A service whose loop steps block in the window lookup until `release` is set, with
+        every thread that looked up the window recorded in `calls` (no screen is captured)."""
+        service = CaptureService()
+        service.release = threading.Event()
+        service.calls = []
+
+        def find_window():
+            service.calls.append(threading.current_thread())
+            service.release.wait(10)
+            return None
+
+        service.window_finder.find_ffvii_window = find_window
+        service.window_finder._scan_interval = 0.01
+        return service
+
+    def _wait_for(self, condition, timeout=5.0):
+        deadline = time.monotonic() + timeout
+        while not condition():
+            self.assertLess(time.monotonic(), deadline, "timed out")
+            time.sleep(0.01)
+
+    def test_start_after_a_timed_out_stop_runs_one_loop(self):
+        # CLAUDE-20261012-B04: stop() gave up after 2 s while a step was still running, and the
+        # next start() cleared the shared stop event, so the old thread kept looping next to the
+        # new one
+        service = self._blocking_service()
+        cfg = make_config(mode="auto_window")
+        with mock.patch.object(calibration_manager, "get_config", return_value=cfg):
+            service.start()
+            self._wait_for(lambda: service.calls)
+            old = service.calls[0]
+            service.stop()  # times out: the step is blocked
+            self.assertTrue(old.is_alive())
+            service.start()
+            service.release.set()
+            self._wait_for(lambda: not old.is_alive())
+            self._wait_for(lambda: any(t is not old for t in service.calls))
+            time.sleep(0.1)
+            service.stop()
+        self.assertEqual(sum(1 for t in service.calls if t is old), 1)
+        self.assertEqual([t for t in threading.enumerate() if t.name == "FFVIICaptureLoop" and t.is_alive()], [])
+
+    def test_restarted_capture_thread_sets_its_qos(self):
+        # CLAUDE-20261012-B06: the QoS state was kept on the service, so a restarted loop (a new
+        # thread, normal priority) skipped setting its priority and EcoQoS
+        from ffvii_companion.engine import capture_service as module
+        service = self._blocking_service()
+        service.release.set()
+        applied = []
+        cfg = make_config(mode="auto_window")
+        with mock.patch.object(calibration_manager, "get_config", return_value=cfg),                 mock.patch.object(module.win_qos, "set_current_thread_qos",
+                                  side_effect=lambda **kw: applied.append(threading.current_thread())):
+            for _ in range(2):
+                service.start()
+                self._wait_for(lambda: service.calls and service.calls[-1].is_alive())
+                service.stop()
+                service.calls.clear()
+        self.assertEqual(len(applied), 2)
+        self.assertIsNot(applied[0], applied[1])
 
 
 if __name__ == "__main__":

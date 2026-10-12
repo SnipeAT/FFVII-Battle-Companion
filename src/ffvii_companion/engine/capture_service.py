@@ -82,7 +82,7 @@ class CaptureService:
         self.current_fps: float = 0.5
 
         # Loop bookkeeping
-        self._qos_efficient: Optional[bool] = None
+        self._thread_qos = threading.local()  # .efficient: the QoS this loop thread last set
         self._last_error: Tuple[str, float] = ("", 0.0)
         self.ocr_frames = 0
         self.gated_frames = 0
@@ -94,9 +94,14 @@ class CaptureService:
         with self._lock:
             if self._running:
                 return
-            self._stop_event.clear()
+            # Every loop thread gets its own stop event: a stop() that timed out while a step was
+            # still running (REPORT holding _capture_lock, slow OCR) leaves that thread finishing
+            # its step, and a shared event cleared here would keep it looping next to the new one.
+            # The new thread first waits for the old one to end.
+            self._stop_event = threading.Event()
             self._running = True
-            self._thread = threading.Thread(target=self._loop, daemon=True, name="FFVIICaptureLoop")
+            self._thread = threading.Thread(target=self._loop, args=(self._stop_event, self._thread),
+                                            daemon=True, name="FFVIICaptureLoop")
             self._thread.start()
             logger.info("FFVII Screen Capture service started.")
 
@@ -156,11 +161,13 @@ class CaptureService:
         self.detector.confidence_threshold = cfg["confidence_threshold"]
 
     def _apply_thread_qos(self, efficient: bool):
-        """Switches the capture thread between EcoQoS (efficiency cores) and full speed."""
-        if self._qos_efficient is efficient:
+        """Switches the capture thread between EcoQoS (efficiency cores) and full speed. Priority
+        and QoS belong to the thread, so the state is kept per thread (a restarted loop is a new
+        thread that starts at normal priority)."""
+        if getattr(self._thread_qos, "efficient", None) is efficient:
             return
         win_qos.set_current_thread_qos(efficient=efficient, below_normal=True)
-        self._qos_efficient = efficient
+        self._thread_qos.efficient = efficient
 
     def _log_error(self, message: str):
         """Logs loop errors without flooding the log when the same error repeats every frame."""
@@ -663,14 +670,18 @@ class CaptureService:
         }
 
     # ------------------------------------------------------------------ loop
-    def _loop(self):
+    def _loop(self, stop_event: Optional[threading.Event] = None,
+              previous: Optional[threading.Thread] = None):
         # Below-normal priority always; EcoQoS (efficiency cores) outside the hunting phase.
         # Keeps the background OCR loop off the performance cores FFVII runs on, while
         # still identifying new enemies at full speed.
+        stop_event = stop_event or self._stop_event
+        if previous is not None and previous.is_alive():
+            previous.join()  # a loop whose stop() timed out finishes its step first
         cpu_prev = time.thread_time()
         wall_prev = time.monotonic()
 
-        while self._running:
+        while not stop_event.is_set():
             start_time = time.monotonic()
             cfg = calibration_manager.get_config()
             self._sync_detector_settings(cfg)
@@ -697,7 +708,7 @@ class CaptureService:
                             self._fire_cleared()
                         # FFVII is not running: sleep on stop event
                         scan_int = getattr(self.window_finder, "_scan_interval", 1.0)
-                        if self._stop_event.wait(scan_int):
+                        if stop_event.wait(scan_int):
                             break
                         continue
 
@@ -752,7 +763,7 @@ class CaptureService:
             with self._state_lock:
                 fps = self._phase_fps(cfg, self.combat_phase)
             elapsed = time.monotonic() - start_time
-            if self._stop_event.wait(max(0.01, (1.0 / fps) - elapsed)):
+            if stop_event.wait(max(0.01, (1.0 / fps) - elapsed)):
                 break
 
 capture_service = CaptureService()
