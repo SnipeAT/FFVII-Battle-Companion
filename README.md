@@ -123,8 +123,8 @@ Note: the launchers prefer `dist\FFVII_Companion\FFVII_Companion.exe`. After cha
 
 | Flag | Default | Description |
 | :--- | :--- | :--- |
-| `--host <IP>` | `127.0.0.1` | Interface to bind. `0.0.0.0` lets iPads / other devices on your LAN connect. |
-| `--port <PORT>` | `59314` | HTTP and WebSocket port. If occupied, the next free port is used. |
+| `--host <IP>` | `127.0.0.1` | Interface to bind. `0.0.0.0` lets iPads / other devices on your LAN connect; one LAN address (`192.168.1.5`) or an IPv6 address (`::1`, `::`) works too. |
+| `--port <PORT>` | `59314` | HTTP and WebSocket port. If occupied, the next free port is used, and the window title shows it. |
 | `--on-top` | off | Start pinned Always on Top (also toggled with the **PIN** button). |
 | `--no-capture` | off | Do not start the capture loop on launch (start it with **CAPTURE**). |
 | `--normal-priority` | off | Do not run the companion in Windows Efficiency mode. |

@@ -87,12 +87,33 @@ def show_startup_error(message: str) -> None:
         except Exception:
             pass
 
+def local_address(host: str) -> str:
+    """The address this PC reaches a server bound to host at: 0.0.0.0 / :: are bind-only
+    addresses (connecting to them fails on Winsock), so their loopback address."""
+    if host in ("0.0.0.0", ""):
+        return "127.0.0.1"
+    if host == "::":
+        return "::1"
+    return host
+
+
+def http_url(host: str, port: int, path: str = "") -> str:
+    """URL of the server bound to host:port, as this PC reaches it (IPv6 in brackets)."""
+    address = local_address(host)
+    if ":" in address:
+        address = f"[{address}]"
+    return f"http://{address}:{port}{path}"
+
+
 def is_port_in_use(port: int, host: str = "127.0.0.1") -> bool:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    try:
+        family, kind, proto, _, sockaddr = socket.getaddrinfo(
+            local_address(host), port, type=socket.SOCK_STREAM)[0]
+    except (OSError, UnicodeError):
+        return False  # not an address of this PC: binding fails, and main() reports that
+    with socket.socket(family, kind, proto) as s:
         s.settimeout(0.3)
-        # 0.0.0.0 / :: are bind-only addresses; connecting to them fails on Winsock
-        probe = "127.0.0.1" if host in ("0.0.0.0", "", "::") else host
-        return s.connect_ex((probe, port)) == 0
+        return s.connect_ex(sockaddr) == 0
 
 def find_available_port(start_port: int = 59314, host: str = "127.0.0.1") -> int:
     port = start_port
@@ -258,7 +279,7 @@ def main():
 
     port = args.port
     if is_port_in_use(port, args.host):
-        if wait_for_server(f"http://127.0.0.1:{port}/api/health", timeout=0.5):
+        if wait_for_server(http_url(args.host, port, "/api/health"), timeout=0.5):
             # A second instance would run a second capture loop on the same game window
             logger.warning(f"A companion is already running on port {port}; exiting.")
             sys.exit(0)
@@ -289,10 +310,10 @@ def main():
     server_thread.start()
 
     # Wait until Uvicorn server is accepting requests
-    health_url = f"http://127.0.0.1:{port}/api/health"
+    health_url = http_url(args.host, port, "/api/health")
     logger.info(f"Starting companion server on http://{args.host}:{port} ...")
     if not wait_for_server(health_url, timeout=6.0):
-        show_startup_error(f"The companion server did not start on port {port} within 6 seconds.")
+        show_startup_error(f"The companion server did not start on {args.host} port {port} within 6 seconds.")
         sys.exit(1)
 
     logger.info("Companion server running successfully.")
@@ -306,11 +327,14 @@ def main():
             logger.error(f"Failed to auto-start capture engine: {e}")
 
     # Create native window WITHOUT js_api (eliminates pywebview COM deadlock)
-    display_host = "127.0.0.1" if args.host == "0.0.0.0" else args.host
-    window_url = f"http://{display_host}:{port}"
+    window_url = http_url(args.host, port)
+    # The port other devices need when the requested one was taken (the LAN launcher prints 59314)
+    title = "FFVII Tactical Battle Companion"
+    if port != args.port:
+        title += f" (port {port})"
 
     window = webview.create_window(
-        title="FFVII Tactical Battle Companion",
+        title=title,
         url=window_url,
         width=args.width,
         height=args.height,

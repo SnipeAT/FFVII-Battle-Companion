@@ -210,6 +210,27 @@ class TestPortProbe(unittest.TestCase):
             self.assertTrue(is_port_in_use(port, "0.0.0.0"))
             self.assertTrue(is_port_in_use(port, "127.0.0.1"))
 
+    def test_other_hosts(self):
+        # CLAUDE-20261012-A06: --host ::1 raised in is_port_in_use, and the health check always
+        # polled 127.0.0.1, so a server bound to one LAN address never counted as started
+        import socket
+        from ffvii_companion.desktop import http_url, is_port_in_use
+        self.assertEqual(http_url("0.0.0.0", 59314, "/api/health"), "http://127.0.0.1:59314/api/health")
+        self.assertEqual(http_url("::", 59314), "http://[::1]:59314")
+        self.assertEqual(http_url("::1", 59314), "http://[::1]:59314")
+        self.assertEqual(http_url("192.168.1.5", 59315), "http://192.168.1.5:59315")
+        self.assertFalse(is_port_in_use(59314, "not a host name"))
+        if socket.has_ipv6:
+            with socket.socket(socket.AF_INET6) as srv:
+                try:
+                    srv.bind(("::1", 0))
+                except OSError:
+                    self.skipTest("no IPv6 loopback")
+                srv.listen(5)
+                port = srv.getsockname()[1]
+                self.assertTrue(is_port_in_use(port, "::1"))
+                self.assertTrue(is_port_in_use(port, "::"))
+
 class TestWinQoS(unittest.TestCase):
     def test_thread_qos_in_worker_thread(self):
         results = []
