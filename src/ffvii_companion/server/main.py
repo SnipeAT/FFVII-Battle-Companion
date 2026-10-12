@@ -151,6 +151,7 @@ class ConnectionManager:
     def __init__(self):
         self.active_connections: Set[WebSocket] = set()
         self.loop: Optional[asyncio.AbstractEventLoop] = None
+        self._closing: Set[asyncio.Task] = set()  # close tasks of dropped clients (kept referenced)
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
@@ -175,8 +176,21 @@ class ConnectionManager:
 
         results = await asyncio.gather(*[_send_safe(ws) for ws in connections], return_exceptions=True)
         for ws, res in zip(connections, results):
-            if res is not True:
+            if res is not True and ws in self.active_connections:
                 self.active_connections.discard(ws)
+                # Close it too: a dropped socket left open stays connected (the browser answers
+                # pings), so the dashboard would show LIVE SYNC without ever getting another
+                # update. The close frame makes its onclose reconnect and resync.
+                task = asyncio.create_task(self._close_dropped(ws))
+                self._closing.add(task)
+                task.add_done_callback(self._closing.discard)
+
+    @staticmethod
+    async def _close_dropped(ws: WebSocket):
+        try:
+            await asyncio.wait_for(ws.close(code=1011), timeout=1.5)
+        except Exception:
+            pass  # already gone; a client that never reads gets the frame once it reads again
 
     async def broadcast(self, message: dict):
         if not self.active_connections:

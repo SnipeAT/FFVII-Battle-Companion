@@ -557,3 +557,38 @@ class TestWebSocket(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBroadcastDropsSlowClients(unittest.TestCase):
+    class FakeSocket:
+        def __init__(self, fail: bool):
+            self.fail, self.sent, self.closed_with = fail, [], None
+
+        async def send_text(self, text):
+            if self.fail:
+                raise RuntimeError("send timed out")
+            self.sent.append(text)
+
+        async def close(self, code=1000):
+            self.closed_with = code
+
+    def test_a_dropped_client_is_closed_so_it_reconnects(self):
+        # CLAUDE-20261012-A02: a client dropped after one failed send stayed connected and
+        # showed LIVE SYNC without getting another update
+        import asyncio
+        from ffvii_companion.server.main import ConnectionManager
+
+        async def run():
+            manager = ConnectionManager()
+            slow, fine = self.FakeSocket(fail=True), self.FakeSocket(fail=False)
+            manager.active_connections.update({slow, fine})
+            await manager.broadcast({"type": "BATTLE_UPDATE"})
+            await asyncio.sleep(0)  # let the close task run
+            await asyncio.gather(*manager._closing)
+            return manager, slow, fine
+
+        manager, slow, fine = asyncio.run(run())
+        self.assertEqual(manager.active_connections, {fine})
+        self.assertEqual(slow.closed_with, 1011)
+        self.assertIsNone(fine.closed_with)
+        self.assertEqual(len(fine.sent), 1)
