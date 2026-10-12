@@ -13,6 +13,12 @@ class ScreenCaptureEngine:
         """
         self.sct = mss.MSS()
         self.monitors = self.sct.monitors
+        self.select_monitor(monitor_index)
+
+    def select_monitor(self, monitor_index: Optional[int]):
+        """Captures monitor_index from now on (the setting as saved; `monitor_index` is the
+        monitor actually used, after the fallback described in __init__)."""
+        self.requested_monitor = monitor_index
         if monitor_index is not None and 1 <= monitor_index < len(self.monitors):
             self.monitor_index = monitor_index
         else:

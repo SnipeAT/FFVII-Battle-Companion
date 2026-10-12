@@ -202,9 +202,12 @@ class CaptureService:
             height = max(64, int(target_win["height"] * roi["height_pct"]))
             return {"top": top, "left": left, "width": width, "height": height}
 
-        # Fallback to monitor coordinates
+        # Fallback to monitor coordinates, of the monitor the settings name now (the setting can
+        # change while the companion runs)
         with self._state_lock:
             self.last_game_window = None
+        if self.capture_engine.requested_monitor != cfg["monitor_index"]:
+            self.capture_engine.select_monitor(cfg["monitor_index"])
         mon = self.capture_engine.monitors[self.capture_engine.monitor_index]
         top = int(mon["top"] + mon["height"] * roi["top_pct"])
         left = int(mon["left"] + mon["width"] * roi["left_pct"])

@@ -306,6 +306,23 @@ class TestCaptureBbox(unittest.TestCase):
         self.assertLess(bbox["left"], 0)
         self.assertLess(bbox["top"], 0)
 
+    def test_monitor_change_applies_without_restart(self):
+        # CLAUDE-20261012-A07: a changed monitor_index was saved and reported but the capture
+        # engine kept the monitor it started with
+        service = CaptureService()
+        engine = service.capture_engine
+        engine.monitors = [
+            {"left": 0, "top": 0, "width": 3840, "height": 1080},
+            {"left": 0, "top": 0, "width": 1920, "height": 1080},
+            {"left": 1920, "top": 0, "width": 1920, "height": 1080},
+        ]
+        roi = {"top_pct": 0.0, "left_pct": 0.0, "width_pct": 1.0, "height_pct": 1.0}
+        for monitor, left in ((1, 0), (2, 1920), (1, 0)):
+            cfg = make_config(mode="custom_roi", monitor_index=monitor, roi=roi)
+            with mock.patch.object(calibration_manager, "get_config", return_value=cfg):
+                self.assertEqual(service._calculate_capture_bbox()["left"], left, monitor)
+            self.assertEqual(engine.monitor_index, monitor)
+
 
 class TestDiagnosticSnapshot(unittest.TestCase):
     def test_snapshot_applies_current_detector_settings(self):
