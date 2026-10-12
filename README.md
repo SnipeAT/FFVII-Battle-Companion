@@ -270,6 +270,10 @@ The item steal value comes from the enemy data (8 = rare, 32 = common, 63 = very
   .\.venv\Scripts\python.exe -m tools.benchmark_loop recordings\session1
   ```
 - `tools/ff7_synthetic.py` - synthetic battle / field frames in the FFNx layout, used by the tests.
+- `tools/ai_script.py` - prints an enemy's attacks (targets, power, status effects, elements) and its battle AI scripts from the game's `scene.bin` (Steam edition install), to check the tactical notes against what the enemy really does:
+  ```powershell
+  .\.venv\Scripts\python.exe -m tools.ai_script "Motor Ball"
+  ```
 - Simulator CLI (needs the app running):
   ```powershell
   .\.venv\Scripts\python.exe -m ffvii_companion.server.simulator tour    # cycle through preset encounters
@@ -395,7 +399,7 @@ FFVII-Battle-Companion/
 │       ├── simulator.py          # Preset encounters + CLI for exercising the dashboard
 │       └── static/               # Dashboard (index.html, app.js, style.css)
 ├── tests/                        # unittest suite + recorded real-frame fixtures
-├── tools/                        # Frame recorder, loop benchmark, synthetic frames, scene.bin enrichment
+├── tools/                        # Frame recorder, loop benchmark, synthetic frames, scene.bin enrichment, AI scripts
 ├── build_tools/                  # build_exe.py, package_release.py (release zip), ffvii_companion.spec (PyInstaller), licenses/
 ├── pyproject.toml                # Package metadata and dependencies
 ├── Launch_Desktop_App.bat / Launch_LAN_iPad.bat                     # Double-click launchers
