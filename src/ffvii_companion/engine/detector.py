@@ -73,7 +73,6 @@ RE_LEADING_MODIFIERS = re.compile(r"^[+*>\-#\.\s]+")
 RE_DIGITS_AND_SYMBOLS = re.compile(r"^[0-9\s/%\.:\-,+*#]+$")
 RE_ROW_DESIGNATION = re.compile(r"\s*[\(\[]?(?:back|front)(?:\s*row)?[\)\]]?", re.IGNORECASE)
 RE_INSTANCE_LETTER = re.compile(r"(?:\s+|(?<=[a-zA-Z]))([A-Ha-h])$")
-RE_TRAILING_DIGIT = re.compile(r"\s+[0-9]$")
 
 # Battle HUD labels and commands. They count only as a whole line or followed by a value ("HP",
 # "HP 9999"): field menus use the same words inside longer text ("Sneak Attack", "HP Absorb").
@@ -182,19 +181,27 @@ class BattleDetector:
         if letter_match and not exact_name:
             stem = cleaned[:letter_match.start()].strip()
             spaced = cleaned[letter_match.start()].isspace()
+            letter = letter_match.group(1).upper()
+            letter_count = ord(letter) - ord('A') + 1
+            stem_enemy = compendium.get_by_name(stem) or compendium.match_enemy(stem)
+            # The formations say how many of an enemy a battle can hold: a letter that claims
+            # more is not an instance letter ("Jenova·BlRTH" is no H, eight Jenovas)
+            most = compendium.max_count(stem_enemy["name"]) if stem_enemy else None
+            possible = most is None or letter_count <= most
             # A letter glued to the name ("SweeperA", OCR dropped the space) only counts as an
             # instance letter when it is a capital, as the game shows them (a glued lowercase a-h
-            # is the end of a misread name, "Grosspanzer Blg"), and the remaining stem is itself
-            # a known enemy name.
-            glued_ok = letter_match.group(1).isupper() and (
-                compendium.get_by_name(stem) is not None or compendium.match_enemy(stem) is not None)
+            # is the end of a misread name, "Grosspanzer Blg"), the remaining stem is itself
+            # a known enemy name, and the count is possible. Otherwise the letter is part of the
+            # name, misread somewhere else.
+            glued_ok = letter_match.group(1).isupper() and stem_enemy is not None and possible
             if spaced or glued_ok:
-                instance_letter = letter_match.group(1).upper()
-                min_count = ord(instance_letter) - ord('A') + 1
+                # A separate letter beyond the formations is a misread letter: it is dropped, and
+                # the count stays within what a battle can hold
+                instance_letter = letter if possible else None
+                min_count = letter_count if possible else most
                 cleaned = stem
-        elif not exact_name:
-            # Strip trailing digit or isolated single character if not a valid instance letter
-            cleaned = RE_TRAILING_DIGIT.sub("", cleaned).strip()
+        # A trailing digit stays: it can belong to the name ("Unknown 2"), and match_enemy tries
+        # the name with and without it
 
         cleaned_upper = cleaned.upper()
 

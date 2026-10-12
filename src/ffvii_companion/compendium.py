@@ -198,6 +198,12 @@ class EnemyCompendium:
             return self._enemies_cache[self._name_map[target]]
         return None
 
+    def max_count(self, name: str) -> Optional[int]:
+        """The most of this enemy (canonical name) that one formation holds; None when no
+        formation has it."""
+        forms = self._formations_by_enemy.get(name)
+        return max(form["enemies"][name] for form in forms) if forms else None
+
     def get_by_normalized_name(self, name: str) -> Optional[Dict[str, Any]]:
         """
         The enemy whose name, in-game spelling or OCR alias equals `name` apart from case and
@@ -375,12 +381,14 @@ class EnemyCompendium:
             # For very short queries (< 4 chars), require exact match only
             res = None
         else:
-            # 2. Fast fuzzy match over precomputed normalized names list
-            result = process.extractOne(
-                norm_query,
-                self._normalized_names_list,
-                scorer=fuzz.ratio
-            )
+            # 2. Fast fuzzy match over precomputed normalized names list. The query as read
+            # competes with its stripped form and wins a tie: a misread name can end in a digit
+            # or letter of its own ("Unkn0wn 2" is Unknown 2, "Turks:Rnde" is Rude, not Reno).
+            result = process.extractOne(norm_query, self._normalized_names_list, scorer=fuzz.ratio)
+            if exact and exact != norm_query:
+                unstripped = process.extractOne(exact, self._normalized_names_list, scorer=fuzz.ratio)
+                if unstripped and (not result or unstripped[1] >= result[1]):
+                    result, norm_query = unstripped, exact
             if result:
                 matched_norm, score, _ = result
                 # Only match if score meets cutoff and length disparity is minimal (prevents substring word matches)
