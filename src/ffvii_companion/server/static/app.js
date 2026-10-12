@@ -168,6 +168,7 @@ function updateWsStatus(text, statusClass) {
 }
 
 let lastRenderedStateKey = "";
+let lastRenderedBattleKey = "";
 let lastTimeUpdatedMs = 0;
 const renderedCardElements = new Map(); // enemyId -> { el: HTMLElement, count: number }
 let isPageVisible = !document.hidden;
@@ -183,9 +184,10 @@ document.addEventListener("visibilitychange", () => {
 function renderBattleState(state) {
   // The party values are part of the key: a profile change re-sends the battle with new steal odds
   const party = state.party ? `${state.party.party_level}:${state.party.sneak_glove}` : "";
-  const currentStateKey = state.in_battle && state.enemies && state.enemies.length > 0
-    ? `${state.battle_title}|${state.enemies.map(e => `${e.id}:${e.count || 1}:${variantKey(e)}`).join(",")}|${party}`
+  const battleKey = state.in_battle && state.enemies && state.enemies.length > 0
+    ? `${state.battle_title}|${state.enemies.map(e => `${e.id}:${e.count || 1}:${variantKey(e)}`).join(",")}`
     : "idle";
+  const currentStateKey = battleKey === "idle" ? battleKey : `${battleKey}|${party}`;
 
   if (currentStateKey === lastRenderedStateKey) {
     const nowMs = Date.now();
@@ -196,6 +198,8 @@ function renderBattleState(state) {
     return;
   }
   lastRenderedStateKey = currentStateKey;
+  const battleChanged = battleKey !== lastRenderedBattleKey;
+  lastRenderedBattleKey = battleKey;
 
   const updateDOM = () => {
     const nowMs = Date.now();
@@ -288,8 +292,12 @@ function renderBattleState(state) {
     updatePartnersBar(state.enemies);
   };
 
+  // A view transition draws its snapshots above the top layer, so an open dialog (e.g. the
+  // Steal Calculator, whose Sneak Glove toggle re-sends the battle) would lose its backdrop and
+  // see the cards flash over it. Only animate a change of enemies, never a profile-only update.
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (document.startViewTransition && !prefersReducedMotion && isPageVisible) {
+  const dialogOpen = document.querySelector("dialog[open]") !== null;
+  if (document.startViewTransition && !prefersReducedMotion && isPageVisible && battleChanged && !dialogOpen) {
     document.startViewTransition(updateDOM);
   } else {
     updateDOM();
