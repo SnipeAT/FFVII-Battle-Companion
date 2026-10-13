@@ -5,12 +5,22 @@ against what the enemy really does (who it targets, when it counters, what its a
     .\\.venv\\Scripts\\python.exe -m tools.ai_script "Motor Ball"
     .\\.venv\\Scripts\\python.exe -m tools.ai_script jenova --scene 227
     .\\.venv\\Scripts\\python.exe -m tools.ai_script "Guard Scorpion" --pseudo
+    .\\.venv\\Scripts\\python.exe -m tools.ai_script --export      (or --check, --candidates)
 
-Read-only; needs the Steam edition installed (--game-dir as in tools/enrich_compendium.py). Every
+Needs the Steam edition installed (--game-dir as in tools/enrich_compendium.py); only --export
+writes a file. Every
 scene.bin record whose name contains the text (case and punctuation ignored) is printed (bosses fought several times have one
 record per scene). For each record: its attacks (targets, power, status effects, elements),
 then each AI script (Init, Main, counters, ...), disassembled or, with --pseudo, decompiled into
 readable pseudo-code (decompile(): if / else, switch, assignments, "use <attack>").
+
+--export writes src/ffvii_companion/data/ai_scripts.json, the dashboard's AI box: for every
+compendium entry (joined to its scene.bin records by name, like tools/enrich_compendium.py), its
+distinct records {"enemy_ids", "scenes", "reacts", "attacks", "scripts"}. --check only reports
+whether that file is up to date. --candidates lists the entries whose AI is worth a hand-written
+summary (ai_summary in enemies.json): an Enemy Skill used only under a condition or never by the
+AI itself, an attack in a counter or death script, battle text, or changes to its own defenses,
+immunities, absorbed elements, HP or attack power.
 
 Opcode names follow Terence Fergusson's notes (Qhimm forums, "Enemy AI (Scripters only!)") and the
 Qhimm wiki's Battle Script and Battle AI Addresses pages (wiki.ffrtt.ru). The stack effect of every
@@ -20,16 +30,19 @@ condition", and confirm anything surprising with a second source (ff7speedruns.c
 scripts for many bosses). Offsets (left column, jump targets, @labels) are relative to the enemy's AI block.
 """
 import argparse
+import json
 import sys
+from collections import defaultdict
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-from ffvii_companion.compendium import ELEMENT_NAMES, ENEMY_SKILLS, name_key
-from tools.enrich_compendium import (ATTACK_IDS_OFFSET, ATTACK_NAMES_OFFSET, DEFAULT_GAME_DIR, E_ATTACKS,
-                                     ENEMY_OFFSET, ENEMY_SIZE, ENEMY_SKILL_FIRST_ID, SCENE_REL, STATUS_BIT_NAMES,
-                                     decode_ff7_string, read_scenes, u16, u32)
+from ffvii_companion.compendium import AI_SCRIPTS_PATH, ELEMENT_NAMES, ENEMY_SKILLS, JSON_PATH, name_key
+from tools.enrich_compendium import (ATTACK_IDS_OFFSET, ATTACK_NAMES_OFFSET, DEFAULT_GAME_DIR, E_ATTACKS, E_LEVEL,
+                                     ENEMY_IDS_OFFSET, ENEMY_OFFSET, ENEMY_SIZE, ENEMY_SKILL_FIRST_ID, SCENE_REL,
+                                     STATUS_BIT_NAMES, decode_ff7_string, dump, is_placeholder_name, read_scenes,
+                                     u16, u32)
 
 ATTACK_DATA_OFFSET = 0x04C0        # 32 x 28-byte attack records, in the order of ATTACK_IDS_OFFSET
 ATTACK_SIZE = 28
@@ -718,14 +731,116 @@ def read_attack_names(scenes: List[bytes]) -> Dict[int, str]:
     return attack_names
 
 
+# ---------------------------------------------------------------------------------------------
+# ai_scripts.json
+
+EXPORT_ATTACK_FIELDS = ("name", "target", "power", "mp", "elements", "statuses", "status_mode", "enemy_skill")
+# Changes to its own fields a player notices (stance changes, barriers, absorbing elements, healing);
+# the others are bookkeeping flags and animations
+NOTABLE_FIELDS = tuple(f"Self.{f} " for f in ("Defense", "MagicDefense", "Evade", "MagicEvade", "PhysicalImmune",
+                                               "MagicImmune", "AbsorbedElements", "HP", "Attack", "MagicAttack"))
+
+
+def export_record(scene: bytes, slot: int, attack_names: Dict[int, str]) -> Optional[dict]:
+    """What the AI box shows of one scene.bin record (None without AI scripts). Unnamed attacks are
+    left out of the attack list: they are animations and form changes (the scripts name them)."""
+    block = ai_block(scene, slot)
+    if block is None:
+        return None
+    attacks = []
+    for a in attack_records(scene, slot, attack_names):
+        if not a["name"]:
+            continue
+        attack = {k: a[k] for k in EXPORT_ATTACK_FIELDS if k in a}
+        if not attack.get("statuses"):
+            attack.pop("status_mode", None)
+        attacks.append(attack)
+    lines = [(name, decompile(block, start, end, attack_names)) for name, start, end in scripts(block)]
+    return {"reacts": reacts(block, attack_names), "attacks": attacks,
+            "scripts": [{"trigger": name, "lines": body} for name, body in lines if body]}
+
+
+def scene_records(scenes: List[bytes]) -> Dict[str, List[Tuple[int, int, int]]]:
+    """(scene, slot, enemy id) of every real enemy record, by name key (as enrich_compendium joins them)."""
+    out: Dict[str, List[Tuple[int, int, int]]] = defaultdict(list)
+    for index, scene in enumerate(scenes):
+        for slot in range(3):
+            rec = scene[ENEMY_OFFSET + slot * ENEMY_SIZE: ENEMY_OFFSET + (slot + 1) * ENEMY_SIZE]
+            name = decode_ff7_string(rec[:32])
+            if not name or rec[E_LEVEL] in (0, 0xFF) or is_placeholder_name(rec[:32]):
+                continue
+            out[name_key(name)].append((index, slot, u16(scene, ENEMY_IDS_OFFSET + slot * 2)))
+    return out
+
+
+def build_ai_scripts(scenes: List[bytes], enemies: List[dict], attack_names: Dict[int, str]) -> Dict[str, list]:
+    """ai_scripts.json: compendium entry id -> its distinct records, ordered by first scene."""
+    by_key = scene_records(scenes)
+    out: Dict[str, list] = {}
+    for enemy in enemies:
+        records: List[dict] = []
+        for index, slot, enemy_id in sorted(by_key.get(name_key(enemy["name"]), [])):
+            content = export_record(scenes[index], slot, attack_names)
+            if content is None:
+                continue
+            same = next((r for r in records if r["content"] == content), None)
+            if same is None:
+                same = {"enemy_ids": set(), "scenes": set(), "content": content}
+                records.append(same)
+            same["enemy_ids"].add(enemy_id)
+            same["scenes"].add(index)
+        if records:
+            out[enemy["id"]] = [{"enemy_ids": sorted(r["enemy_ids"]), "scenes": sorted(r["scenes"]), **r["content"]}
+                                for r in records]
+    return out
+
+
+def candidates(enemies: List[dict], ai_scripts: Dict[str, list]) -> List[str]:
+    """Entries whose AI is worth a hand-written summary, with the reasons."""
+    lines = []
+    for enemy in enemies:
+        reasons = set()
+        for record in ai_scripts.get(enemy["id"], []):
+            if record["reacts"]:
+                reasons.add(f"reacts to {', '.join(record['reacts'])}")
+            skills = {a["name"] for a in record["attacks"] if a.get("enemy_skill")}
+            used = defaultdict(list)    # skill -> (script, indented) of each use
+            for script in record["scripts"]:
+                for line in script["lines"]:
+                    body = line.strip()
+                    if body.startswith("use ") and body[4:] in skills:
+                        used[body[4:]].append((script["trigger"], line != body))
+                    if body.startswith("show "):
+                        reasons.add("battle text")
+                    if body.startswith(NOTABLE_FIELDS):
+                        reasons.add("changes its own " + body.split()[0][5:])
+            for skill in sorted(skills):
+                uses = used.get(skill)
+                if not uses:
+                    reasons.add(f"never uses {skill} itself")
+                elif all(script != "Main" or indented for script, indented in uses):
+                    reasons.add(f"{skill} only under a condition")
+        if reasons:
+            done = "summary" if enemy.get("ai_summary") else "no summary"
+            notes = ", notes" if enemy.get("notes") else ""
+            lines.append(f"{enemy['name']} ({done}{notes}): {'; '.join(sorted(reasons))}")
+    return lines
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.strip().split("\n\n")[0])
-    parser.add_argument("name", help="Text the enemy's scene.bin name contains (any case and punctuation)")
+    parser.add_argument("name", nargs="?", help="Text the enemy's scene.bin name contains (any case and punctuation)")
     parser.add_argument("--scene", type=int, help="Only this scene")
     parser.add_argument("--pseudo", action="store_true", help="Print the scripts as pseudo-code")
+    parser.add_argument("--export", action="store_true", help=f"Write {AI_SCRIPTS_PATH.name}")
+    parser.add_argument("--check", action="store_true",
+                        help=f"Only report whether {AI_SCRIPTS_PATH.name} is up to date (exit code 1 if not)")
+    parser.add_argument("--candidates", action="store_true", help="List the entries worth an AI summary")
     parser.add_argument("--game-dir", type=Path, default=DEFAULT_GAME_DIR,
                         help="FINAL FANTASY VII Steam Edition install directory")
     args = parser.parse_args(argv)
+    if not (args.name or args.export or args.check or args.candidates):
+        parser.error("give an enemy name, --export, --check or --candidates")
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # the middle dot of Jenova·LIFE
     scene_path = args.game_dir / SCENE_REL
@@ -734,6 +849,22 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 2
     scenes = read_scenes(scene_path)
     attack_names = read_attack_names(scenes)
+    if args.export or args.check or args.candidates:
+        enemies = json.loads(JSON_PATH.read_text(encoding="utf-8"))
+        ai_scripts = build_ai_scripts(scenes, enemies, attack_names)
+        if args.candidates:
+            print("\n".join(candidates(enemies, ai_scripts)))
+        text = dump(ai_scripts)
+        current = AI_SCRIPTS_PATH.read_text(encoding="utf-8") if AI_SCRIPTS_PATH.exists() else None
+        if args.check:
+            if text != current:
+                print(f"out of date: {AI_SCRIPTS_PATH}")
+                return 1
+            return 0
+        if args.export and text != current:
+            AI_SCRIPTS_PATH.write_text(text, encoding="utf-8", newline="\n")
+            print(f"updated {AI_SCRIPTS_PATH}: {len(ai_scripts)} of {len(enemies)} entries")
+        return 0
     found = 0
     for index, scene in enumerate(scenes):
         if args.scene is not None and index != args.scene:

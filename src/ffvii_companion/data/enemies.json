@@ -68,6 +68,7 @@
     ],
     "enemy_skills": [],
     "notes": null,
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -269,7 +270,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "grunt",
@@ -328,7 +330,8 @@
       "Beam Gun"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "devil-ride",
@@ -393,7 +396,8 @@
       "Drift Turn"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "custom-sweeper",
@@ -464,7 +468,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "kalm-fang",
@@ -521,7 +526,8 @@
       "Bodyblow"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "prowler",
@@ -576,7 +582,8 @@
       "Hit"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "mu",
@@ -631,7 +638,8 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "levrikon",
@@ -686,7 +694,8 @@
       "Flaming Peck"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "elfadunk",
@@ -739,7 +748,8 @@
       "Shower"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "mandragora",
@@ -792,7 +802,8 @@
       "Slow Dance"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "chocobo",
@@ -861,6 +872,7 @@
       }
     ],
     "notes": null,
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -1364,7 +1376,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "nerosuferoth",
@@ -1410,7 +1423,8 @@
       "Heatwing"
     ],
     "enemy_skills": [],
-    "notes": "Common in Junon Area / Fort Condor & Battle Square. Susceptible to all magic and physical attacks."
+    "notes": "Common in Junon Area / Fort Condor & Battle Square. Susceptible to all magic and physical attacks.",
+    "ai_summary": null
   },
   {
     "id": "formula",
@@ -1474,7 +1488,8 @@
       "Cross Impulse"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "hell-rider-vr2",
@@ -1538,7 +1553,8 @@
       "Ballistic"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "capparwire",
@@ -1593,7 +1609,8 @@
       "Grand Spark"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "grangalan",
@@ -1650,7 +1667,8 @@
       "Darkeye"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "grangalan-jr",
@@ -1707,7 +1725,8 @@
       "Triclops"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "grangalan-jrjr",
@@ -1764,7 +1783,8 @@
       "Stop Eye"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "needle-kiss",
@@ -1828,7 +1848,8 @@
       "Thunder Kiss"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "cokatolis",
@@ -1887,7 +1908,8 @@
       "Petrify Smog"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "beachplug",
@@ -1940,7 +1962,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "spencer",
@@ -1994,7 +2017,8 @@
       "Upper Cutter"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "flapbeat",
@@ -2057,7 +2081,8 @@
       "Flying Sickle"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "joker",
@@ -2108,7 +2133,8 @@
       "Spinning Card"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "harpy",
@@ -2177,7 +2203,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "grand-horn",
@@ -2226,7 +2253,8 @@
       "Grand Punch"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "gagighandi",
@@ -2279,7 +2307,8 @@
       "Stone Stare"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "touch-me",
@@ -2341,7 +2370,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "griffin",
@@ -2400,7 +2430,8 @@
     "morph": "Phoenix Down",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "bagrisk",
@@ -2466,7 +2497,8 @@
       "Stone Strike"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "desert-sahagin",
@@ -2527,7 +2559,8 @@
       "Sandgun"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "skeeskee",
@@ -2583,7 +2616,8 @@
       "Rage Bomber"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "golem",
@@ -2638,7 +2672,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "crown-lance",
@@ -2692,7 +2727,8 @@
     "morph": "Dream Powder",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "nibel-wolf",
@@ -2745,7 +2781,8 @@
       "Fang"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "valron",
@@ -2797,7 +2834,8 @@
       "Dive Kick"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "bahba-velamyu",
@@ -2845,7 +2883,8 @@
       "Magic Cutter"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "battery-cap",
@@ -2902,7 +2941,8 @@
       "Four Laser"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "velcher-task",
@@ -2957,7 +2997,8 @@
       "Poison Blow"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "kyuvilduns",
@@ -3005,7 +3046,8 @@
       "Lay Flat"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "razor-weed",
@@ -3064,7 +3106,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "tail-vault",
@@ -3112,7 +3155,8 @@
       "Somersault"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "edgehead",
@@ -3166,7 +3210,8 @@
       "Electric Burst"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "thunderbird",
@@ -3233,7 +3278,8 @@
       "Lightning"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "bizarre-bug",
@@ -3284,7 +3330,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "under-lizard",
@@ -3339,7 +3386,8 @@
       "Petrified Frog"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "dual-horn",
@@ -3392,7 +3440,8 @@
       "Horn Lift"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "tonadu",
@@ -3455,7 +3504,8 @@
       "Big Sound"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "slaps",
@@ -3508,7 +3558,8 @@
     "morph": "Hyper",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "kelzmelzer",
@@ -3562,7 +3613,8 @@
       "Liquid poison"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "vlakorados",
@@ -3623,7 +3675,8 @@
     "morph": "Elixir",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "trickplay",
@@ -3681,7 +3734,8 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "bandersnatch",
@@ -3741,7 +3795,8 @@
       "Bite"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "jumping",
@@ -3787,7 +3842,8 @@
       "Club Sword"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "ice-golem",
@@ -3846,7 +3902,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "lessaloploth",
@@ -3912,7 +3969,8 @@
       "Aero3"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "hippogriff",
@@ -3963,7 +4021,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "spiral",
@@ -4019,7 +4078,8 @@
     "morph": "Guard Source",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "head-hunter",
@@ -4072,7 +4132,8 @@
       "Rising Dagger"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "crysales",
@@ -4116,7 +4177,8 @@
       "Sleep Scales"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "sea-worm",
@@ -4188,7 +4250,8 @@
       "Sandstorm"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "cactuer",
@@ -4230,7 +4293,8 @@
       "Mystery Kick"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "goblin",
@@ -4293,7 +4357,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "cactuar",
@@ -4360,7 +4425,8 @@
       "Mystery Kick"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "mystery-ninja",
@@ -4413,6 +4479,7 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": null,
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -4773,6 +4840,7 @@
       }
     ],
     "notes": "Flees after a few turns and must be chased across the world map, ramming it with the Highwind to start each fight. Ultima Beam hits the whole party. Its final act is Shadow Flare on whoever lands the killing blow; give that character Enemy Skill to learn it.",
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -5093,6 +5161,7 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": null,
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -5316,7 +5385,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "mp",
@@ -5371,7 +5441,8 @@
       "Tonfa"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "guard-hound",
@@ -5427,7 +5498,8 @@
       "Tentacle"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "mono-drive",
@@ -5487,7 +5559,8 @@
       "Fire"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "1st-ray",
@@ -5538,7 +5611,8 @@
       "Laser Cannon"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "sweeper",
@@ -5591,7 +5665,8 @@
       "Smoke Shot"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "guard-scorpion",
@@ -5653,7 +5728,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Search Scope only marks the next target and does no damage. When it raises its tail, stop attacking: any hit while the tail is up triggers Tail Laser on the whole party. Defend or heal until the tail lowers, then go back to Bolt and attacks."
+    "notes": "Search Scope only marks the next target and does no damage. When it raises its tail, stop attacking: any hit while the tail is up triggers Tail Laser on the whole party. Defend or heal until the tail lowers, then go back to Bolt and attacks.",
+    "ai_summary": null
   },
   {
     "id": "grashtrike",
@@ -5707,7 +5783,8 @@
       "Silk"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "chuse-tank",
@@ -5763,7 +5840,8 @@
       "Rolling Claw"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "rocket-launcher",
@@ -5816,6 +5894,7 @@
     ],
     "enemy_skills": [],
     "notes": null,
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -5981,7 +6060,8 @@
       "Hell Bubbles"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "special-combatant",
@@ -6042,7 +6122,8 @@
       "Wave"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "blood-taste",
@@ -6097,7 +6178,8 @@
       "Tentacle Drain"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "proto-machinegun",
@@ -6150,7 +6232,8 @@
       "Machine Gun"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "smogger",
@@ -6216,7 +6299,8 @@
       "Smog"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "air-buster",
@@ -6281,7 +6365,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Hits to its back deal far more damage, and each one draws a counter: usually it turns and uses Bodyblow on the attacker, otherwise it fires Rear Gun. On its own turns it faces the member it targets, so alternate attackers to keep reaching its back. Fires Big Bomber at one member up to 4 times, then switches to Energy Ball and Rear Gun. Below 20% HP it can no longer turn."
+    "notes": "Hits to its back deal far more damage, and each one draws a counter: usually it turns and uses Bodyblow on the attacker, otherwise it fires Rear Gun. On its own turns it faces the member it targets, so alternate attackers to keep reaching its back. Fires Big Bomber at one member up to 4 times, then switches to Energy Ball and Rear Gun. Below 20% HP it can no longer turn.",
+    "ai_summary": null
   },
   {
     "id": "hedgehog-pie",
@@ -6336,7 +6421,8 @@
       "Fire"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "whole-eater",
@@ -6383,7 +6469,8 @@
       "Sickle"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "vice",
@@ -6436,7 +6523,8 @@
       "Hit"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "hell-house",
@@ -6487,6 +6575,7 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": null,
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -6623,7 +6712,8 @@
       "Hit"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "scotch",
@@ -6661,7 +6751,8 @@
       "Hit"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "aps",
@@ -6717,7 +6808,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Opens with Sewer Tsunami on the party. Any spell makes it use Sewer Tsunami twice over its next turns, and so does dropping below 1/3 HP (once). Otherwise it uses Tail Attack or Lick, which inflicts Sadness and slows Limit gauges. Cross-slash can paralyze it, and a paralyzed Aps cannot counter."
+    "notes": "Opens with Sewer Tsunami on the party. Any spell makes it use Sewer Tsunami twice over its next turns, and so does dropping below 1/3 HP (once). Otherwise it uses Tail Attack or Lick, which inflicts Sadness and slows Limit gauges. Cross-slash can paralyze it, and a paralyzed Aps cannot counter.",
+    "ai_summary": null
   },
   {
     "id": "sahagin",
@@ -6775,7 +6867,8 @@
       "Water Gun"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "ceasar",
@@ -6833,7 +6926,8 @@
       "Bubble"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "ghost",
@@ -6900,7 +6994,8 @@
       "Drain"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "cripshay",
@@ -6952,7 +7047,8 @@
       "Dual Spike"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "deenglow",
@@ -7020,7 +7116,8 @@
       "Demi"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "eligor",
@@ -7076,7 +7173,8 @@
       "Silence"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "aero-combatant",
@@ -7142,6 +7240,7 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": null,
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -7322,6 +7421,7 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Pyramid traps an ally, who then counts as KO'd; if everyone is trapped the battle is lost. Free them by attacking the Pyramid with another character. Lightning hits draw an Electro-mag Rod counter, which can paralyze. When fought with other Turks, the battle ends as soon as one Turk falls.",
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -7601,7 +7701,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "grenade-combatant",
@@ -7654,7 +7755,8 @@
       "Hand Grenade"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "hammer-blaster",
@@ -7716,7 +7818,8 @@
     "morph": "Smoke Bomb",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "sword-dance",
@@ -7774,7 +7877,8 @@
       "Slap"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "warning-board",
@@ -7828,7 +7932,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "machine-gun",
@@ -7882,7 +7987,8 @@
       "Machine Gun"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "laser-cannon",
@@ -7936,7 +8042,8 @@
       "Laser Cannon"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "soldier-3rd",
@@ -7993,7 +8100,8 @@
       "Sleepel"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "moth-slasher",
@@ -8053,7 +8161,8 @@
       "Speed Slash"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "brain-pod",
@@ -8114,7 +8223,8 @@
       "Refuse"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "vargid-police",
@@ -8167,7 +8277,8 @@
       "Needle"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "zenene",
@@ -8229,7 +8340,8 @@
       "Ghenghana"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "sample-h0512",
@@ -8287,7 +8399,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Revives its Opt minions with Reanimagic, so ignore them and focus on H0512; they vanish when it dies. Shady Breath poisons the party and Keyclaw targets poisoned members, so cure Poison and heal everyone at once with All plus Restore."
+    "notes": "Revives its Opt minions with Reanimagic, so ignore them and focus on H0512; they vanish when it dies. Shady Breath poisons the party and Keyclaw targets poisoned members, so cure Poison and heal everyone at once with All plus Restore.",
+    "ai_summary": null
   },
   {
     "id": "sample-h0512-opt",
@@ -8336,7 +8449,8 @@
       "Bodyblow"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "hundred-gunner",
@@ -8394,7 +8508,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Only Barret's attacks, Limits and magic reach it; use Bolt. Below two thirds HP it switches to Main Artillery on the whole party, and below one third it charges for two turns before Wave Artillery, its strongest attack. Heli Gunner follows straight after, so heal before finishing it."
+    "notes": "Only Barret's attacks, Limits and magic reach it; use Bolt. Below two thirds HP it switches to Main Artillery on the whole party, and below one third it charges for two turns before Wave Artillery, its strongest attack. Heli Gunner follows straight after, so heal before finishing it.",
+    "ai_summary": null
   },
   {
     "id": "heli-gunner",
@@ -8458,7 +8573,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "rufus",
@@ -8512,7 +8628,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Cloud fights alone. Defeat Dark Nation first: it casts Barrier and MBarrier, cutting your damage. Keep Cloud healed with Cure or Potions."
+    "notes": "Cloud fights alone. Defeat Dark Nation first: it casts Barrier and MBarrier, cutting your damage. Keep Cloud healed with Cure or Potions.",
+    "ai_summary": null
   },
   {
     "id": "dark-nation",
@@ -8557,7 +8674,8 @@
       "Bite"
     ],
     "enemy_skills": [],
-    "notes": "Casts Barrier and MBarrier to cut your damage. Defeat it first; magic ignores its back-row position."
+    "notes": "Casts Barrier and MBarrier to cut your damage. Defeat it first; magic ignores its back-row position.",
+    "ai_summary": null
   },
   {
     "id": "motor-ball",
@@ -8622,7 +8740,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Repeats a fixed cycle: two turns of Arm Attack on the highest-HP member (sometimes twice in one turn), then Twin Burner, Deadly Wheel and Rolling Fire on the whole party. The first time it falls below 1/8 HP it skips ahead to Twin Burner. Use Bolt, link Elemental with Fire in armor, and keep party-wide healing ready."
+    "notes": "Repeats a fixed cycle: two turns of Arm Attack on the highest-HP member (sometimes twice in one turn), then Twin Burner, Deadly Wheel and Rolling Fire on the whole party. The first time it falls below 1/8 HP it skips ahead to Twin Burner. Use Bolt, link Elemental with Fire in armor, and keep party-wide healing ready.",
+    "ai_summary": null
   },
   {
     "id": "midgar-zolom",
@@ -8676,7 +8795,8 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "ark-dragon",
@@ -8748,7 +8868,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "madouge",
@@ -8800,7 +8921,8 @@
       "Swamp Shoot"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "crawler",
@@ -8849,7 +8971,8 @@
       "Cold Breath"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "castanets",
@@ -8896,7 +9019,8 @@
       "Scissor Spark"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "bottomswell",
@@ -8956,7 +9080,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Flies, so only ranged attackers (Barret, Yuffie, Long Range materia) or magic reach it. Waterball traps a member in a bubble that hurts every turn; break it with magic, since the bubble is immune to physical attacks. Below 50% HP it adds Big Wave on the party, and it uses Big Wave once more as it dies."
+    "notes": "Flies, so only ranged attackers (Barret, Yuffie, Long Range materia) or magic reach it. Waterball traps a member in a bubble that hurts every turn; break it with magic, since the bubble is immune to physical attacks. Below 50% HP it adds Big Wave on the party, and it uses Big Wave once more as it dies.",
+    "ai_summary": null
   },
   {
     "id": "waterpolo",
@@ -9007,7 +9132,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "scrutin-eye",
@@ -9069,7 +9195,8 @@
       "Fire2"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "marine",
@@ -9122,7 +9249,8 @@
       "Smoke Bullet"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "jenovabirth",
@@ -9180,7 +9308,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Casts Stop on one member, then uses Gas on whoever is stopped. Tail Laser hits the whole party and often comes twice in one turn, so keep everyone's HP up with Restore."
+    "notes": "Casts Stop on one member, then uses Gas on whoever is stopped. Tail Laser hits the whole party and often comes twice in one turn, so keep everyone's HP up with Restore.",
+    "ai_summary": null
   },
   {
     "id": "search-crown",
@@ -9240,7 +9369,8 @@
       "Four Laser"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "bagnadrana",
@@ -9311,7 +9441,8 @@
       "Horn"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "bloatfloat",
@@ -9374,7 +9505,8 @@
       "Spiky Hell"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "bomb",
@@ -9435,7 +9567,8 @@
     "morph": "Shrapnel",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "2-faced",
@@ -9492,7 +9625,8 @@
     "morph": "Hi-Potion",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "bandit",
@@ -9545,7 +9679,8 @@
       "Hit"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "death-claw",
@@ -9603,7 +9738,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "bullmotor",
@@ -9661,7 +9797,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "land-worm",
@@ -9723,7 +9860,8 @@
       "Sandstorm"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "dyne",
@@ -9777,7 +9915,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Barret fights alone. Dyne uses Needle Gun, adds S-Mine below 75% HP and Molotov Cocktail below 25%, and may throw one last Molotov as he falls. Let him fill Barret's Limit gauge, heal with items when low, and finish with Limits."
+    "notes": "Barret fights alone. Dyne uses Needle Gun, adds S-Mine below 75% HP and Molotov Cocktail below 25%, and may throw one last Molotov as he falls. Let him fill Barret's Limit gauge, heal with items when low, and finish with Limits.",
+    "ai_summary": null
   },
   {
     "id": "kimara-bug",
@@ -9832,7 +9971,8 @@
       "Spider Attack"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "flower-prong",
@@ -9888,6 +10028,7 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": null,
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -10108,7 +10249,8 @@
       "Big Spiral"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "turks-rude",
@@ -10166,6 +10308,7 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Will not attack Tifa unless everyone else is down. Heals allies with Cure2, can cast MBarrier, and Grand Spark hits one member hard. With the Attack Squad, clear the soldiers so melee can reach him. When fought with other Turks, the battle ends as soon as one Turk falls.",
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -10461,7 +10604,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "heg",
@@ -10513,7 +10657,8 @@
       "Halt Whip"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "gi-spector",
@@ -10569,7 +10714,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "stinger",
@@ -10625,7 +10771,8 @@
       "Rabbit Gouge"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "soul-fire",
@@ -10690,7 +10837,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Possesses a party member and casts Fire2 on them, leaving after three turns or when the host dies. All Soul Fires die as soon as Gi Nattak is defeated, so you can ignore them."
+    "notes": "Possesses a party member and casts Fire2 on them, leaving after three turns or when the host dies. All Soul Fires die as soon as Gi Nattak is defeated, so you can ignore them.",
+    "ai_summary": null
   },
   {
     "id": "gi-nattak",
@@ -10752,7 +10900,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Undead: Cure, Potions and other healing damage it. Two Soul Fires possess party members and cast Fire2 on their host for three turns. Defeating Gi Nattak first destroys any remaining Soul Fires, so focus him and avoid Fire."
+    "notes": "Undead: Cure, Potions and other healing damage it. Two Soul Fires possess party members and cast Fire2 on their host for three turns. Defeating Gi Nattak first destroys any remaining Soul Fires, so focus him and avoid Fire.",
+    "ai_summary": null
   },
   {
     "id": "dorky-face",
@@ -10807,7 +10956,8 @@
       "Funny Breath"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "ghirofelgo",
@@ -10866,7 +11016,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "chain",
@@ -10906,7 +11057,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "mirage",
@@ -10953,7 +11105,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "jersey",
@@ -11014,7 +11167,8 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "black-bat",
@@ -11067,7 +11221,8 @@
       "Blood Suck"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "ying",
@@ -11120,7 +11275,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "yang",
@@ -11173,7 +11329,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "ying-yang",
@@ -11211,7 +11368,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "lost-number",
@@ -11267,6 +11425,7 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Starts half physical, half magic. Below half HP it becomes the form that matches the hit that got it there: magic leaves the red magic form, which resists magic and casts spells, and physical leaves the purple physical form, which resists physical attacks and hits one member for 2000 or more with Lost Blow. Finish the first half with magic, then use physical attacks and Limits.",
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -11493,7 +11652,8 @@
       "Harrier"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "zuu",
@@ -11560,7 +11720,8 @@
       "Great Gale"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "twin-brain",
@@ -11614,7 +11775,8 @@
       "Stare Down"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "screamer",
@@ -11661,7 +11823,8 @@
       "War Cry"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "materia-keeper",
@@ -11723,7 +11886,8 @@
         "manipulate": false
       }
     ],
-    "notes": "Trine hits the whole party (learn it with Enemy Skill), Hell Combo hits one member hard, and it heals itself with Cure2. Its special attacks come more often as its HP drops, so set Big Guard and keep All plus Restore ready."
+    "notes": "Trine hits the whole party (learn it with Enemy Skill), Hell Combo hits one member hard, and it heals itself with Cure2. Its special attacks come more often as its HP drops, so set Big Guard and keep All plus Restore ready.",
+    "ai_summary": null
   },
   {
     "id": "palmer",
@@ -11778,7 +11942,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Mostly harmless. Mako Gun casts Fire2, Ice2 or Bolt2 on a random member, and he can inflict Sadness. Attack with your strongest moves to finish quickly."
+    "notes": "Mostly harmless. Mako Gun casts Fire2, Ice2 or Bolt2 on a random member, and he can inflict Sadness. Attack with your strongest moves to finish quickly.",
+    "ai_summary": null
   },
   {
     "id": "jayjujayme",
@@ -11831,7 +11996,8 @@
       "Confu-scales"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "foulander",
@@ -11882,7 +12048,8 @@
       "Flame Dance"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "garuda",
@@ -11951,7 +12118,8 @@
       "Bolt2"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "rapps",
@@ -12006,7 +12174,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Cloud's party fights without Materia, since Yuffie took it and Corneo has kidnapped her. Aero3 can deal over 1300 damage to one member, so keep everyone's HP high; Barret's Mindblow drains his MP to stop it. Scorpion's Tail can poison and is often used twice in one turn."
+    "notes": "Cloud's party fights without Materia, since Yuffie took it and Corneo has kidnapped her. Aero3 can deal over 1300 damage to one member, so keep everyone's HP high; Barret's Mindblow drains his MP to stop it. Scorpion's Tail can poison and is often used twice in one turn.",
+    "ai_summary": null
   },
   {
     "id": "attack-squad",
@@ -12062,7 +12231,8 @@
       "Smoke Bullet"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "gorkii",
@@ -12120,7 +12290,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Yuffie fights alone. His spells hit hard early but he runs out of power, so set Big Guard and outlast him."
+    "notes": "Yuffie fights alone. His spells hit hard early but he runs out of power, so set Big Guard and outlast him.",
+    "ai_summary": null
   },
   {
     "id": "shake",
@@ -12175,7 +12346,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Yuffie fights alone. Mostly uses Beak. Below half HP he counters with Rage Bomber, which inflicts Fury (faster Limit gauge, but she misses more); he also uses it while poisoned, so don't poison him."
+    "notes": "Yuffie fights alone. Mostly uses Beak. Below half HP he counters with Rage Bomber, which inflicts Fury (faster Limit gauge, but she misses more); he also uses it while poisoned, so don't poison him.",
+    "ai_summary": null
   },
   {
     "id": "chekhov",
@@ -12230,7 +12402,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Yuffie fights alone. Opens with Stare Down, which paralyzes, and counters any magic with it again, so equip a Jem Ring. Below half HP he drains her with Absorb."
+    "notes": "Yuffie fights alone. Opens with Stare Down, which paralyzes, and counters any magic with it again, so equip a Jem Ring. Below half HP he drains her with Absorb.",
+    "ai_summary": null
   },
   {
     "id": "staniv",
@@ -12285,7 +12458,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Yuffie fights alone. Alternates Ironball with War Cry (Sadness) and may counter with Iron Attack when nearly dead. Counter Attack materia speeds the fight up."
+    "notes": "Yuffie fights alone. Alternates Ironball with War Cry (Sadness) and may counter with Iron Attack when nearly dead. Counter Attack materia speeds the fight up.",
+    "ai_summary": null
   },
   {
     "id": "godo",
@@ -12345,7 +12519,8 @@
         "manipulate": false
       }
     ],
-    "notes": "Yuffie fights alone. Uses gravity attacks that take a share of her HP, Trine, and Mini (Remedy or Cornucopia cures it). Late in the fight he heals with Cure2, but poison damage does not trigger it, so Bio works well. Learn Trine with Enemy Skill."
+    "notes": "Yuffie fights alone. Uses gravity attacks that take a share of her HP, Trine, and Mini (Remedy or Cornucopia cures it). Late in the fight he heals with Cure2, but poison damage does not trigger it, so Bio works well. Learn Trine with Enemy Skill.",
+    "ai_summary": null
   },
   {
     "id": "toxic-frog",
@@ -12412,7 +12587,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "doorbull",
@@ -12468,7 +12644,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "ancient-dragon",
@@ -12523,7 +12700,8 @@
       "Southern Cross"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "jemnezmy",
@@ -12571,7 +12749,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "demons-gate",
@@ -12631,7 +12810,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Hits very hard: Cave-in and Demon Rush hit the whole party, and Petrif-Eye inflicts gradual Petrify. Its special attacks come more often as its HP drops. Use Big Guard and Regen, keep Soft or Ribbons ready, and let the damage build Limit Breaks."
+    "notes": "Hits very hard: Cave-in and Demon Rush hit the whole party, and Petrif-Eye inflicts gradual Petrify. Its special attacks come more often as its HP drops. Use Big Guard and Regen, keep Soft or Ribbons ready, and let the damage build Limit Breaks.",
+    "ai_summary": null
   },
   {
     "id": "8-eye",
@@ -12677,7 +12857,8 @@
     "morph": "Magic Source",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "red-dragon",
@@ -12735,7 +12916,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Usually opens with Red Dragon Breath; it and Dragon Fang each hit one member hard. Set Big Guard, heal often, and use Ice or physical attacks."
+    "notes": "Usually opens with Red Dragon Breath; it and Dragon Fang each hit one member hard. Set Big Guard, heal often, and use Ice or physical attacks.",
+    "ai_summary": null
   },
   {
     "id": "boundfat",
@@ -12797,7 +12979,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "malldancer",
@@ -12856,7 +13039,8 @@
       "Dance"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "hungry",
@@ -12907,7 +13091,8 @@
       "Bodyblow"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "grimguard",
@@ -12962,7 +13147,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "jenovalife",
@@ -13028,7 +13214,8 @@
         "manipulate": false
       }
     ],
-    "notes": "Counters magic by casting Reflect on itself while it has MP, so lean on physical attacks and Limit Breaks. Aqualung hits the whole party; bring Enemy Skill to learn it. Its extra and special attacks get more frequent at 75%, 50% and 25% HP."
+    "notes": "Counters magic by casting Reflect on itself while it has MP, so lean on physical attacks and Limit Breaks. Aqualung hits the whole party; bring Enemy Skill to learn it. Its extra and special attacks get more frequent at 75%, 50% and 25% HP.",
+    "ai_summary": null
   },
   {
     "id": "acrophies",
@@ -13082,7 +13269,8 @@
       "Big Red Clipper"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "shred",
@@ -13138,7 +13326,8 @@
       "Cure3"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "frozen-nail",
@@ -13178,7 +13367,8 @@
       "Flying Sickle"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "snow",
@@ -13248,7 +13438,8 @@
       "Cold Breath"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "magnade",
@@ -13314,7 +13505,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "malboro",
@@ -13391,7 +13583,8 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "headbomber",
@@ -13444,7 +13637,8 @@
       "Dorsal Punch"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "zolokalter",
@@ -13491,7 +13685,8 @@
       "Toxic Barf"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "stilva",
@@ -13553,7 +13748,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "evilhead",
@@ -13598,7 +13794,8 @@
       "Ultrasound"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "blue-dragon",
@@ -13661,7 +13858,8 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "cuahl",
@@ -13713,7 +13911,8 @@
       "Blaster"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "icicle",
@@ -13769,7 +13968,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "gigas",
@@ -13826,7 +14026,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "grenade",
@@ -13887,7 +14088,8 @@
     "morph": "Right Arm",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "gremlin",
@@ -13940,7 +14142,8 @@
       "Claw"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "ironite",
@@ -13996,7 +14199,8 @@
       "Sleepel"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "sculpture",
@@ -14045,7 +14249,8 @@
       "Fire Shell"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "wind-wing",
@@ -14104,7 +14309,8 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "dragon-rider",
@@ -14168,7 +14374,8 @@
       "Dual Attack"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "killbin",
@@ -14221,7 +14428,8 @@
       "x"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "tonberry",
@@ -14285,7 +14493,8 @@
     "morph": "Elixir",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "schizo(right)",
@@ -14349,7 +14558,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Two heads act separately and absorb different elements, so all-target Fire or Ice heals one of them. Every few hits each head counters with Tremor on the party. Each head breathes on the whole party as it dies, so heal before finishing either head."
+    "notes": "Two heads act separately and absorb different elements, so all-target Fire or Ice heals one of them. Every few hits each head counters with Tremor on the party. Each head breathes on the whole party as it dies, so heal before finishing either head.",
+    "ai_summary": null
   },
   {
     "id": "schizo(left)",
@@ -14410,7 +14620,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Two heads act separately and absorb different elements, so all-target Fire or Ice heals one of them. Every few hits each head counters with Tremor on the party. Each head breathes on the whole party as it dies, so heal before finishing either head."
+    "notes": "Two heads act separately and absorb different elements, so all-target Fire or Ice heals one of them. Every few hits each head counters with Tremor on the party. Each head breathes on the whole party as it dies, so heal before finishing either head.",
+    "ai_summary": null
   },
   {
     "id": "jenovadeath",
@@ -14467,7 +14678,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Silences one member early, so bring Echo Screens or a Ribbon. Tropic Wind hits the whole party, and its Red Light comes more often as its HP drops."
+    "notes": "Silences one member early, so bring Echo Screens or a Ribbon. Tropic Wind hits the whole party, and its Red Light comes more often as its HP drops.",
+    "ai_summary": null
   },
   {
     "id": "roulette-cannon",
@@ -14529,7 +14741,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "pedestal",
@@ -14566,7 +14779,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "soldier-2nd",
@@ -14622,7 +14836,8 @@
       "Sword of Doom"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "death-machine",
@@ -14676,7 +14891,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "slalom",
@@ -14741,7 +14957,8 @@
       "Smog"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "guard-system",
@@ -14800,7 +15017,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "quick-machine-gun",
@@ -14853,7 +15071,8 @@
     "morph": "Hi-Potion",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "submarine-crew",
@@ -14911,7 +15130,8 @@
       "Hand Grenade"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "ghost-ship",
@@ -14978,7 +15198,8 @@
       "Fight"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "corvette",
@@ -15038,7 +15259,8 @@
       "Spinning Cut"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "diver-nest",
@@ -15087,7 +15309,8 @@
       "Tornade Wave"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "underwater-mp",
@@ -15139,7 +15362,8 @@
       "Hand Grenade"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "senior-grunt",
@@ -15182,7 +15406,8 @@
       "Water Wave"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "hard-attacker",
@@ -15229,7 +15454,8 @@
       "Oil"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "gun-carrier",
@@ -15285,7 +15511,8 @@
       "Bodyblow"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "guardian",
@@ -15338,7 +15565,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "guardian(right)",
@@ -15391,7 +15619,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "guardian(left)",
@@ -15444,7 +15673,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "carry-armor",
@@ -15509,7 +15739,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Lapis Laser hits the whole party hard and comes more often as its HP drops. Each arm can grab a member, who is out of action until that arm is destroyed or Carry Armor dies. Use all-target Bolt magic, Big Guard and Regen."
+    "notes": "Lapis Laser hits the whole party hard and comes more often as its HP drops. Each arm can grab a member, who is out of action until that arm is destroyed or Carry Armor dies. Use all-target Bolt magic, Big Guard and Regen.",
+    "ai_summary": null
   },
   {
     "id": "right-arm",
@@ -15571,6 +15802,7 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": null,
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -15742,6 +15974,7 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": null,
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -15907,7 +16140,8 @@
       "Hand Grenade"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "rilfsak",
@@ -15958,7 +16192,8 @@
       "Autumn Leaves"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "diablo",
@@ -16002,7 +16237,8 @@
       "Cold"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "epiolnis",
@@ -16055,7 +16291,8 @@
       "Acid Rain"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "ho-chu",
@@ -16120,7 +16357,8 @@
       "Big Pollen"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "poodler",
@@ -16182,7 +16420,8 @@
       "Bodyblow"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "bad-rap",
@@ -16249,7 +16488,8 @@
       "Evil Poison"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "unknown",
@@ -16311,7 +16551,8 @@
     "morph": "Power Source",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "unknown-3",
@@ -16376,7 +16617,8 @@
     "morph": "Magic Source",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "unknown-2",
@@ -16438,7 +16680,8 @@
     "morph": "Guard Source",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "serpent",
@@ -16517,7 +16760,8 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "gas-ducter",
@@ -16568,7 +16812,8 @@
       "Smog Alert"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "wolfmeister",
@@ -16625,7 +16870,8 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "eagle-gun",
@@ -16697,7 +16943,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "cromwell",
@@ -16754,7 +17001,8 @@
       "Normal Shell"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "manhole",
@@ -16811,7 +17059,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "manhole(lid)",
@@ -16855,7 +17104,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "behemoth",
@@ -16931,7 +17181,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "crazy-saw",
@@ -17001,7 +17252,8 @@
       "Rifle"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "shadow-maker",
@@ -17066,7 +17318,8 @@
       "Support Beam"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "grosspanzerbig",
@@ -17126,7 +17379,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "grosspanzersmall",
@@ -17181,7 +17435,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "grosspanzermobile",
@@ -17236,7 +17491,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "turks-elena",
@@ -17298,7 +17554,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Fought with Reno and Rude; the battle ends as soon as any one Turk falls. Each Turk resists or absorbs different elements, so check each card before using all-target elemental magic. Non-elemental attacks such as Ultima or Bahamut are safest."
+    "notes": "Fought with Reno and Rude; the battle ends as soon as any one Turk falls. Each Turk resists or absorbs different elements, so check each card before using all-target elemental magic. Non-elemental attacks such as Ultima or Bahamut are safest.",
+    "ai_summary": null
   },
   {
     "id": "proud-clod",
@@ -17358,7 +17615,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "While Jamar Armor stands, Proud Clod can use Materia Jammer to put Reflect on one member, and a Ribbon does not stop it, so destroy Jamar Armor first. Proud Clod fires machine guns and beams, and once damaged enough adds Beam Cannon on the whole party. Big Guard and Regen keep the fight safe."
+    "notes": "While Jamar Armor stands, Proud Clod can use Materia Jammer to put Reflect on one member, and a Ribbon does not stop it, so destroy Jamar Armor first. Proud Clod fires machine guns and beams, and once damaged enough adds Beam Cannon on the whole party. Big Guard and Regen keep the fight safe.",
+    "ai_summary": null
   },
   {
     "id": "jamar-armor",
@@ -17416,7 +17674,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Proud Clod's support unit; it has no attacks of its own. While it stands, Proud Clod can use Materia Jammer to put Reflect on a member, so defeat it first, then focus Proud Clod."
+    "notes": "Proud Clod's support unit; it has no attacks of its own. While it stands, Proud Clod can use Materia Jammer to put Reflect on a member, so defeat it first, then focus Proud Clod.",
+    "ai_summary": null
   },
   {
     "id": "soldier-1st",
@@ -17465,7 +17724,8 @@
       "Fight"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "xcannon",
@@ -17525,7 +17785,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "maximum-kimaira",
@@ -17575,7 +17836,8 @@
       "Freeze"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "hojo",
@@ -17629,7 +17891,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Summons Poodler Sample and Bad Rap Sample and brings them back when they fall, so ignore them and attack Hojo directly; defeating him ends this stage."
+    "notes": "Summons Poodler Sample and Bad Rap Sample and brings them back when they fall, so ignore them and attack Hojo directly; defeating him ends this stage.",
+    "ai_summary": null
   },
   {
     "id": "bad-rap-sample",
@@ -17677,7 +17940,8 @@
       "Whip"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "poodler-sample",
@@ -17725,7 +17989,8 @@
       "Bodyblow"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "helletic-hojo",
@@ -17779,7 +18044,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Its right arm hits hard and revives almost immediately, so focus the main body. The fight inflicts Confusion, Sleep and Silence; Ribbons make it much easier."
+    "notes": "Its right arm hits hard and revives almost immediately, so focus the main body. The fight inflicts Confusion, Sleep and Silence; Ribbons make it much easier.",
+    "ai_summary": null
   },
   {
     "id": "lifeform-hojo-n",
@@ -17837,7 +18103,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Relies on status attacks rather than damage. With Ribbons equipped it is barely a threat, so hit it with your strongest attacks."
+    "notes": "Relies on status attacks rather than damage. With Ribbons equipped it is barely a threat, so hit it with your strongest attacks.",
+    "ai_summary": null
   },
   {
     "id": "gargoyle",
@@ -17890,6 +18157,7 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": null,
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -18071,7 +18339,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "master-tonberry",
@@ -18136,7 +18405,8 @@
     "morph": "Ribbon",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "parasite",
@@ -18206,7 +18476,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "pollensalta",
@@ -18268,7 +18539,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "death-dealer",
@@ -18340,7 +18612,8 @@
         "manipulate": true
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "dragon-zombie",
@@ -18411,7 +18684,8 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "magic-pot",
@@ -18458,7 +18732,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "christopher",
@@ -18519,7 +18794,8 @@
         "manipulate": false
       }
     ],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "gighee",
@@ -18575,7 +18851,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "allemagne",
@@ -18638,7 +18915,8 @@
       "L3 Flare"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "mover",
@@ -18702,7 +18980,8 @@
     "morph": "Protect Ring",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "king-behemoth",
@@ -18757,7 +19036,8 @@
       "????"
     ],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "armored-golem",
@@ -18819,7 +19099,8 @@
     "morph": "Guard Source",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "iron-man",
@@ -18883,7 +19164,8 @@
     "morph": "Escort Guard",
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "jenovasynthesis",
@@ -18940,7 +19222,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Below 15,000 HP it starts a countdown and then casts Ultima, which ends the fight with no EXP or AP, so defeat it before the count runs out. Repeating Slap can inflict Fury and Absorb Sadness; it also casts Bio2 (Poison) and Stop."
+    "notes": "Below 15,000 HP it starts a countdown and then casts Ultima, which ends the fight with no EXP or AP, so defeat it before the count runs out. Repeating Slap can inflict Fury and Absorb Sadness; it also casts Bio2 (Poison) and Stop.",
+    "ai_summary": null
   },
   {
     "id": "bizarrosephiroth",
@@ -19000,6 +19283,7 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Its Core restores a large share of the main body's HP almost every turn, so put your heaviest damage on the main body, or defeat the Core if the healing outpaces you.",
+    "ai_summary": null,
     "variants": [
       {
         "enemy_ids": [
@@ -19378,7 +19662,8 @@
         "manipulate": false
       }
     ],
-    "notes": "Equip Ribbons: Pale Horse, Break and his wing attack inflict statuses, and DeSpell strips your buffs. Super Nova hits the whole party. Use Big Guard, Regen, and your strongest summons and Limits; Shadow Flare can be learned here."
+    "notes": "Equip Ribbons: Pale Horse, Break and his wing attack inflict statuses, and DeSpell strips your buffs. Super Nova hits the whole party. Use Big Guard, Regen, and your strongest summons and Limits; Shadow Flare can be learned here.",
+    "ai_summary": null
   },
   {
     "id": "sephiroth",
@@ -19429,7 +19714,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Final one-on-one with Cloud, who starts with a full Limit gauge. Any attack wins."
+    "notes": "Final one-on-one with Cloud, who starts with a full Limit gauge. Any attack wins.",
+    "ai_summary": null
   },
   {
     "id": "scissors",
@@ -19491,7 +19777,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "scissors(upper)",
@@ -19553,7 +19840,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "scissors(lower)",
@@ -19615,7 +19903,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "diamond-weapon",
@@ -19680,7 +19969,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Immune to physical attacks at first. When it starts counting down to Diamond Flash it opens up to physical hits, so switch to attacks and Limits then. Diamond Flash hits the whole party and can Silence, so set Big Guard and heal before the count runs out."
+    "notes": "Immune to physical attacks at first. When it starts counting down to Diamond Flash it opens up to physical hits, so switch to attacks and Limits then. Diamond Flash hits the whole party and can Silence, so set Big Guard and heal before the count runs out.",
+    "ai_summary": null
   },
   {
     "id": "ruby-weapon",
@@ -19743,7 +20033,8 @@
         "manipulate": false
       }
     ],
-    "notes": "Cannot be damaged until it plants its tentacles in the sand. Whirlsand removes a member from the battle for good but cannot target the last active character, so start with two members KO'd and revive them once the tentacles are down. Not immune to Paralysis: Dazers stop its attacks."
+    "notes": "Cannot be damaged until it plants its tentacles in the sand. Whirlsand removes a member from the battle for good but cannot target the last active character, so start with two members KO'd and revive them once the tentacles are down. Not immune to Paralysis: Dazers stop its attacks.",
+    "ai_summary": null
   },
   {
     "id": "ruby's-tentacle",
@@ -19795,7 +20086,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Ruby Weapon cannot be damaged until these are planted in the sand. Focus the main body rather than the tentacles."
+    "notes": "Ruby Weapon cannot be damaged until these are planted in the sand. Focus the main body rather than the tentacles.",
+    "ai_summary": null
   },
   {
     "id": "emerald-weapon",
@@ -19860,7 +20152,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Without Underwater materia the fight has a 20-minute timer. Aire Tam Storm deals 1111 damage per equipped materia to each character, so keep everyone at 8 or fewer. Emerald Beam hits the whole party and removes Regen."
+    "notes": "Without Underwater materia the fight has a 20-minute timer. Aire Tam Storm deals 1111 damage per equipped materia to each character, so keep everyone at 8 or fewer. Emerald Beam hits the whole party and removes Regen.",
+    "ai_summary": null
   },
   {
     "id": "leg",
@@ -19916,7 +20209,8 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": null
+    "notes": null,
+    "ai_summary": null
   },
   {
     "id": "eye",
@@ -19974,6 +20268,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Emerald Weapon's eyes: blue eyes fire damaging lasers and orange eyes drain MP. The fight is won by defeating Emerald Weapon itself."
+    "notes": "Emerald Weapon's eyes: blue eyes fire damaging lasers and orange eyes drain MP. The fight is won by defeating Emerald Weapon itself.",
+    "ai_summary": null
   }
 ]

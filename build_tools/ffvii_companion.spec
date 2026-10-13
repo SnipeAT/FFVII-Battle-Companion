@@ -15,6 +15,7 @@ PKG = SRC / 'ffvii_companion'
 datas = [
     (str(PKG / 'data' / 'enemies.json'), 'ffvii_companion/data'),
     (str(PKG / 'data' / 'formations.json'), 'ffvii_companion/data'),
+    (str(PKG / 'data' / 'ai_scripts.json'), 'ffvii_companion/data'),
     (str(PKG / 'server' / 'static'), 'ffvii_companion/server/static'),
     # The OCR models, with their license (Apache-2.0, unlike the rest of the app)
     (str(PKG / 'ppocr' / 'ch_PP-OCRv4_det_infer.onnx'), 'ffvii_companion/ppocr'),
