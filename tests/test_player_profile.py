@@ -1,4 +1,5 @@
 """Player profile validation and persistence (engine/player_profile.py)."""
+import codecs
 import json
 import tempfile
 import unittest
@@ -66,6 +67,25 @@ class TestPersistence(unittest.TestCase):
         self.path.parent.mkdir(parents=True)
         self.path.write_text("{not json", encoding="utf-8")
         self.assertEqual(PlayerProfile(self.path).get(), DEFAULT_PROFILE)
+
+    def test_file_with_byte_order_mark_is_read(self):
+        # CLAUDE-20261012-A03: Notepad's "UTF-8 with BOM" made the profile fall back to the defaults
+        self.path.parent.mkdir(parents=True)
+        self.path.write_bytes(codecs.BOM_UTF8 + json.dumps({"party_level": 50}).encode("utf-8"))
+        self.assertEqual(PlayerProfile(self.path).get()["party_level"], 50)
+
+    def test_failed_save_changes_nothing(self):
+        # CLAUDE-20261012-A04: the new value stayed in memory although the file kept the old one
+        from unittest import mock
+        profile = PlayerProfile(self.path)
+        profile.update({"party_level": 20})
+        with mock.patch("ffvii_companion.engine.player_profile.os.replace",
+                        side_effect=PermissionError("held by another program")):
+            with self.assertRaises(OSError):
+                profile.update({"party_level": 60})
+        self.assertEqual(profile.get()["party_level"], 20)
+        self.assertEqual(json.loads(self.path.read_text(encoding="utf-8"))["party_level"], 20)
+        self.assertFalse(self.path.with_suffix(".json.tmp").exists())
 
 
 if __name__ == "__main__":

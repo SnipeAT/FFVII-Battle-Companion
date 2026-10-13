@@ -785,7 +785,11 @@ function saveProfile(changes) {
   })
     .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
     .then(applyProfile)
-    .catch(err => console.error("Error saving profile:", err));
+    .catch(err => {
+      console.error("Error saving profile:", err);
+      // Not saved (the server keeps the old profile): show what the server holds again
+      fetch("/api/profile").then(res => res.json()).then(applyProfile).catch(() => {});
+    });
 }
 
 // Enemy Skill checklist
@@ -1389,7 +1393,12 @@ if (autoAddPartnersCheckbox) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ auto_add_scene_partners: autoAddPartnersCheckbox.checked })
-    }).catch(err => console.error("Error updating auto-add partners config:", err));
+    })
+      .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
+      .catch(err => {
+        console.error("Error updating auto-add partners config:", err);
+        autoAddPartnersCheckbox.checked = !autoAddPartnersCheckbox.checked;  // not saved
+      });
   });
 }
 

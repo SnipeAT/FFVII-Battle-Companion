@@ -54,7 +54,7 @@ Module and data paths in this README are relative to the package folder `src/ffv
 1. **Capture.** `engine/window_finder.py` finds the FFVII window (title `FINAL FANTASY VII` or an `ff7*.exe` / `ffvii*.exe` process). `engine/capture_service.py` grabs only the calibrated region of interest (default: 60% of the width, rows 66%-84% of the height, where the targeted enemy name and the top of the battle menus appear).
 2. **Text-change gate.** `engine/text_gate.py` reduces the region to a tiny "bright, low-saturation pixel" signature (FFVII's menu and target text is white) and compares it with the signature from the last OCR pass. If no text-like pixels changed, OCR is skipped and the last result is reused. The animated 3D scene, colored gauges and the blue windows do not trigger OCR.
 3. **OCR.** `engine/ocr_engine.py` runs the PP-OCRv4 detection and recognition models (RapidOCR's ONNX conversion, bundled in `ppocr/`) in single-threaded ONNX Runtime sessions with thread spinning disabled. Recognition is cached per text box: boxes that did not move or change keep their text, and only new or changed boxes are recognized.
-4. **Parsing and matching.** `engine/detector.py` drops HUD labels, commands, party names and overlay text, extracts instance letters (`Devil Ride B` means at least two Devil Rides), and fuzzy-matches the remaining candidates against `data/enemies.json`.
+4. **Parsing and matching.** `engine/detector.py` drops HUD labels, commands, party names and overlay text, extracts instance letters (`Devil Ride B` means at least two Devil Rides; a letter only counts when some formation holds that many of the enemy, so a misread `Jenova·BlRTH` is not eight Jenovas), and fuzzy-matches the remaining candidates against `data/enemies.json`, trying each name both as read and without a trailing letter or digit (`Unkn0wn 2` is Unknown 2, not Unknown).
 5. **Formation deduction.** `compendium.py` narrows the encounter using `data/formations.json`: it prunes impossible enemies, predicts formation partners, and detects Battle Square / Arena round changes (a new enemy that cannot share any formation with the current ones starts a new encounter).
 6. **Broadcast.** `server/main.py` pushes battle updates over the `/ws` WebSocket to every connected dashboard (`server/static/`). Requests from other web origins are rejected for anything that changes state.
 
@@ -123,8 +123,8 @@ Note: the launchers prefer `dist\FFVII_Companion\FFVII_Companion.exe`. After cha
 
 | Flag | Default | Description |
 | :--- | :--- | :--- |
-| `--host <IP>` | `127.0.0.1` | Interface to bind. `0.0.0.0` lets iPads / other devices on your LAN connect. |
-| `--port <PORT>` | `59314` | HTTP and WebSocket port. If occupied, the next free port is used. |
+| `--host <IP>` | `127.0.0.1` | Interface to bind. `0.0.0.0` lets iPads / other devices on your LAN connect; one LAN address (`192.168.1.5`) or an IPv6 address (`::1`, `::`) works too. |
+| `--port <PORT>` | `59314` | HTTP and WebSocket port. If occupied, the next free port is used, and the window title shows it. |
 | `--on-top` | off | Start pinned Always on Top (also toggled with the **PIN** button). |
 | `--no-capture` | off | Do not start the capture loop on launch (start it with **CAPTURE**). |
 | `--normal-priority` | off | Do not run the companion in Windows Efficiency mode. |
@@ -196,8 +196,9 @@ Open **CALIBRATION** in the header:
 | `text_gate` | `true` | Skip OCR when the text in the region has not changed. |
 | `eco_mode` | `true` | Run the capture thread on efficiency cores outside the hunting phase. |
 | `auto_add_scene_partners` | `false` | Automatically add formation partners that are certain: enemies that every formation matching the enemies seen so far contains. Merely possible partners stay on the partners bar. |
+| `allowed_hosts` | `[]` | Extra host names the dashboard may be opened under, such as a name your router gives the PC (`["gaming-pc.lan"]`); `["*"]` allows any name. IP addresses, `localhost` and the PC's own name (also with `.local`) always work. Only a hand edit of the file changes it (the API refuses it); restart the companion afterwards. See the security note under "iPad, tablet or phone". |
 
-Values are validated: the API rejects invalid settings (HTTP 422), and out-of-range values in a hand-edited file are clamped on load. The defaults are the ones in this table (`DEFAULT_CONFIG` in `engine/calibration.py`); the file in the data folder holds only what was saved from the dashboard or edited by hand.
+Values are validated: the API rejects invalid settings (HTTP 422), and out-of-range values in a hand-edited file are clamped on load. The defaults are the ones in this table (`DEFAULT_CONFIG` in `engine/calibration.py`); the file in the data folder holds only what was saved from the dashboard or edited by hand, so a default that a later version changes reaches you unless you set that value yourself. Files saved by version 2.0.4 or earlier hold every value: delete a line to go back to its default. A save that fails (for example while another program holds the file) changes nothing, and the dashboard shows the old value again.
 
 ### Where files are saved
 
@@ -222,7 +223,7 @@ The `FFVII_COMPANION_HOME` environment variable overrides the folder. Folders an
 
 After an update of the companion, a dashboard left open on the tablet reloads itself when it reconnects, so it never runs the old version against the new server.
 
-Security note: in LAN mode every device on your network can open the dashboard and use its controls (start/stop capture, calibration, diagnostic snapshots of the capture region). There is no login, so only use LAN mode on a network you trust. Web pages from other sites cannot use the companion: the server sends no cross-origin (CORS) headers, so they cannot read its responses, and it rejects state-changing requests and WebSocket connections whose `Origin` does not match the server.
+Security note: in LAN mode every device on your network can open the dashboard and use its controls (start/stop capture, calibration, diagnostic snapshots of the capture region). There is no login, so only use LAN mode on a network you trust. Web pages from other sites cannot use the companion: the server sends no cross-origin (CORS) headers, so they cannot read its responses, and it rejects state-changing requests and WebSocket connections whose `Origin` does not match the server. It also answers only requests addressed to an IP address, `localhost` or the PC's name: a web page that points its own domain name at your PC (DNS rebinding) would otherwise count as the same site. A home router does not protect against that, because the page runs in your own browser. `allowed_hosts` in the settings file adds names; `["*"]` turns this check off.
 
 ---
 
@@ -269,6 +270,10 @@ The item steal value comes from the enemy data (8 = rare, 32 = common, 63 = very
   .\.venv\Scripts\python.exe -m tools.benchmark_loop recordings\session1
   ```
 - `tools/ff7_synthetic.py` - synthetic battle / field frames in the FFNx layout, used by the tests.
+- `tools/ai_script.py` - prints an enemy's attacks (targets, power, status effects, elements) and its battle AI scripts from the game's `scene.bin` (Steam edition install), to check the tactical notes against what the enemy really does:
+  ```powershell
+  .\.venv\Scripts\python.exe -m tools.ai_script "Motor Ball"
+  ```
 - Simulator CLI (needs the app running):
   ```powershell
   .\.venv\Scripts\python.exe -m ffvii_companion.server.simulator tour    # cycle through preset encounters
@@ -394,7 +399,7 @@ FFVII-Battle-Companion/
 │       ├── simulator.py          # Preset encounters + CLI for exercising the dashboard
 │       └── static/               # Dashboard (index.html, app.js, style.css)
 ├── tests/                        # unittest suite + recorded real-frame fixtures
-├── tools/                        # Frame recorder, loop benchmark, synthetic frames, scene.bin enrichment
+├── tools/                        # Frame recorder, loop benchmark, synthetic frames, scene.bin enrichment, AI scripts
 ├── build_tools/                  # build_exe.py, package_release.py (release zip), ffvii_companion.spec (PyInstaller), licenses/
 ├── pyproject.toml                # Package metadata and dependencies
 ├── Launch_Desktop_App.bat / Launch_LAN_iPad.bat                     # Double-click launchers

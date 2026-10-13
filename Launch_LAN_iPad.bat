@@ -22,6 +22,9 @@ if not "%LOCAL_IP%"=="" (
     echo.
     echo        http://%LOCAL_IP%:59314
     echo.
+    echo   If another program uses port 59314, the companion takes the next free
+    echo   port and shows it in its window title: use that port instead.
+    echo.
     echo   Tip: Tap the Share button in Safari and choose "Add to Home Screen"
     echo        to run the companion as a full-screen, borderless tablet app.
 ) else (

@@ -9,11 +9,16 @@ with warnings.catch_warnings():
 from ffvii_companion.server.main import app
 from ffvii_companion.engine.calibration import calibration_manager
 
+# The server answers only IP addresses, localhost and the PC's name (TestClient's default host,
+# "testserver", is not one of them)
+BASE_URL = "http://127.0.0.1"
+WS_URL = "ws://127.0.0.1/ws"  # websocket_connect ignores base_url for relative URLs
+
 
 class TestRestApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.client = TestClient(app)
+        cls.client = TestClient(app, base_url=BASE_URL)
 
     def test_health(self):
         self.assertEqual(self.client.get("/api/health").json(), {"ok": True})
@@ -65,17 +70,80 @@ class TestRestApi(unittest.TestCase):
     def test_cross_origin_state_changes_are_rejected(self):
         foreign = self.client.post("/api/capture/stop", headers={"Origin": "https://example.com"})
         self.assertEqual(foreign.status_code, 403)
-        same_origin = self.client.post("/api/capture/stop", headers={"Origin": "http://testserver"})
+        same_origin = self.client.post("/api/capture/stop", headers={"Origin": BASE_URL})
         self.assertEqual(same_origin.status_code, 200)
         no_origin = self.client.post("/api/capture/stop")
         self.assertEqual(no_origin.status_code, 200)
 
+    def test_cross_origin_requests_from_another_port_are_rejected(self):
+        # CLAUDE-20261012-A09: a mutation comparing only host names passed every test
+        for origin in ("http://127.0.0.1:8080", "http://localhost", "null"):
+            resp = self.client.post("/api/capture/stop", headers={"Origin": origin})
+            self.assertEqual(resp.status_code, 403, origin)
+
+    def test_dns_rebinding_host_names_are_rejected(self):
+        # CLAUDE-20261012-A01: a page that points its own name at 127.0.0.1 sends that name as
+        # Host and as Origin, which match each other
+        rebound = "http://rebind.attacker.example:59314"
+        client = TestClient(app, base_url=rebound)
+        self.assertEqual(client.post("/api/capture/stop", headers={"Origin": rebound}).status_code, 403)
+        # it could also read every response, the battle and the profile included
+        self.assertEqual(client.get("/api/profile").status_code, 403)
+        self.assertEqual(client.get("/").status_code, 403)
+        from starlette.websockets import WebSocketDisconnect
+        with self.assertRaises(WebSocketDisconnect):
+            with client.websocket_connect("ws://rebind.attacker.example:59314/ws", headers={"Origin": rebound}) as ws:
+                ws.receive_json()
+
+    def test_dashboard_hosts_are_allowed(self):
+        import socket
+        for base in ("http://127.0.0.1:59314", "http://localhost:59314", "http://[::1]:59314",
+                     "http://192.168.1.20:59314", "http://companion.localhost",
+                     f"http://{socket.gethostname()}:59314", f"http://{socket.gethostname()}.local:59314"):
+            client = TestClient(app, base_url=base)
+            self.assertEqual(client.get("/api/health").status_code, 200, base)
+            self.assertEqual(client.post("/api/capture/stop", headers={"Origin": base}).status_code, 200, base)
+
+    def test_allowed_hosts_setting(self):
+        from ffvii_companion.server.main import is_allowed_host
+        self.assertFalse(is_allowed_host("companion.lan:59314", []))
+        self.assertTrue(is_allowed_host("Companion.LAN.:59314", ["companion.lan"]))
+        self.assertTrue(is_allowed_host("anything.example", ["*"]))
+        self.assertFalse(is_allowed_host("", []))
+        self.assertFalse(is_allowed_host("[not-an-ip", []))
+        config = calibration_manager.get_config()
+        try:
+            config["allowed_hosts"] = ["companion.lan"]
+            client = TestClient(app, base_url="http://companion.lan:59314")
+            self.assertEqual(client.get("/api/health").status_code, 200)
+        finally:
+            config["allowed_hosts"] = []
+
+    def test_failed_saves_answer_503_and_change_nothing(self):
+        # CLAUDE-20261012-A04: a failed save answered 500 but kept the new value in memory
+        from unittest import mock
+        from ffvii_companion.engine.player_profile import player_profile
+        level = player_profile.get()["party_level"]
+        idle_fps = calibration_manager.get_config()["idle_fps"]
+        failing = mock.patch("os.replace", side_effect=PermissionError("held by another program"))
+        with failing:
+            self.assertEqual(self.client.post("/api/profile", json={"party_level": level % 98 + 1}).status_code, 503)
+            self.assertEqual(self.client.post("/api/calibration/config", json={"idle_fps": 4.0}).status_code, 503)
+            self.assertEqual(self.client.post("/api/calibration/preset/full_game_window").status_code, 503)
+        self.assertEqual(self.client.get("/api/profile").json()["party_level"], level)
+        self.assertEqual(calibration_manager.get_config()["idle_fps"], idle_fps)
+
+    def test_allowed_hosts_cannot_be_changed_through_the_api(self):
+        resp = self.client.post("/api/calibration/config", json={"allowed_hosts": ["*"]})
+        self.assertEqual(resp.status_code, 422)
+        self.assertEqual(calibration_manager.get_config()["allowed_hosts"], [])
+
     def test_cross_origin_websocket_is_rejected(self):
         from starlette.websockets import WebSocketDisconnect
         with self.assertRaises(WebSocketDisconnect):
-            with self.client.websocket_connect("/ws", headers={"Origin": "https://example.com"}) as ws:
+            with self.client.websocket_connect(WS_URL, headers={"Origin": "https://example.com"}) as ws:
                 ws.receive_json()
-        with self.client.websocket_connect("/ws", headers={"Origin": "http://testserver"}) as ws:
+        with self.client.websocket_connect(WS_URL, headers={"Origin": BASE_URL}) as ws:
             receive_connect_messages(ws)
 
     def test_every_enemy_id_is_reachable(self):
@@ -181,7 +249,7 @@ class TestRestApi(unittest.TestCase):
 class TestCaptureAndCalibrationApi(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.client = TestClient(app)
+        cls.client = TestClient(app, base_url=BASE_URL)
 
     def test_capture_status_endpoint(self):
         data = self.client.get("/api/capture/status").json()
@@ -274,7 +342,7 @@ class TestCaptureAndCalibrationApi(unittest.TestCase):
 class TestProfileSkillsAndReports(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.client = TestClient(app)
+        cls.client = TestClient(app, base_url=BASE_URL)
 
     def setUp(self):
         from ffvii_companion.engine.player_profile import player_profile
@@ -300,7 +368,7 @@ class TestProfileSkillsAndReports(unittest.TestCase):
     def test_profile_change_rebroadcasts_steal_odds(self):
         self.client.post("/api/profile", json={"party_level": 10, "sneak_glove": False})
         self.client.post("/api/simulate/encounter", json={"enemy_names": ["Custom Sweeper"]})
-        with self.client.websocket_connect("/ws") as ws:
+        with self.client.websocket_connect(WS_URL) as ws:
             msgs = receive_connect_messages(ws)
             low = msgs["battle"]["enemies"][0]["steal_odds"]
             self.client.post("/api/profile", json={"sneak_glove": True})
@@ -393,7 +461,7 @@ def receive_connect_messages(ws) -> dict:
 class TestWebSocket(unittest.TestCase):
     def test_connect_sends_version_battle_profile_and_capture_status(self):
         from ffvii_companion.server.main import DASHBOARD_VERSION
-        with TestClient(app).websocket_connect("/ws") as ws:
+        with TestClient(app, base_url=BASE_URL).websocket_connect(WS_URL) as ws:
             msgs = receive_connect_messages(ws)
         # A dashboard tab left open across an update reloads when this differs from what it first saw
         self.assertEqual(msgs["version"], DASHBOARD_VERSION)
@@ -411,8 +479,8 @@ class TestWebSocket(unittest.TestCase):
         # One client context: both sockets share one event loop, as under uvicorn
         with mock.patch.object(capture_service, "start", side_effect=set_running(True)), \
                 mock.patch.object(capture_service, "stop", side_effect=set_running(False)), \
-                TestClient(app) as client, \
-                client.websocket_connect("/ws") as desktop, client.websocket_connect("/ws") as ipad:
+                TestClient(app, base_url=BASE_URL) as client, \
+                client.websocket_connect(WS_URL) as desktop, client.websocket_connect(WS_URL) as ipad:
             self.assertFalse(receive_connect_messages(desktop)["capture"]["running"])
             self.assertFalse(receive_connect_messages(ipad)["capture"]["running"])
 
@@ -433,8 +501,8 @@ class TestWebSocket(unittest.TestCase):
     def test_phase_change_is_pushed_to_clients(self):
         # Regression: hunting -> settled changes no enemy data, and the dashboard kept showing HUNTING
         from ffvii_companion.engine.capture_service import capture_service
-        client = TestClient(app)
-        with client.websocket_connect("/ws") as ws:
+        client = TestClient(app, base_url=BASE_URL)
+        with client.websocket_connect(WS_URL) as ws:
             receive_connect_messages(ws)
             with capture_service._state_lock:
                 saved = (capture_service.combat_phase, capture_service.current_fps)
@@ -450,8 +518,8 @@ class TestWebSocket(unittest.TestCase):
             "running": capture_service.is_running(), "combat_phase": "settled", "current_fps": 0.35}})
 
     def test_websocket_manual_select_add_and_clear(self):
-        client = TestClient(app)
-        with client.websocket_connect("/ws") as ws:
+        client = TestClient(app, base_url=BASE_URL)
+        with client.websocket_connect(WS_URL) as ws:
             receive_connect_messages(ws)
 
             ws.send_json({"action": "MANUAL_SELECT", "enemy_id": "sweeper"})
@@ -477,8 +545,8 @@ class TestWebSocket(unittest.TestCase):
         from ffvii_companion.engine.capture_service import capture_service
         # One client context, so both sockets share one event loop as under uvicorn: without it each
         # socket gets its own loop and the broadcast from the other loop can leave receive_json hanging
-        with TestClient(app) as client, client.websocket_connect("/ws") as ws, \
-                client.websocket_connect("/ws") as ipad:
+        with TestClient(app, base_url=BASE_URL) as client, client.websocket_connect(WS_URL) as ws, \
+                client.websocket_connect(WS_URL) as ipad:
             receive_connect_messages(ws)
             receive_connect_messages(ipad)
             with capture_service._state_lock:
@@ -503,3 +571,38 @@ class TestWebSocket(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestBroadcastDropsSlowClients(unittest.TestCase):
+    class FakeSocket:
+        def __init__(self, fail: bool):
+            self.fail, self.sent, self.closed_with = fail, [], None
+
+        async def send_text(self, text):
+            if self.fail:
+                raise RuntimeError("send timed out")
+            self.sent.append(text)
+
+        async def close(self, code=1000):
+            self.closed_with = code
+
+    def test_a_dropped_client_is_closed_so_it_reconnects(self):
+        # CLAUDE-20261012-A02: a client dropped after one failed send stayed connected and
+        # showed LIVE SYNC without getting another update
+        import asyncio
+        from ffvii_companion.server.main import ConnectionManager
+
+        async def run():
+            manager = ConnectionManager()
+            slow, fine = self.FakeSocket(fail=True), self.FakeSocket(fail=False)
+            manager.active_connections.update({slow, fine})
+            await manager.broadcast({"type": "BATTLE_UPDATE"})
+            await asyncio.sleep(0)  # let the close task run
+            await asyncio.gather(*manager._closing)
+            return manager, slow, fine
+
+        manager, slow, fine = asyncio.run(run())
+        self.assertEqual(manager.active_connections, {fine})
+        self.assertEqual(slow.closed_with, 1011)
+        self.assertIsNone(fine.closed_with)
+        self.assertEqual(len(fine.sent), 1)

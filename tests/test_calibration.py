@@ -1,3 +1,4 @@
+import codecs
 import json
 import tempfile
 import unittest
@@ -57,6 +58,42 @@ class TestCalibrationManager(unittest.TestCase):
             self.assertEqual(cfg["target_menu_preset"], key)
             self.assertEqual(cfg["roi"]["top_pct"], preset["top_pct"])
         self.assertIsNone(mgr.apply_preset("missing"))
+
+    def test_file_with_byte_order_mark_is_read(self):
+        # CLAUDE-20261012-A03: a hand edit saved as "UTF-8 with BOM" was ignored, and the next
+        # save wrote the defaults over it
+        self.path.parent.mkdir(parents=True)
+        self.path.write_bytes(codecs.BOM_UTF8 + json.dumps({"idle_fps": 2.0}).encode("utf-8"))
+        mgr = CalibrationManager(self.path)
+        self.assertEqual(mgr.get_config()["idle_fps"], 2.0)
+        mgr.update_config({"eco_mode": False})
+        self.assertEqual(CalibrationManager(self.path).get_config()["idle_fps"], 2.0)
+
+    def test_file_holds_only_saved_values(self):
+        # CLAUDE-20261012-A05: the first save wrote every default into the file, so a default
+        # changed by a later version never reached the user
+        mgr = CalibrationManager(self.path)
+        mgr.update_config({"auto_add_scene_partners": True})
+        mgr.apply_preset("bottom_half_battle_ui")
+        with open(self.path, "r", encoding="utf-8") as f:
+            self.assertEqual(set(json.load(f)), {"auto_add_scene_partners", "target_menu_preset", "roi"})
+        self.assertEqual(set(mgr.get_config()), set(DEFAULT_CONFIG))
+
+    def test_failed_save_changes_nothing(self):
+        # CLAUDE-20261012-A04: the value was applied in memory although the file kept the old one
+        from unittest import mock
+        mgr = CalibrationManager(self.path)
+        mgr.update_config({"idle_fps": 1.0})
+        before = json.loads(json.dumps(mgr.get_config()))
+        with mock.patch("ffvii_companion.engine.calibration.os.replace",
+                        side_effect=PermissionError("held by another program")):
+            with self.assertRaises(OSError):
+                mgr.update_config({"idle_fps": 2.0})
+            with self.assertRaises(OSError):
+                mgr.apply_preset("full_game_window")
+        self.assertEqual(mgr.get_config(), before)
+        self.assertEqual(CalibrationManager(self.path).get_config()["idle_fps"], 1.0)
+        self.assertFalse(self.path.with_suffix(".json.tmp").exists())
 
     def test_validate_settings_drops_unknown_keys(self):
         # capture_fps is a retired setting that older calibration files still contain

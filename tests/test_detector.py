@@ -28,9 +28,9 @@ class TestLineParsing(unittest.TestCase):
         self.assertIsNone(cand4)
 
     def test_cached_parse_enemy_line(self):
-        c1, l1, cnt1 = BattleDetector.parse_enemy_line("Sweeper B")
-        c2, l2, cnt2 = BattleDetector.parse_enemy_line("Sweeper B")
-        self.assertEqual((c1, l1, cnt1), ("Sweeper", "B", 2))
+        c1, l1, cnt1 = BattleDetector.parse_enemy_line("Grunt B")
+        c2, l2, cnt2 = BattleDetector.parse_enemy_line("Grunt B")
+        self.assertEqual((c1, l1, cnt1), ("Grunt", "B", 2))
         self.assertEqual((c1, l1, cnt1), (c2, l2, cnt2))
 
     def test_commands_party_and_overlay_are_rejected(self):
@@ -40,7 +40,7 @@ class TestLineParsing(unittest.TestCase):
 
     def test_glued_instance_letter_requires_known_stem(self):
         # OCR sometimes drops the space before the instance letter
-        self.assertEqual(BattleDetector.parse_enemy_line("SweeperB"), ("Sweeper", "B", 2))
+        self.assertEqual(BattleDetector.parse_enemy_line("GruntB"), ("Grunt", "B", 2))
         self.assertEqual(BattleDetector.parse_enemy_line("MPA"), ("MP", "A", 1))
         # ...but names and ordinary words ending in a-h are not split into name + letter
         self.assertEqual(BattleDetector.parse_enemy_line("Bandersnatch"), ("Bandersnatch", None, 1))
@@ -58,7 +58,19 @@ class TestLineParsing(unittest.TestCase):
             with self.subTest(line=line):
                 self.assertEqual(BattleDetector.parse_enemy_line(line), (line, None, 1))
         # A real instance letter after such a name still counts
-        self.assertEqual(BattleDetector.parse_enemy_line("Grosspanzer-Mobile B"), ("Grosspanzer-Mobile", "B", 2))
+        self.assertEqual(BattleDetector.parse_enemy_line("SOLDIER:3rd B"), ("SOLDIER:3rd", "B", 2))
+
+    def test_instance_letters_stay_within_the_formations(self):
+        # CLAUDE-20261012-B02: one misread letter in Jenova·BIRTH left its glued H as an instance
+        # letter (8x for the whole battle); no formation holds more than one Jenova·BIRTH
+        for line, name in (("Jenova·BlRTH", "Jenova·BlRTH"), ("Jen0va·DEATH", "Jen0va·DEATH"),
+                           ("Jenova·LlFE", "Jenova·LlFE"), ("Jenova-BlRTH", "Jenova-BlRTH")):
+            with self.subTest(line=line):
+                self.assertEqual(BattleDetector.parse_enemy_line(line), (name, None, 1))
+        # a separate letter beyond the formations is a misread letter: the count stays possible
+        self.assertEqual(BattleDetector.parse_enemy_line("Grosspanzer-Mobile B"), ("Grosspanzer-Mobile", None, 1))
+        self.assertEqual(BattleDetector.parse_enemy_line("Devil Ride H"), ("Devil Ride", None, 2))
+        self.assertEqual(BattleDetector.parse_enemy_line("Devil Ride B"), ("Devil Ride", "B", 2))
 
     def test_no_enemy_name_reads_as_an_instance_letter(self):
         # Every name and in-game spelling, also with its middle dot as OCR reads it (Safer·Sephiroth
@@ -121,6 +133,80 @@ class TestEnemyIdentification(unittest.TestCase):
         enemies = self.det.identify_enemies_from_lines(["Custom Sweeper B", "ttack", "Mime", "HP", "MP"])
         self.assertEqual([(e["name"], e["count"]) for e in enemies], [("Custom Sweeper", 2)])
         self.assertEqual(self.det.identify_enemies_from_lines(["Attack all opponents", "lash-All", "Morph", "HP", "MP"]), [])
+
+
+class TestMisreadNames(unittest.TestCase):
+    """CLAUDE-20261012-B02 / -B03: names with one OCR misreading must give the right enemy (or
+    none) and count 1. Before the fix, 10 of these spellings gave another enemy ("Unkn0wn 2" ->
+    Unknown, "Turks:Rnde" -> Reno) and 12 a count of 5 or 8 (the Jenova names)."""
+    CONFUSIONS = [("O", "0"), ("0", "O"), ("o", "0"), ("l", "I"), ("I", "l"), ("i", "l"),
+                  ("l", "1"), ("1", "l"), ("rn", "m"), ("m", "rn"), ("u", "n"), ("n", "u"),
+                  ("e", "c"), ("c", "e"), ("S", "5"), ("B", "8"), ("·", "-"), ("·", "."),
+                  ("·", " "), (" ", "")]
+
+    @classmethod
+    def misreadings(cls, name):
+        out = set()
+        for old, new in cls.CONFUSIONS:
+            start = 0
+            while (i := name.find(old, start)) != -1:
+                out.add(name[:i] + new + name[i + len(old):])
+                start = i + 1
+        out.discard(name)
+        return out
+
+    def test_one_misread_character_never_gives_another_enemy_or_count(self):
+        from ffvii_companion.compendium import compendium
+        det = BattleDetector()
+        wrong, miscounted, total = [], [], 0
+        for enemy in compendium.get_all():
+            for name in {enemy["name"], enemy.get("display_name", enemy["name"])}:
+                for line in self.misreadings(name):
+                    total += 1
+                    found = det.identify_enemies_from_lines([line])
+                    if not found:
+                        continue  # unmatched is safe: nothing wrong is shown
+                    if found[0]["id"] != enemy["id"]:
+                        wrong.append((line, enemy["name"], found[0]["name"]))
+                    elif found[0]["count"] != 1:
+                        miscounted.append((line, found[0]["count"]))
+        self.assertGreater(total, 1500)
+        self.assertEqual(wrong, [])
+        self.assertEqual(miscounted, [])
+
+    def test_reviewer_examples(self):
+        det = BattleDetector()
+        for line, enemy_id in (("Unkn0wn 2", "unknown-2"), ("Unknovvn 3", "unknown-3"),
+                               ("Turks:Rnde", "turks-rude"), ("Jenova·BlRTH", "jenovabirth")):
+            with self.subTest(line=line):
+                found = det.identify_enemies_from_lines([line])
+                self.assertEqual([(e["id"], e["count"]) for e in found], [(enemy_id, 1)])
+
+
+class TestDetectorGuards(unittest.TestCase):
+    """Guards that mutations removed without a failing test (CLAUDE-20261012-B09)."""
+
+    def test_only_letters_a_to_h_are_instance_letters(self):
+        # a formation holds at most 8 enemies, so the game's letters stop at H
+        self.assertEqual(BattleDetector.parse_enemy_line("Grunt K")[1:], (None, 1))
+        det = BattleDetector()
+        self.assertEqual([e["count"] for e in det.identify_enemies_from_lines(["Grunt K"])], [1])
+
+    def test_field_menu_lines_rule_out_the_hud(self):
+        # the field menu shows HP / MP and party names next to lines only it has
+        for line in ("LIMIT LEVEL", "NEXT LEVEL", "MATERIA", "EQUIP", "SAVE"):
+            with self.subTest(line=line):
+                self.assertFalse(BattleDetector.is_combat_hud_active(["Cloud", "HP", "MP", line]))
+        self.assertTrue(BattleDetector.is_combat_hud_active(["Cloud", "HP", "MP"]))
+
+    def test_low_confidence_lines_are_dropped(self):
+        from unittest import mock
+        import numpy as np
+        from ffvii_companion.engine.ocr_engine import OCRLine, OCRResult
+        det = BattleDetector(confidence_threshold=0.45)
+        result = OCRResult(lines=[OCRLine("Prowler", 0.9, (0, 0, 1, 1)), OCRLine("Grunt", 0.3, (0, 0, 1, 1))])
+        with mock.patch.object(det._ocr, "run", return_value=result):
+            self.assertEqual(det.detect_text_lines(np.zeros((8, 8, 3), np.uint8)), ["Prowler"])
 
 
 class TestCombatHud(unittest.TestCase):

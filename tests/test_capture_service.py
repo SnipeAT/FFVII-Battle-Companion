@@ -217,6 +217,24 @@ class TestCaptureStateMachine(unittest.TestCase):
         counts = {e["name"]: e["count"] for e in self.service.current_enemies}
         self.assertEqual(counts, {"Grosspanzerbig": 1, "Grosspanzermobile": 1})
 
+    def test_item_named_like_an_enemy_is_not_a_new_round(self):
+        # CLAUDE-20261012-B01: the battle Item menu is inside the capture region; a highlighted
+        # Grenade replaced the encounter, and the next target read lost the instance count
+        frames = (["Devil Ride B", "Attack", "HP", "MP"], ["otion", "Grenade", "HP", "MP"],
+                  ["Right arm", "X-Potion", "HP", "MP"], ["Devil Ride", "ttack", "Mime", "HP", "MP"])
+        titles = []
+        for lines in frames:
+            enemies = self.service.detector.identify_enemies_from_lines(lines)
+            _, title, _ = self.service._update_battle_state(enemies, True, True, self.cfg, 3)
+            titles.append(title)
+        self.assertEqual({e["name"]: e["count"] for e in self.service.current_enemies}, {"Devil Ride": 2})
+        self.assertEqual([t for t in titles if t], ["Battle: 2x Devil Ride"])
+        # A battle against Grenades still registers them
+        self.service._clear_battle_state()
+        enemies = self.service.detector.identify_enemies_from_lines(["Grenade", "Attack", "HP", "MP"])
+        self.service._update_battle_state(enemies, True, True, self.cfg, 3)
+        self.assertEqual([e["name"] for e in self.service.current_enemies], ["Grenade"])
+
     def test_compatible_partner_is_not_a_round_transition(self):
         prowler = dict(compendium.get_by_name("Prowler"))
         fang = dict(compendium.get_by_name("Kalm Fang"))
@@ -305,6 +323,23 @@ class TestCaptureBbox(unittest.TestCase):
         bbox = service._calculate_capture_bbox(win)
         self.assertLess(bbox["left"], 0)
         self.assertLess(bbox["top"], 0)
+
+    def test_monitor_change_applies_without_restart(self):
+        # CLAUDE-20261012-A07: a changed monitor_index was saved and reported but the capture
+        # engine kept the monitor it started with
+        service = CaptureService()
+        engine = service.capture_engine
+        engine.monitors = [
+            {"left": 0, "top": 0, "width": 3840, "height": 1080},
+            {"left": 0, "top": 0, "width": 1920, "height": 1080},
+            {"left": 1920, "top": 0, "width": 1920, "height": 1080},
+        ]
+        roi = {"top_pct": 0.0, "left_pct": 0.0, "width_pct": 1.0, "height_pct": 1.0}
+        for monitor, left in ((1, 0), (2, 1920), (1, 0)):
+            cfg = make_config(mode="custom_roi", monitor_index=monitor, roi=roi)
+            with mock.patch.object(calibration_manager, "get_config", return_value=cfg):
+                self.assertEqual(service._calculate_capture_bbox()["left"], left, monitor)
+            self.assertEqual(engine.monitor_index, monitor)
 
 
 class TestDiagnosticSnapshot(unittest.TestCase):
@@ -424,11 +459,14 @@ class TestCaptureLoopLifecycle(unittest.TestCase):
         service = CaptureService()
         errors = []
 
+        states = []
+
         def worker():
             try:
                 service._apply_thread_qos(True)
                 service._apply_thread_qos(False)
                 service._apply_thread_qos(False)
+                states.append(service._thread_qos.efficient)
             except Exception as exc:  # pragma: no cover - failure path
                 errors.append(exc)
 
@@ -436,8 +474,189 @@ class TestCaptureLoopLifecycle(unittest.TestCase):
         t.start()
         t.join()
         self.assertEqual(errors, [])
-        self.assertFalse(service._qos_efficient)
+        self.assertEqual(states, [False])
 
+    def _blocking_service(self):
+        """A service whose loop steps block in the window lookup until `release` is set, with
+        every thread that looked up the window recorded in `calls` (no screen is captured)."""
+        service = CaptureService()
+        service.release = threading.Event()
+        service.calls = []
+
+        def find_window():
+            service.calls.append(threading.current_thread())
+            service.release.wait(10)
+            return None
+
+        service.window_finder.find_ffvii_window = find_window
+        service.window_finder._scan_interval = 0.01
+        return service
+
+    def _wait_for(self, condition, timeout=5.0):
+        deadline = time.monotonic() + timeout
+        while not condition():
+            self.assertLess(time.monotonic(), deadline, "timed out")
+            time.sleep(0.01)
+
+    def test_start_after_a_timed_out_stop_runs_one_loop(self):
+        # CLAUDE-20261012-B04: stop() gave up after 2 s while a step was still running, and the
+        # next start() cleared the shared stop event, so the old thread kept looping next to the
+        # new one
+        service = self._blocking_service()
+        cfg = make_config(mode="auto_window")
+        with mock.patch.object(calibration_manager, "get_config", return_value=cfg):
+            service.start()
+            self._wait_for(lambda: service.calls)
+            old = service.calls[0]
+            service.stop()  # times out: the step is blocked
+            self.assertTrue(old.is_alive())
+            service.start()
+            time.sleep(0.2)
+            self.assertEqual(service.calls, [old], "the new loop waits for the old one's step")
+            service.release.set()
+            self._wait_for(lambda: not old.is_alive())
+            self._wait_for(lambda: any(t is not old for t in service.calls))
+            time.sleep(0.1)
+            service.stop()
+        self.assertEqual(sum(1 for t in service.calls if t is old), 1)
+        self.assertEqual([t for t in threading.enumerate() if t.name == "FFVIICaptureLoop" and t.is_alive()], [])
+
+    def test_restarted_capture_thread_sets_its_qos(self):
+        # CLAUDE-20261012-B06: the QoS state was kept on the service, so a restarted loop (a new
+        # thread, normal priority) skipped setting its priority and EcoQoS
+        from ffvii_companion.engine import capture_service as module
+        service = self._blocking_service()
+        service.release.set()
+        applied = []
+        cfg = make_config(mode="auto_window")
+        with mock.patch.object(calibration_manager, "get_config", return_value=cfg),                 mock.patch.object(module.win_qos, "set_current_thread_qos",
+                                  side_effect=lambda **kw: applied.append(threading.current_thread())):
+            for _ in range(2):
+                service.start()
+                self._wait_for(lambda: service.calls and service.calls[-1].is_alive())
+                service.stop()
+                service.calls.clear()
+        self.assertEqual(len(applied), 2)
+        self.assertIsNot(applied[0], applied[1])
+
+
+
+class TestDocumentedLoopBehavior(unittest.TestCase):
+    """Behavior that CLAUDE.md and README promise and that mutations of the code passed every
+    test (CLAUDE-20261012-B08)."""
+
+    def setUp(self):
+        self.service = CaptureService()
+        self.cfg = make_config()
+
+    def test_documented_constants(self):
+        from ffvii_companion.engine.capture_service import HUNTING_BURST_FRAMES
+        self.assertEqual(MAX_GATED_SKIPS, {"hunting": 2, "settled": 4, "idle": 4})
+        self.assertEqual(HUNTING_BURST_FRAMES, 3)
+
+    def test_battle_clears_after_idle_timeout(self):
+        self.cfg["idle_timeout_seconds"] = 6.0
+        self.assertEqual(CaptureService._max_empty_frames(self.cfg, "hunting"), 9)   # 1.5 FPS
+        self.assertEqual(CaptureService._max_empty_frames(self.cfg, "idle"), 3)      # 0.5 FPS
+        self.assertEqual(CaptureService._max_empty_frames(self.cfg, "settled"), 2)   # 0.35 FPS
+        # process_frame without an explicit limit uses the same one: 2 s at 1.5 FPS = 3 samples
+        self.cfg["idle_timeout_seconds"] = 2.0
+        prowler = dict(compendium.get_by_name("Prowler"))
+        self.service._update_battle_state([prowler], True, True, self.cfg, 3)
+        self.assertEqual(self.service.combat_phase, "hunting")
+        cleared_at = None
+        for step in range(1, 8):
+            if self.service.process_frame(load_fixture_bgra("field_no_text.png"), self.cfg)["cleared"]:
+                cleared_at = step
+                break
+        self.assertEqual(cleared_at, 3)
+
+    def test_overlapping_names_are_not_a_new_round(self):
+        devil_rides = {**compendium.get_by_name("Devil Ride"), "count": 2}
+        devil_ride = {**compendium.get_by_name("Devil Ride"), "count": 1}
+        dragon = dict(compendium.get_by_id("dragon"))
+        self.service._update_battle_state([devil_rides], True, True, self.cfg, 3)
+        # Dragon shares no formation with Devil Ride, but a Devil Ride is still on screen: no new
+        # round, so the two Devil Rides seen before are kept
+        self.service._update_battle_state([devil_ride, dragon], True, True, self.cfg, 3)
+        self.assertEqual(self.service.observed_counts.get("Devil Ride"), 2)
+
+    def test_instance_letter_follows_the_count(self):
+        def read(line):
+            enemies = self.service.detector.identify_enemies_from_lines([line, "Attack", "HP", "MP"])
+            self.service._update_battle_state(enemies, True, True, self.cfg, 3)
+            return [(e["count"], e["instance_letter"]) for e in self.service.current_enemies]
+
+        # a misread letter ("H": no formation has 8 Devil Rides) raises the count to 2 without
+        # a letter; "A" belongs to count 1 and must not become the letter of 2
+        self.assertEqual(read("Devil Ride H"), [(2, None)])
+        self.assertEqual(read("Devil Ride A"), [(2, None)])
+        self.assertEqual(read("Devil Ride B"), [(2, "B")])
+        self.assertEqual(read("Devil Ride A"), [(2, "B")])
+
+    def test_new_enemy_restarts_the_hunting_burst(self):
+        from ffvii_companion.engine.capture_service import HUNTING_BURST_FRAMES
+        prowler = dict(compendium.get_by_name("Prowler"))
+        fang = dict(compendium.get_by_name("Kalm Fang"))
+        self.service._update_battle_state([prowler], True, True, self.cfg, 3)
+        self.service._update_battle_state([prowler], True, True, self.cfg, 3)
+        self.assertEqual(self.service.hunting_frames_remaining, HUNTING_BURST_FRAMES - 1)
+        self.service._update_battle_state([prowler, fang], True, True, self.cfg, 3)
+        self.assertEqual(self.service.hunting_frames_remaining, HUNTING_BURST_FRAMES)
+
+    def test_clear_runs_ocr_on_the_next_sample(self):
+        frame = load_fixture_bgra("prowler.png")
+        self.assertTrue(self.service.process_frame(frame, self.cfg)["ocr_ran"])
+        self.assertFalse(self.service.process_frame(frame, self.cfg)["ocr_ran"])  # gated
+        self.service.clear_battle()
+        # the cleared enemy is read again at once, not after the gate's safety net
+        self.assertTrue(self.service.process_frame(frame, self.cfg)["ocr_ran"])
+
+    def _run_loop_once(self, phase_after_step):
+        """Runs one step of _loop (custom_roi, frame and step faked) and returns the QoS it set
+        and the sleep it chose."""
+        from ffvii_companion.engine import capture_service as module
+
+        class OneStep(threading.Event):
+            timeouts = []
+
+            def wait(self, timeout=None):
+                self.timeouts.append(timeout)
+                self.set()
+                return True
+
+        def step(frame, cfg, max_empty_frames):
+            with self.service._state_lock:
+                self.service.combat_phase = phase_after_step
+            return {"ocr_timing": {}, "cvt_color_ms": 0.0, "ocr_total_ms": 0.0, "match_ms": 0.0,
+                    "lines": [], "ocr_ran": True, "gate_ms": 0.0}
+
+        qos = []
+        cfg = make_config(mode="custom_roi")
+        self.service._calculate_capture_bbox = lambda win=None: {"top": 0, "left": 0, "width": 8, "height": 8}
+        self.service._grab = lambda bbox: load_fixture_bgra("prowler.png")
+        self.service.process_frame = step
+        stop = OneStep()
+        with mock.patch.object(calibration_manager, "get_config", return_value=cfg),                 mock.patch.object(module.win_qos, "set_current_thread_qos",
+                                  side_effect=lambda **kw: qos.append(kw["efficient"])):
+            self.service._loop(stop)
+        return qos, stop.timeouts[0]
+
+    def test_loop_leaves_ecoqos_while_hunting(self):
+        self.service.combat_phase = "hunting"
+        qos, _ = self._run_loop_once("hunting")
+        self.assertEqual(qos, [False])
+        self.service.combat_phase = "idle"
+        qos, _ = self._run_loop_once("idle")
+        self.assertEqual(qos, [True])
+
+    def test_loop_sleeps_at_the_rate_of_the_phase_the_step_ended_in(self):
+        # idle (0.5 FPS) -> a step that starts hunting (1.5 FPS): the next sample comes after
+        # about 0.67 s, not 2 s
+        self.service.combat_phase = "idle"
+        _, sleep = self._run_loop_once("hunting")
+        self.assertLess(sleep, 1.0 / 1.5 + 0.01)
+        self.assertGreater(sleep, 0.3)
 
 if __name__ == "__main__":
     unittest.main()

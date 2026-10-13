@@ -96,6 +96,18 @@ class TestCompendiumLookup(unittest.TestCase):
             self.assertEqual(compendium.match_enemy(query)["name"], expected)
 
 
+class TestMatchGuards(unittest.TestCase):
+    """Guards that mutations removed without a failing test (CLAUDE-20261012-B09)."""
+
+    def test_short_queries_must_match_exactly(self):
+        self.assertEqual(compendium.match_enemy("Mu")["name"], "Mu")
+        self.assertIsNone(compendium.match_enemy("Mux"))  # "mu" scores 80, but 3 letters is too short
+
+    def test_length_must_be_close(self):
+        self.assertEqual(compendium.match_enemy("Sweeperrr")["name"], "Sweeper")
+        self.assertIsNone(compendium.match_enemy("Sweeperrrr"))  # scores 82, 3 letters longer
+
+
 class TestFormations(unittest.TestCase):
     def test_formation_deduction(self):
         deduction = compendium.deduce_formation({"Nerosuferoth": 2, "Formula": 1})
@@ -147,6 +159,24 @@ class TestFormations(unittest.TestCase):
         # The battle may name its enemies by id
         self.assertEqual(names(compendium.get_partners("devil-ride", current_observed={"devil-ride": 1})),
                          ["Kalm Fang"])
+
+
+class TestDeductionGuards(unittest.TestCase):
+    def test_matching_formations_name_their_other_enemies(self):
+        # auto-add relies on certain_partners. Two Mus match one formation (with a Levrikon);
+        # two Prowlers match several formations, all with a Kalm Fang
+        for observed, partner in (({"Mu": 2}, "Levrikon"), ({"Prowler": 2}, "Kalm Fang")):
+            with self.subTest(observed=observed):
+                deduction = compendium.deduce_formation(observed)
+                self.assertTrue(deduction["is_disambiguated"])
+                self.assertEqual([p["name"] for p in deduction["certain_partners"]], [partner])
+        self.assertEqual(len(compendium.find_matching_formations({"Mu": 2})), 1)
+
+    def test_formation_is_not_known_while_several_match(self):
+        devil_ride = {**compendium.get_by_name("Devil Ride"), "count": 1}
+        self.assertFalse(compendium.battle_summary([devil_ride])["formation_known"])
+        fang = {**compendium.get_by_name("Kalm Fang"), "count": 2}
+        self.assertTrue(compendium.battle_summary([devil_ride, fang])["formation_known"])
 
 
 class TestStealFormula(unittest.TestCase):

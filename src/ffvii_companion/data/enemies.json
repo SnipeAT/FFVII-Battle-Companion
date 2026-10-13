@@ -8622,7 +8622,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Starts with Arm Attack on the highest-HP member, then cycles Twin Burner, Deadly Wheel and Rolling Fire, all on the whole party. Below 1/8 HP it goes straight to its flamethrower attacks. Use Bolt, link Elemental with Fire in armor, and keep party-wide healing ready."
+    "notes": "Repeats a fixed cycle: two turns of Arm Attack on the highest-HP member (sometimes twice in one turn), then Twin Burner, Deadly Wheel and Rolling Fire on the whole party. The first time it falls below 1/8 HP it skips ahead to Twin Burner. Use Bolt, link Elemental with Fire in armor, and keep party-wide healing ready."
   },
   {
     "id": "midgar-zolom",
@@ -18940,7 +18940,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Below 15,000 HP it starts a countdown and then casts Ultima, which ends the fight with no EXP or AP, so defeat it before the count runs out. Its tentacle attacks hit hard and can Silence."
+    "notes": "Below 15,000 HP it starts a countdown and then casts Ultima, which ends the fight with no EXP or AP, so defeat it before the count runs out. Repeating Slap can inflict Fury and Absorb Sadness; it also casts Bio2 (Poison) and Stop."
   },
   {
     "id": "bizarrosephiroth",

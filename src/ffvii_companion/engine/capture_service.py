@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 
 from ffvii_companion.engine.capture import ScreenCaptureEngine
-from ffvii_companion.engine.detector import BattleDetector
+from ffvii_companion.engine.detector import BattleDetector, ITEM_NAMED_ENEMIES
 from ffvii_companion.engine.window_finder import FFVIIWindowFinder
 from ffvii_companion.engine.calibration import calibration_manager
 from ffvii_companion.engine.profiler import perf_tracker
@@ -20,10 +20,9 @@ logger = logging.getLogger("ffvii-capture-service")
 # Safety net for the text-change gate: OCR is forced after this many consecutive
 # gated (skipped) frames even if the gate saw no text change.
 MAX_GATED_SKIPS = {"hunting": 2, "settled": 4, "idle": 4}
-# Frames to stay in the hunting phase after a new enemy appears.
+# Frames to stay in the hunting phase after a new enemy appears. While the battle HUD shows
+# without a registered enemy, hunting lasts as long as the HUD does.
 HUNTING_BURST_FRAMES = 3
-# Frames to keep hunting while the battle HUD is visible but no enemy is registered.
-HUD_HUNTING_FRAMES = 4
 # Minimum seconds between repeated identical error log lines from the capture loop.
 ERROR_LOG_INTERVAL = 30.0
 
@@ -82,7 +81,7 @@ class CaptureService:
         self.current_fps: float = 0.5
 
         # Loop bookkeeping
-        self._qos_efficient: Optional[bool] = None
+        self._thread_qos = threading.local()  # .efficient: the QoS this loop thread last set
         self._last_error: Tuple[str, float] = ("", 0.0)
         self.ocr_frames = 0
         self.gated_frames = 0
@@ -94,9 +93,14 @@ class CaptureService:
         with self._lock:
             if self._running:
                 return
-            self._stop_event.clear()
+            # Every loop thread gets its own stop event: a stop() that timed out while a step was
+            # still running (REPORT holding _capture_lock, slow OCR) leaves that thread finishing
+            # its step, and a shared event cleared here would keep it looping next to the new one.
+            # The new thread first waits for the old one to end.
+            self._stop_event = threading.Event()
             self._running = True
-            self._thread = threading.Thread(target=self._loop, daemon=True, name="FFVIICaptureLoop")
+            self._thread = threading.Thread(target=self._loop, args=(self._stop_event, self._thread),
+                                            daemon=True, name="FFVIICaptureLoop")
             self._thread.start()
             logger.info("FFVII Screen Capture service started.")
 
@@ -146,6 +150,12 @@ class CaptureService:
             return max(0.2, cfg["settled_fps"])
         return max(0.2, cfg["idle_fps"])
 
+    @classmethod
+    def _max_empty_frames(cls, cfg: Dict[str, Any], phase: str) -> int:
+        """Samples without enemies or HUD after which the battle clears: idle_timeout_seconds at
+        the phase's sampling rate (at least 2)."""
+        return max(2, int(cls._phase_fps(cfg, phase) * cfg["idle_timeout_seconds"]))
+
     def _sync_detector_settings(self, cfg: Dict[str, Any]):
         det_limit = cfg["det_limit_side_len"]
         if self.detector.det_limit_side_len != det_limit:
@@ -156,11 +166,13 @@ class CaptureService:
         self.detector.confidence_threshold = cfg["confidence_threshold"]
 
     def _apply_thread_qos(self, efficient: bool):
-        """Switches the capture thread between EcoQoS (efficiency cores) and full speed."""
-        if self._qos_efficient is efficient:
+        """Switches the capture thread between EcoQoS (efficiency cores) and full speed. Priority
+        and QoS belong to the thread, so the state is kept per thread (a restarted loop is a new
+        thread that starts at normal priority)."""
+        if getattr(self._thread_qos, "efficient", None) is efficient:
             return
         win_qos.set_current_thread_qos(efficient=efficient, below_normal=True)
-        self._qos_efficient = efficient
+        self._thread_qos.efficient = efficient
 
     def _log_error(self, message: str):
         """Logs loop errors without flooding the log when the same error repeats every frame."""
@@ -202,9 +214,12 @@ class CaptureService:
             height = max(64, int(target_win["height"] * roi["height_pct"]))
             return {"top": top, "left": left, "width": width, "height": height}
 
-        # Fallback to monitor coordinates
+        # Fallback to monitor coordinates, of the monitor the settings name now (the setting can
+        # change while the companion runs)
         with self._state_lock:
             self.last_game_window = None
+        if self.capture_engine.requested_monitor != cfg["monitor_index"]:
+            self.capture_engine.select_monitor(cfg["monitor_index"])
         mon = self.capture_engine.monitors[self.capture_engine.monitor_index]
         top = int(mon["top"] + mon["height"] * roi["top_pct"])
         left = int(mon["left"] + mon["width"] * roi["left_pct"])
@@ -451,6 +466,17 @@ class CaptureService:
                     detected_names = {e["name"] for e in detected_enemies}
                     new_names = detected_names - current_names
 
+                    # Items named like enemies: the battle Item menu lists them inside the capture
+                    # region. One that cannot join the current enemies is that menu, not a new
+                    # round (a highlighted Grenade used to replace the battle and its counts).
+                    if current_names and new_names & ITEM_NAMED_ENEMIES:
+                        menu_items = {n for n in new_names & ITEM_NAMED_ENEMIES
+                                      if not compendium.find_matching_formations({**self.observed_counts, n: 1})}
+                        if menu_items:
+                            detected_enemies = [e for e in detected_enemies if e["name"] not in menu_items]
+                            detected_names -= menu_items
+                            new_names -= menu_items
+
                     # Battle Square / Arena round transition detection:
                     # If we have existing enemies and detected names contain a new enemy,
                     # verify if the new enemy can legally co-exist in ANY formation with current enemies.
@@ -556,7 +582,6 @@ class CaptureService:
                     if self.combat_phase != "hunting":
                         logger.info(f"Combat HUD active. Increasing sample rate to {active_fps} FPS to identify enemies.")
                     self.combat_phase = "hunting"
-                    self.hunting_frames_remaining = max(self.hunting_frames_remaining, HUD_HUNTING_FRAMES)
                 else:
                     # In battle, enemies already registered: decrement hunting burst and settle
                     self._decay_hunting_locked(settled_fps)
@@ -586,7 +611,7 @@ class CaptureService:
             phase = self.combat_phase
             in_battle = bool(self.current_enemies) or phase != "idle"
         if max_empty_frames is None:
-            max_empty_frames = max(2, int(self._phase_fps(cfg, phase) * cfg["idle_timeout_seconds"]))
+            max_empty_frames = self._max_empty_frames(cfg, phase)
 
         # 1. Text-change gate (sub-millisecond): skip OCR when the text-like pixels are unchanged
         t_gate = time.perf_counter()
@@ -660,24 +685,27 @@ class CaptureService:
         }
 
     # ------------------------------------------------------------------ loop
-    def _loop(self):
+    def _loop(self, stop_event: Optional[threading.Event] = None,
+              previous: Optional[threading.Thread] = None):
         # Below-normal priority always; EcoQoS (efficiency cores) outside the hunting phase.
         # Keeps the background OCR loop off the performance cores FFVII runs on, while
         # still identifying new enemies at full speed.
+        stop_event = stop_event or self._stop_event
+        if previous is not None and previous.is_alive():
+            previous.join()  # a loop whose stop() timed out finishes its step first
         cpu_prev = time.thread_time()
         wall_prev = time.monotonic()
 
-        while self._running:
+        while not stop_event.is_set():
             start_time = time.monotonic()
             cfg = calibration_manager.get_config()
             self._sync_detector_settings(cfg)
             mode = cfg["mode"]
 
             current_phase = self._sync_current_fps(cfg)
-            fps = self._phase_fps(cfg, current_phase)
             self._apply_thread_qos(efficient=bool(cfg["eco_mode"]) and current_phase != "hunting")
 
-            max_empty_frames = max(2, int(fps * cfg["idle_timeout_seconds"]))
+            max_empty_frames = self._max_empty_frames(cfg, current_phase)
 
             try:
                 t_loop0 = time.perf_counter()
@@ -694,7 +722,7 @@ class CaptureService:
                             self._fire_cleared()
                         # FFVII is not running: sleep on stop event
                         scan_int = getattr(self.window_finder, "_scan_interval", 1.0)
-                        if self._stop_event.wait(scan_int):
+                        if stop_event.wait(scan_int):
                             break
                         continue
 
@@ -749,7 +777,7 @@ class CaptureService:
             with self._state_lock:
                 fps = self._phase_fps(cfg, self.combat_phase)
             elapsed = time.monotonic() - start_time
-            if self._stop_event.wait(max(0.01, (1.0 / fps) - elapsed)):
+            if stop_event.wait(max(0.01, (1.0 / fps) - elapsed)):
                 break
 
 capture_service = CaptureService()

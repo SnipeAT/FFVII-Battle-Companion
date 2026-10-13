@@ -34,6 +34,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "ocr_threads": 1,            # ONNX Runtime threads per OCR session (1 = lowest CPU impact)
     "text_gate": True,           # Skip OCR when the text in the capture region has not changed
     "eco_mode": True,            # Run OCR on efficiency cores (EcoQoS) outside the hunting phase
+    "allowed_hosts": [],         # Host names the server answers besides IP addresses, localhost and the PC's name ("*": any); settings file only
 }
 
 PRESETS = {
@@ -80,6 +81,10 @@ NUMERIC_RANGES = {
 INTEGER_KEYS = {"det_limit_side_len", "monitor_index", "ocr_threads"}
 BOOLEAN_KEYS = {"auto_add_scene_partners", "text_gate", "eco_mode"}
 ROI_KEYS = ("top_pct", "left_pct", "width_pct", "height_pct")
+# Settings that only a hand edit of the file can change, not the API: allowed_hosts decides which
+# requests the server answers at all, so a request must not be able to widen it.
+FILE_ONLY_KEYS = {"allowed_hosts"}
+MAX_ALLOWED_HOSTS = 32
 
 
 class ConfigValidationError(ValueError):
@@ -115,6 +120,19 @@ def _coerce_roi(value: Any) -> Dict[str, float]:
     return roi
 
 
+def _coerce_hosts(value: Any) -> list:
+    if not isinstance(value, list) or len(value) > MAX_ALLOWED_HOSTS:
+        raise ConfigValidationError(f"allowed_hosts must be a list of at most {MAX_ALLOWED_HOSTS} host names")
+    hosts = []
+    for item in value:
+        if not isinstance(item, str) or not item.strip() or len(item) > 253:
+            raise ConfigValidationError("allowed_hosts entries must be host names")
+        host = item.strip().lower().rstrip(".")
+        if host and host not in hosts:
+            hosts.append(host)
+    return hosts
+
+
 def validate_settings(settings: Dict[str, Any], clamp: bool = False) -> Dict[str, Any]:
     """
     Validates and normalizes a (partial) settings dict.
@@ -142,6 +160,8 @@ def validate_settings(settings: Dict[str, Any], clamp: bool = False) -> Dict[str
                 clean[key] = value
             elif key == "roi":
                 clean[key] = _coerce_roi(value)
+            elif key == "allowed_hosts":
+                clean[key] = _coerce_hosts(value)
             elif key == "target_menu_preset":
                 if not isinstance(value, str) or len(value) > 64:
                     raise ConfigValidationError("target_menu_preset must be a short string")
@@ -154,55 +174,76 @@ def validate_settings(settings: Dict[str, Any], clamp: bool = False) -> Dict[str
 
 
 class CalibrationManager:
+    """
+    The settings: DEFAULT_CONFIG with the user's saved values over it (`config`). The file holds
+    only the saved values (`_saved`: set from the dashboard or by hand), so a default that a
+    later version changes reaches every user who did not set that value themselves.
+    """
     def __init__(self, file_path: Path = CALIBRATION_FILE):
         self.file_path = file_path
         self._lock = threading.Lock()
-        self.config: Dict[str, Any] = self._load()
+        self._saved: Dict[str, Any] = self._load()
+        self.config: Dict[str, Any] = json.loads(json.dumps(DEFAULT_CONFIG))  # deep copy so the defaults stay pristine
+        self.config.update(self._saved)
 
     def _load(self) -> Dict[str, Any]:
-        cfg = json.loads(json.dumps(DEFAULT_CONFIG))  # deep copy so the defaults stay pristine
         if self.file_path.exists():
             try:
-                with open(self.file_path, "r", encoding="utf-8") as f:
+                # utf-8-sig: Notepad ("UTF-8 with BOM") and PowerShell 5.1 write a byte order mark
+                with open(self.file_path, "r", encoding="utf-8-sig") as f:
                     data = json.load(f)
-                # Merge defaults with validated (clamped) file values
-                cfg.update(validate_settings(data, clamp=True))
+                if not isinstance(data, dict):
+                    raise ValueError("the file does not hold an object")
+                # Validated (clamped) file values
+                return validate_settings(data, clamp=True)
             except Exception as e:
                 logger.warning(f"Could not read calibration file {self.file_path}: {e}. Using defaults.")
-        return cfg
+        return {}
 
-    def save(self):
-        """Writes the configuration atomically (temp file + replace) to avoid torn files."""
+    def _write(self, saved: Dict[str, Any]):
+        """Writes the saved values atomically (temp file + replace) to avoid torn files. Raises
+        OSError when the file cannot be written (for example while another program holds it)."""
         self.file_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = self.file_path.with_suffix(".json.tmp")
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(self.config, f, indent=2)
-        os.replace(tmp, self.file_path)
+        try:
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(saved, f, indent=2)
+            os.replace(tmp, self.file_path)
+        except OSError:
+            tmp.unlink(missing_ok=True)
+            raise
+
+    def _apply(self, changes: Dict[str, Any]):
+        """Saves the changes, then applies them: when the save fails (OSError), nothing changes."""
+        saved = {**self._saved, **changes}
+        self._write(saved)
+        self._saved = saved
+        self.config.update(json.loads(json.dumps(changes)))  # no dict shared with _saved
 
     def get_config(self) -> Dict[str, Any]:
         return self.config
 
     def update_config(self, new_settings: Dict[str, Any]) -> Dict[str, Any]:
-        """Validates, applies and persists settings. Raises ConfigValidationError on bad input."""
+        """Validates, persists and applies settings. Raises ConfigValidationError on bad input and
+        OSError when the file cannot be written (the settings then stay as they were)."""
+        file_only = sorted(FILE_ONLY_KEYS.intersection(new_settings))
+        if file_only:
+            raise ConfigValidationError(f"{', '.join(file_only)} can only be changed in the settings file")
         filtered = validate_settings(new_settings, clamp=False)
         with self._lock:
             if filtered:
-                self.config.update(filtered)
-                self.save()
+                self._apply(filtered)
             return self.config
 
     def apply_preset(self, preset_key: str) -> Optional[Dict[str, Any]]:
+        """Selects a capture region preset; None for an unknown key. Raises OSError like update_config."""
         if preset_key in PRESETS:
             preset = PRESETS[preset_key]
             with self._lock:
-                self.config["target_menu_preset"] = preset_key
-                self.config["roi"] = {
-                    "top_pct": preset["top_pct"],
-                    "left_pct": preset["left_pct"],
-                    "width_pct": preset["width_pct"],
-                    "height_pct": preset["height_pct"]
-                }
-                self.save()
+                self._apply({
+                    "target_menu_preset": preset_key,
+                    "roi": {key: preset[key] for key in ROI_KEYS},
+                })
                 return self.config
         return None
 
