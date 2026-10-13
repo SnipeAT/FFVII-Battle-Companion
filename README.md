@@ -270,9 +270,10 @@ The item steal value comes from the enemy data (8 = rare, 32 = common, 63 = very
   .\.venv\Scripts\python.exe -m tools.benchmark_loop recordings\session1
   ```
 - `tools/ff7_synthetic.py` - synthetic battle / field frames in the FFNx layout, used by the tests.
-- `tools/ai_script.py` - prints an enemy's attacks (targets, power, status effects, elements) and its battle AI scripts from the game's `scene.bin` (Steam edition install), to check the tactical notes against what the enemy really does:
+- `tools/ai_script.py` - prints an enemy's attacks (targets, power, status effects, elements) and its battle AI scripts from the game's `scene.bin` (Steam edition install), to check the tactical notes against what the enemy really does. `--pseudo` decompiles the scripts into readable pseudo-code (if / else, switch, while, `use <attack>`) instead of listing the instructions:
   ```powershell
   .\.venv\Scripts\python.exe -m tools.ai_script "Motor Ball"
+  .\.venv\Scripts\python.exe -m tools.ai_script "Guard Scorpion" --pseudo
   ```
 - Simulator CLI (needs the app running):
   ```powershell
@@ -327,7 +328,7 @@ Individual suites:
 .\.venv\Scripts\python.exe -m unittest tests.test_profiler -v
 .\.venv\Scripts\python.exe -m unittest tests.test_detector -v
 .\.venv\Scripts\python.exe -m unittest tests.test_platform -v          # screen capture, window finder, QoS
-.\.venv\Scripts\python.exe -m unittest tests.test_ai_script -v         # tools/ai_script.py disassembler and name matching
+.\.venv\Scripts\python.exe -m unittest tests.test_ai_script -v         # tools/ai_script.py disassembler, decompiler and name matching
 ```
 
 The test package redirects all writable files (settings, player profile, reports, logs) to a temporary folder, so running the tests never changes your settings. `tests/fixtures/real/` holds capture-region frames recorded from real FFNx sessions, battles and field menus (see its `manifest.json` for the expected result of each frame).
