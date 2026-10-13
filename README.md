@@ -327,6 +327,7 @@ Individual suites:
 .\.venv\Scripts\python.exe -m unittest tests.test_profiler -v
 .\.venv\Scripts\python.exe -m unittest tests.test_detector -v
 .\.venv\Scripts\python.exe -m unittest tests.test_platform -v          # screen capture, window finder, QoS
+.\.venv\Scripts\python.exe -m unittest tests.test_ai_script -v         # tools/ai_script.py disassembler and name matching
 ```
 
 The test package redirects all writable files (settings, player profile, reports, logs) to a temporary folder, so running the tests never changes your settings. `tests/fixtures/real/` holds capture-region frames recorded from real FFNx sessions, battles and field menus (see its `manifest.json` for the expected result of each frame).

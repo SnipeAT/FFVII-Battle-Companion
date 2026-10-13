@@ -6,7 +6,7 @@ against what the enemy really does (who it targets, when it counters, what its a
     .\\.venv\\Scripts\\python.exe -m tools.ai_script jenova --scene 227
 
 Read-only; needs the Steam edition installed (--game-dir as in tools/enrich_compendium.py). Every
-scene.bin record whose name contains the text is printed (bosses fought several times have one
+scene.bin record whose name contains the text (case and punctuation ignored) is printed (bosses fought several times have one
 record per scene). For each record: its attacks (target flags, power, status effects, elements),
 then each AI script (Init, Main, counters, ...) disassembled.
 
@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from ffvii_companion.compendium import ELEMENT_NAMES
+from ffvii_companion.compendium import ELEMENT_NAMES, name_key
 from tools.enrich_compendium import (ATTACK_IDS_OFFSET, ATTACK_NAMES_OFFSET, DEFAULT_GAME_DIR, E_ATTACKS,
                                      ENEMY_OFFSET, ENEMY_SIZE, SCENE_REL, STATUS_BIT_NAMES, decode_ff7_string,
                                      read_scenes, u16, u32)
@@ -65,6 +65,8 @@ def disassemble(block: bytes, start: int, end: int, attack_names: Dict[int, str]
     while pc < end:
         op, at = block[pc], pc
         pc += 1
+        if op == 0xFF:
+            break  # not an opcode: the 0xFF padding after the last script of the scene
         if op <= 0x07 or 0x10 <= op <= 0x17:
             value = u16(block, pc)
             pc += 2
@@ -135,9 +137,16 @@ def describe(scene: bytes, slot: int, attack_names: Dict[int, str]) -> List[str]
     return out
 
 
+def name_matches(query: str, name: str) -> bool:
+    """Whether a scene.bin name contains the query, ignoring case and punctuation: the compendium's
+    "Jenovasynthesis" and "jenova synthesis" both find "Jenova·SYNTHESIS"."""
+    key = name_key(query)
+    return bool(key) and key in name_key(name)
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.strip().split("\n\n")[0])
-    parser.add_argument("name", help="Text the enemy's scene.bin name contains (any case)")
+    parser.add_argument("name", help="Text the enemy's scene.bin name contains (any case and punctuation)")
     parser.add_argument("--scene", type=int, help="Only this scene")
     parser.add_argument("--game-dir", type=Path, default=DEFAULT_GAME_DIR,
                         help="FINAL FANTASY VII Steam Edition install directory")
@@ -163,7 +172,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         for slot in range(3):
             rec = scene[ENEMY_OFFSET + slot * ENEMY_SIZE: ENEMY_OFFSET + (slot + 1) * ENEMY_SIZE]
             name = decode_ff7_string(rec[:32])
-            if not name or args.name.lower() not in name.lower():
+            if not name or not name_matches(args.name, name):
                 continue
             found += 1
             print(f"=== scene {index}, slot {slot}, enemy id {u16(scene, slot * 2)}: {name}")

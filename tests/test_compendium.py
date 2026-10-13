@@ -1,4 +1,7 @@
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from ffvii_companion.compendium import compendium, EnemyCompendium, RE_TRAILING_INSTANCE_LETTER
 
@@ -106,6 +109,16 @@ class TestMatchGuards(unittest.TestCase):
     def test_length_must_be_close(self):
         self.assertEqual(compendium.match_enemy("Sweeperrr")["name"], "Sweeper")
         self.assertIsNone(compendium.match_enemy("Sweeperrrr"))  # scores 82, 3 letters longer
+
+    def test_unstripped_query_wins_a_tie(self):
+        # No misreading of a real name ties (GEMINI-20261012-07), so two made-up enemies: "nabed"
+        # (the letter stripped) scores 80 against Nnbed, "nabed c" (as read) 80 against Nabedo D.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "enemies.json"
+            path.write_text(json.dumps([{"id": "nnbed", "name": "Nnbed"},
+                                        {"id": "nabedo-d", "name": "Nabedo D"}]), encoding="utf-8")
+            small = EnemyCompendium(path, Path(tmp) / "formations.json")
+        self.assertEqual(small.match_enemy("Nabed C")["name"], "Nabedo D")
 
 
 class TestFormations(unittest.TestCase):
