@@ -14,7 +14,7 @@ Windows 10 or 11 (64-bit) only. Pick one of the two ways below; both end with th
 
 1. Open the [latest release](https://github.com/SnipeAT/FFVII-Battle-Companion/releases/latest) and download `FFVII_Companion-<version>-windows-x64.zip` from its **Assets**.
 2. Right-click the downloaded zip, choose **Properties**, tick **Unblock** at the bottom if it is there, and click **OK**. Windows marks downloaded files as coming from the internet; unblocking the zip before extracting it keeps that mark off the extracted files, so Windows asks fewer questions about them.
-3. Extract the zip to a folder you can write to, for example `Documents`. Not `Program Files`: the companion saves its settings and logs next to the EXE.
+3. Extract the zip to a folder you can write to, for example `Documents`. Not `Program Files`: the companion saves its settings and logs next to the EXE. Keep the folder path short, under about 150 characters (`C:\Users\<you>\Documents` is fine): some bundled files sit deep inside the `_internal` folder, and in a longer path Windows refuses them and the EXE stops with "DLL load failed ... The filename or extension is too long".
 4. Double-click `FFVII_Companion.exe` in the extracted `FFVII_Companion` folder. If Windows SmartScreen says it protected your PC, click **More info**, then **Run anyway**: the EXE is not code-signed.
    - If Windows says **Smart App Control** blocked it (Windows 11 with Smart App Control on), there is no "Run anyway": Smart App Control blocks unsigned programs until Microsoft's cloud service has assessed them, which can take a while after a new release. Try again later, or run the companion from source instead (Option 2, which then needs no EXE).
 5. Start the game and enter a battle: the companion finds the game window and reads the battle text by itself. See [Using it with 7th Heaven / FFNx](#using-it-with-7th-heaven--ffnx) for the dashboard, and [iPad, tablet or phone](#ipad-tablet-or-phone-local-wi-fi) to show it on another device (`Launch_LAN_iPad.bat` is in the same folder).
@@ -24,7 +24,7 @@ To update, delete `FFVII_Companion.exe` and the `_internal` folder, then extract
 ### Option 2: build the EXE yourself from source
 
 1. Install [Python 3.14](https://www.python.org/downloads/windows/) (64-bit). With the Python install manager that python.org offers, that is `py install 3.14`; the traditional 3.14 installer works too (keep its "py launcher" option). Python 3.11 to 3.13 also meet the requirements, but only 3.14 is tested; 3.15 cannot install the dependencies yet (`onnxruntime`, `pyclipper` and `PyYAML` have no Windows build for it).
-2. Download **Source code (zip)** from the release's **Assets** and extract it (or clone the repository: `git clone https://github.com/SnipeAT/FFVII-Battle-Companion.git`).
+2. Download **Source code (zip)** from the release's **Assets** and extract it (or clone the repository: `git clone https://github.com/SnipeAT/FFVII-Battle-Companion.git`). Use a short folder path here too, for the same reason as in Option 1: the EXE is built into `dist\FFVII_Companion` inside this folder.
 3. Open PowerShell in the extracted folder (Windows 11: right-click inside the folder, **Open in Terminal**; Windows 10: Shift + right-click, **Open PowerShell window here**) and run the commands below. With another Python version, write it in the first one (for example `py -3.12`).
    ```powershell
    py -3.14 -m venv .venv
