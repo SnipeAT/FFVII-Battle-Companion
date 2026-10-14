@@ -4840,7 +4840,73 @@
       }
     ],
     "notes": "Flees after a few turns and must be chased across the world map, ramming it with the Highwind to start each fight. Ultima Beam hits the whole party. Its final act is Shadow Flare on whoever lands the killing blow; give that character Enemy Skill to learn it.",
-    "ai_summary": null,
+    "ai_summary": [
+      {
+        "title": "Between fights",
+        "rows": [
+          [
+            "HP",
+            "Its HP carries over from one fight to the next."
+          ],
+          [
+            "Flees",
+            "Once it has taken 20000 damage in a fight, or drops below 20000 HP. Below 20000 HP the next fight is the last."
+          ]
+        ]
+      },
+      {
+        "title": "First fight",
+        "enemy_ids": [
+          333
+        ],
+        "rows": [
+          [
+            "Turns",
+            "Quake2 on the whole party, Claw on a random member, Ultima Beam on the whole party, then it flies away."
+          ]
+        ]
+      },
+      {
+        "title": "Chase fight (Claw)",
+        "enemy_ids": [
+          334
+        ],
+        "rows": [
+          [
+            "Turns",
+            "Stays 2 to 4 turns, counting down: Claw, Ultima Beam, Claw, Quake2 (the first ones only when it stays longer), then it flies away."
+          ]
+        ]
+      },
+      {
+        "title": "Chase fight (Thunderball)",
+        "enemy_ids": [
+          335
+        ],
+        "rows": [
+          [
+            "Turns",
+            "Stays 2 to 4 turns, counting down: Ultima Beam, Thunderball, Ultima Beam, Thunderball (the first ones only when it stays longer), then it flies away."
+          ]
+        ]
+      },
+      {
+        "title": "Final fight",
+        "enemy_ids": [
+          336
+        ],
+        "rows": [
+          [
+            "Each turn",
+            "Thunderball on a random member or Ultima Beam on the whole party, half each. It no longer flees."
+          ],
+          [
+            "Defeated",
+            "Shadow Flare on the member who landed the last hit: give them Enemy Skill to learn it."
+          ]
+        ]
+      }
+    ],
     "variants": [
       {
         "enemy_ids": [
@@ -15472,7 +15538,38 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Two heads act separately and absorb different elements, so all-target Fire or Ice heals one of them. Every few hits each head counters with Tremor on the party. Each head breathes on the whole party as it dies, so heal before finishing either head.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn (6-turn cycle)",
+        "rows": [
+          [
+            "Turns 1-3",
+            "Right Breath (Fire) on a random member."
+          ],
+          [
+            "Turns 4, 5",
+            "Nothing."
+          ],
+          [
+            "Turn 6",
+            "Double Breath (Fire, Ice) on a random member. Once the left head is down: Right Breath on each member instead."
+          ]
+        ]
+      },
+      {
+        "title": "Counter",
+        "rows": [
+          [
+            "Every 5th action against it",
+            "Tremor on the whole party."
+          ],
+          [
+            "Defeated",
+            "Right Breath 2 (Lightning) on the whole party as it goes down. The battle ends when both heads are down."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "schizo(left)",
@@ -15534,7 +15631,38 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Two heads act separately and absorb different elements, so all-target Fire or Ice heals one of them. Every few hits each head counters with Tremor on the party. Each head breathes on the whole party as it dies, so heal before finishing either head.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn (6-turn cycle)",
+        "rows": [
+          [
+            "Turns 1-3",
+            "Left Breath (Ice) on a random member."
+          ],
+          [
+            "Turns 4, 5",
+            "Nothing."
+          ],
+          [
+            "Turn 6",
+            "Double Breath (Fire, Ice) on a random member. Once the right head is down: Left Breath on each member instead."
+          ]
+        ]
+      },
+      {
+        "title": "Counter",
+        "rows": [
+          [
+            "Every 6th action against it",
+            "Tremor on the whole party."
+          ],
+          [
+            "Defeated",
+            "Left Breath 2 (Lightning) on the whole party as it goes down. The battle ends when both heads are down."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "jenovadeath",
@@ -15592,7 +15720,37 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Silences one member early, so bring Echo Screens or a Ribbon. Tropic Wind hits the whole party, and its Red Light comes more often as its HP drops.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn (6-turn cycle)",
+        "rows": [
+          [
+            "Battle start",
+            "Half the time it opens at turn 4."
+          ],
+          [
+            "Turn 1",
+            "Silence on a member who isn't silenced. If someone already is, or it lacks the MP: Red Light instead (as on turn 4)."
+          ],
+          [
+            "Turns 2, 3",
+            "Nothing."
+          ],
+          [
+            "Turns 4, 5",
+            "Red Light: 1 in 4 on each member; otherwise three, two or one Red Lights on random members (1 in 4, 1 in 4, 2 in 4)."
+          ],
+          [
+            "Turn 6",
+            "Tropic Wind on the whole party; the cycle starts over."
+          ],
+          [
+            "As its HP drops",
+            "Red Light on each member gets likelier: 1 in 3 below 3/4 HP, 1 in 2 below 1/4."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "roulette-cannon",
@@ -16653,7 +16811,34 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Lapis Laser hits the whole party hard and comes more often as its HP drops. Each arm can grab a member, who is out of action until that arm is destroyed or Carry Armor dies. Use all-target Bolt magic, Big Guard and Regen.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Battle start",
+            "1 in 3 Lapis Laser on the whole party."
+          ],
+          [
+            "Every other turn",
+            "Lapis Laser on every member not held by an arm, 1 in 4; 1 in 3 below 3/4 HP, 1 in 2 below 1/2, every time below 1/4. The other turns nothing."
+          ]
+        ]
+      },
+      {
+        "title": "Counter",
+        "rows": [
+          [
+            "Any action against it",
+            "Damage Attack on each member an arm is holding."
+          ],
+          [
+            "Defeated",
+            "Both arms let go of their members and vanish."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "right-arm",
@@ -16715,7 +16900,48 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": null,
-    "ai_summary": null,
+    "ai_summary": [
+      {
+        "title": "Carry Armor's arm",
+        "enemy_ids": [
+          259
+        ],
+        "rows": [
+          [
+            "Each turn",
+            "If it holds no one: Arm Grab on a random free member (they are out of action until the arm or Carry Armor is destroyed), otherwise half the time Arm Punch. Holding someone: nothing."
+          ],
+          [
+            "Arm Grab chance",
+            "1 in 16 at first; after it is hit, 1 in 128 above 3/4 HP, 1 in 32 below, 1 in 8 below 1/2, 1 in 2 below 1/4."
+          ],
+          [
+            "When hit",
+            "Damage Attack on the member it holds, and on the one the left arm holds."
+          ],
+          [
+            "Destroyed",
+            "Lets go of its member."
+          ]
+        ]
+      },
+      {
+        "title": "Helletic Hojo's arm",
+        "enemy_ids": [
+          307
+        ],
+        "rows": [
+          [
+            "Its turn",
+            "None: Helletic Hojo attacks with it."
+          ],
+          [
+            "Destroyed",
+            "Helletic Hojo switches to Sleepel and, half the time every other turn, revives this arm at full HP."
+          ]
+        ]
+      }
+    ],
     "variants": [
       {
         "enemy_ids": [
@@ -16887,7 +17113,48 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": null,
-    "ai_summary": null,
+    "ai_summary": [
+      {
+        "title": "Carry Armor's arm",
+        "enemy_ids": [
+          260
+        ],
+        "rows": [
+          [
+            "Each turn",
+            "If it holds no one: Arm Grab on a random free member (they are out of action until the arm or Carry Armor is destroyed), otherwise half the time Arm Punch. Holding someone: nothing."
+          ],
+          [
+            "Arm Grab chance",
+            "1 in 16 at first; after it is hit, 1 in 128 above 3/4 HP, 1 in 32 below, 1 in 8 below 1/2, 1 in 2 below 1/4."
+          ],
+          [
+            "When hit",
+            "Damage Attack on the member it holds, and on the one the right arm holds."
+          ],
+          [
+            "Destroyed",
+            "Lets go of its member."
+          ]
+        ]
+      },
+      {
+        "title": "Helletic Hojo's arm",
+        "enemy_ids": [
+          308
+        ],
+        "rows": [
+          [
+            "Its turn",
+            "None: Helletic Hojo attacks with it."
+          ],
+          [
+            "Destroyed",
+            "Helletic Hojo switches to Pile Banger, often twice a turn, and Silence."
+          ]
+        ]
+      }
+    ],
     "variants": [
       {
         "enemy_ids": [
@@ -18555,7 +18822,33 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "While Jamar Armor stands, Proud Clod can use Materia Jammer to put Reflect on one member, and a Ribbon does not stop it, so destroy Jamar Armor first. Proud Clod fires machine guns and beams, and once damaged enough adds Beam Cannon on the whole party. Big Guard and Regen keep the fight safe.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Battle start",
+            "Starts at a random point of its chain."
+          ],
+          [
+            "Chain",
+            "W Machine Gun; then Big Hand Clash or Wrist Laser; then Knee Fire or Knee Blend; then a Materia-jammer turn; repeats. Always on random members."
+          ],
+          [
+            "Second shot",
+            "Each attack comes twice in one turn 1 in 5, rising as its HP drops: 1 in 4 below 4/5, 1 in 3 below 3/5, 1 in 2 below 2/5, every time below 1/5."
+          ],
+          [
+            "Materia-jammer turn",
+            "While Jamar Armor stands and no member has Reflect: Materia-jammer (Reflect) on a member with that same chance, otherwise Big Hand Clash. With Jamar Armor down, or once someone has Reflect: W Machine Gun."
+          ],
+          [
+            "Below 3/5 HP",
+            "After each Materia-jammer turn it transforms, charges for a turn, fires Beam Cannon on the whole party, and changes back."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "jamar-armor",
@@ -18614,7 +18907,21 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Proud Clod's support unit; it has no attacks of its own. While it stands, Proud Clod can use Materia Jammer to put Reflect on a member, so defeat it first, then focus Proud Clod.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Proud Clod's support",
+        "rows": [
+          [
+            "Its turn",
+            "Nothing: it has no AI script and never uses Bodyblow."
+          ],
+          [
+            "While it stands",
+            "Proud Clod can use Materia-jammer."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "soldier-1st",
@@ -18831,7 +19138,25 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Summons Poodler Sample and Bad Rap Sample and brings them back when they fall, so ignore them and attack Hojo directly; defeating him ends this stage.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Battle start",
+            "His samples start the battle KO'd."
+          ],
+          [
+            "Each turn",
+            "Capsule brings every KO'd sample back at full HP and MP while he has the MP. He never attacks himself."
+          ],
+          [
+            "Defeated",
+            "“Haw…now let's see how the Mako Juice is reacting?”: he transforms into Helletic Hojo and the samples leave."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "bad-rap-sample",
@@ -18984,7 +19309,29 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Its right arm hits hard and revives almost immediately, so focus the main body. The fight inflicts Confusion, Sleep and Silence; Ribbons make it much easier.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Both arms up",
+            "Pile Banger on a member who is neither confused nor asleep, 1 in 3 twice, for three turns; then Confu (2 in 3) or Bio Gas (Poison) on a member who isn't confused. Starts at a random point."
+          ],
+          [
+            "Right arm down",
+            "Sleepel on a member who isn't asleep, confused or reflecting, then half the time Right Arm Revive (the right arm comes back at full HP); repeats."
+          ],
+          [
+            "Left arm down",
+            "Pile Banger, half the time twice, for two turns; then Silence on a member without Silence or Reflect."
+          ],
+          [
+            "Defeated",
+            "Transforms into Lifeform-Hojo N."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "lifeform-hojo-n",
@@ -19043,7 +19390,38 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Relies on status attacks rather than damage. With Ribbons equipped it is barely a threat, so hit it with your strongest attacks.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Battle start",
+            "Starts at a random step."
+          ],
+          [
+            "Combo",
+            "Four Combo hits on one member (one plain; the others inflict Poison, Darkness and Sleep), preferring a member with Slow; it switches targets when that member is KO'd."
+          ],
+          [
+            "Then, at random",
+            "Combo again 1 in 5; Slow on the whole party 2 in 5 (while someone isn't slowed); Absorb 2 in 5 on the member with the most HP while it is hurt, or the most MP while its MP isn't full."
+          ]
+        ]
+      },
+      {
+        "title": "Counter",
+        "rows": [
+          [
+            "Below 3/4, 1/2 and 1/4 HP",
+            "Each first time: its next turn is a Combo on the member who hit it."
+          ],
+          [
+            "Any spell",
+            "Silence on the caster while they aren't silenced and it has the MP."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "gargoyle",
@@ -20909,7 +21287,34 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Immune to physical attacks at first. When it starts counting down to Diamond Flash it opens up to physical hits, so switch to attacks and Limits then. Diamond Flash hits the whole party and can Silence, so set Big Guard and heal before the count runs out.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Normally",
+            "Diamond Fire on a random member, followed 2 in 3 by Foot Stamp on the member with the most HP; after Foot Stamp, 3 in 4 back to Diamond Fire."
+          ],
+          [
+            "Countdown",
+            "“Countdown”, “3”, “2”, “1”: Diamond Fire each turn, then at “0” Diamond Flash (Silence) on the whole party, and it closes up again."
+          ]
+        ]
+      },
+      {
+        "title": "Defenses",
+        "rows": [
+          [
+            "Physical attacks",
+            "No effect, except during the countdown."
+          ],
+          [
+            "Summons and Limits",
+            "They hit it, and the second one (the third below half HP) starts the countdown."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "ruby-weapon",
