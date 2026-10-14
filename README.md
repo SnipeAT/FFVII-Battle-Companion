@@ -1,6 +1,6 @@
 # Final Fantasy VII - Automated Real-Time Tactical Companion
 
-A real-time combat companion for the PC release of Final Fantasy VII (1998 / 2012-2013 Steam edition and its re-release, with or without 7th Heaven / FFNx mods). It watches a small region of the game window, reads the battle text with on-device OCR, identifies the enemies you are fighting, and shows their full profile - stats and AP, elemental weaknesses and resistances, status immunities, steal items and your odds, drops and morphs, Enemy Skills and Manipulate commands - plus a summary of the whole encounter, on a second monitor, in a native desktop window, or on an iPad / tablet over your local network.
+A real-time combat companion for the PC release of Final Fantasy VII (1998 / 2012-2013 Steam edition and its re-release, with or without 7th Heaven / FFNx mods). It watches a small region of the game window, reads the battle text with on-device OCR, identifies the enemies you are fighting, and shows their full profile - stats and AP, elemental weaknesses and resistances, status immunities, steal items and your odds, drops and morphs, Enemy Skills and Manipulate commands, and its battle AI (what it does and when, decoded from the game's data) - plus a summary of the whole encounter, on a second monitor, in a native desktop window, or on an iPad / tablet over your local network.
 
 This is a fan project, not affiliated with or endorsed by Square Enix. It only reads what is on screen: it does not modify the game or read its memory. You need your own copy of Final Fantasy VII.
 
