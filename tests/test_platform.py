@@ -176,6 +176,16 @@ class TestReleasePackage(unittest.TestCase):
         self.assertIn("docs/CONFIGURATION.md", files)
         self.assertIn("docs/images/dashboard.png", files)
 
+    @unittest.skipUnless((Path(__file__).resolve().parent.parent / ".git").exists(), "needs a Git checkout")
+    def test_release_includes_the_license_guide_and_lan_launcher(self):
+        # Dropping one of them from the zip passed every test (GEMINI-20261014-01)
+        from build_tools.package_release import project_files
+        files = dict((name, path) for path, name in project_files())
+        for name in ("LICENSE.txt", "README.md", "docs/CONFIGURATION.md", "Launch_LAN_Mode.bat"):
+            with self.subTest(name=name):
+                self.assertIn(name, files)
+                self.assertTrue(files[name].is_file())
+
     def test_build_writes_the_exe_config(self):
         # Files extracted from a downloaded zip that was not unblocked carry Zone.Identifier, and
         # .NET then refused to load pywebview's Python.Runtime.dll: the EXE exited without a window
@@ -263,6 +273,33 @@ class TestPortProbe(unittest.TestCase):
                 port = srv.getsockname()[1]
                 self.assertTrue(is_port_in_use(port, "::1"))
                 self.assertTrue(is_port_in_use(port, "::"))
+
+@unittest.skipUnless(os.name == "nt", "Windows batch file")
+class TestLanLauncher(unittest.TestCase):
+    def run_launcher(self, *args):
+        # A copy in an empty folder finds neither the EXE nor the virtual environment: it prints
+        # the address, reports that, and its pause reads end of input
+        import shutil
+        import subprocess
+        import tempfile
+        root = Path(__file__).resolve().parent.parent
+        with tempfile.TemporaryDirectory() as tmp:
+            shutil.copy(root / "Launch_LAN_Mode.bat", tmp)
+            result = subprocess.run(["cmd", "/c", str(Path(tmp) / "Launch_LAN_Mode.bat"), *args],
+                                    stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=30)
+        self.assertIn("Could not find compiled executable", result.stdout)
+        return result.stdout
+
+    def test_prints_the_port_the_companion_uses(self):
+        # It printed 59314 when a --port flag passed on to the companion asked for another
+        # (GEMINI-20261014-02)
+        self.assertIn("(0.0.0.0:59314)", self.run_launcher())
+        for args in (["--port", "59420"], ["--on-top", "--port=59420"]):
+            with self.subTest(args=args):
+                output = self.run_launcher(*args)
+                self.assertIn("(0.0.0.0:59420)", output)
+                self.assertNotIn("59314", output)
+
 
 class TestWinQoS(unittest.TestCase):
     def test_thread_qos_in_worker_thread(self):
