@@ -7,14 +7,23 @@ echo   FFVII TACTICAL COMPANION - LAN MODE (PHONES, TABLETS, OTHER PCS)
 echo =================================================================
 echo.
 
-REM Retrieve IPv4 address
+REM This PC's address on the network: the interface of the default route with the lowest metric.
+REM ipconfig can list virtual adapters (WSL, Hyper-V, VirtualBox) before the Wi-Fi or Ethernet one.
+set "LOCAL_IP="
+set "BEST_METRIC="
+for /f "tokens=1-5" %%a in ('route print -4 0.0.0.0') do (
+    if "%%a %%b"=="0.0.0.0 0.0.0.0" if not "%%e"=="" call :pick_ip %%d %%e
+)
+if defined LOCAL_IP goto :found_ip
+
+REM No default route (a network without a router): the first IPv4 address ipconfig lists
 for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /i "IPv4"') do (
     set "LOCAL_IP=%%a"
     goto :found_ip
 )
 
 :found_ip
-set "LOCAL_IP=%LOCAL_IP: =%"
+if defined LOCAL_IP set "LOCAL_IP=%LOCAL_IP: =%"
 
 echo [INFO] Binding server to all network interfaces (0.0.0.0:59314)...
 if not "%LOCAL_IP%"=="" (
@@ -59,3 +68,13 @@ if exist ".venv\Scripts\python.exe" (
 
 echo [ERROR] Could not find compiled executable or virtual environment.
 pause
+exit /b 1
+
+:pick_ip
+REM %1 the interface address and %2 the metric of a default route: keeps the lowest metric
+if not defined BEST_METRIC goto :keep_ip
+if %2 GEQ %BEST_METRIC% goto :eof
+:keep_ip
+set "LOCAL_IP=%1"
+set "BEST_METRIC=%2"
+goto :eof
