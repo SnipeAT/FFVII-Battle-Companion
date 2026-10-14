@@ -66,8 +66,10 @@ ADDRESSES = {
     0x2110: "BattleEndFlags", 0x2111: "EndEscaped", 0x2112: "EndVictory", 0x2113: "EndNoReward",
     0x2114: "EndBattle", 0x2116: "NoVictoryPose", 0x2120: "LastElements", 0x2140: "FormationIndex",
     0x2150: "LastActionIndex", 0x2170: "SpecialAttackFlags", 0x21C0: "PartyGil",
-    0x4000: "Statuses", 0x4020: "SituationFlags", 0x4021: "IsAlly", 0x4025: "Defending", 0x4026: "BackRow",
-    0x4027: "AttackConnects", 0x4028: "PhysicalImmune", 0x4029: "MagicImmune", 0x402B: "Covered",
+    # 0x4021 and 0x4027 ("ally", "attack connects" on the wiki) are left unnamed: Air Buster, their
+    # only user, keeps the side of the pincer each actor stands on in them
+    0x4000: "Statuses", 0x4020: "SituationFlags", 0x4025: "Defending", 0x4026: "BackRow",
+    0x4028: "PhysicalImmune", 0x4029: "MagicImmune", 0x402B: "Covered",
     0x402C: "DeathImmune", 0x402D: "Dead", 0x402E: "Invisible", 0x4040: "ActorIndex", 0x4048: "Level",
     0x4060: "CharID", 0x4068: "Attack", 0x4070: "MagicAttack", 0x4078: "Evade", 0x4080: "IdleAnimation",
     0x4088: "DamagedAnimation", 0x4098: "ModelSize", 0x40A0: "Dexterity", 0x40C0: "LastTargets",
@@ -672,9 +674,20 @@ def scripts(block: bytes) -> List[Tuple[str, int, int]]:
     return out
 
 
-def reacts(block: bytes, attack_names: Dict[int, str]) -> List[str]:
-    """What the enemy answers with a named attack: its counter / death scripts that can use one
-    (unnamed attacks are mostly animations, like Guard Scorpion lowering its tail)."""
+def scene_targets(scene: bytes) -> Dict[int, int]:
+    """Target flags of the scene's attacks, by attack id."""
+    out = {}
+    for i in range(32):
+        aid = u16(scene, ATTACK_IDS_OFFSET + i * 2)
+        if aid != 0xFFFF:
+            out[aid] = scene[ATTACK_DATA_OFFSET + i * ATTACK_SIZE + A_TARGET]
+    return out
+
+
+def reacts(block: bytes, attack_names: Dict[int, str], targets: Optional[Dict[int, int]] = None) -> List[str]:
+    """What the enemy answers with an attack: its counter / death scripts that can use one. Unnamed
+    attacks and, given the scene's target flags, attacks that target no one are animations (Guard
+    Scorpion lowering its tail, Air Buster's "Destroyed")."""
     out = []
     for name, start, end in scripts(block):
         if name not in REACTION_SCRIPTS:
@@ -682,7 +695,7 @@ def reacts(block: bytes, attack_names: Dict[int, str]) -> List[str]:
         ins = decode(block, start, end)
         for k, x in enumerate(ins):
             command, attack_id = perform_operands(ins, k) if x.op == PERFORM else (None, None)
-            if command == CMD_ATTACK and attack_names.get(attack_id):
+            if command == CMD_ATTACK and attack_names.get(attack_id) and (targets or {}).get(attack_id) != 0:
                 out.append(REACTION_SCRIPTS[name])
                 break
     return out
@@ -701,7 +714,7 @@ def describe(scene: bytes, slot: int, attack_names: Dict[int, str], pseudo: bool
     block = ai_block(scene, slot)
     if block is None:
         return out + ["  no AI scripts"]
-    react = reacts(block, attack_names)
+    react = reacts(block, attack_names, scene_targets(scene))
     if react:
         out.append(f"  reacts to: {', '.join(react)}")
     for name, start, end in scripts(block):
@@ -758,7 +771,7 @@ def export_record(scene: bytes, slot: int, attack_names: Dict[int, str]) -> Opti
         if attack not in attacks:  # copies under another id (Guard Scorpion's two Rifles)
             attacks.append(attack)
     lines = [(name, decompile(block, start, end, attack_names)) for name, start, end in scripts(block)]
-    return {"reacts": reacts(block, attack_names), "attacks": attacks,
+    return {"reacts": reacts(block, attack_names, scene_targets(scene)), "attacks": attacks,
             "scripts": [{"trigger": name, "lines": body} for name, body in lines if body]}
 
 

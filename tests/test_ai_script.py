@@ -109,6 +109,11 @@ class TestReacts(unittest.TestCase):
         # Unnamed attacks are animations (Guard Scorpion lowering its tail)
         self.assertEqual(reacts(self.block(), {}), [])
 
+    def test_attacks_without_targets_are_not_counters(self):
+        # Named animations target no one (Air Buster's "Destroyed" as it dies)
+        self.assertEqual(reacts(self.block(), NAMES, {0x011A: 0x00}), [])
+        self.assertEqual(reacts(self.block(), NAMES, {0x011A: 0x03}), ["physical"])
+
 
 class TestNameMatches(unittest.TestCase):
     def test_case_and_punctuation_are_ignored(self):

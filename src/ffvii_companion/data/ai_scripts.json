@@ -9,9 +9,7 @@
         104,
         105
       ],
-      "reacts": [
-        "any action"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Machine Gun",
@@ -1777,10 +1775,7 @@
       "scenes": [
         21
       ],
-      "reacts": [
-        "any action",
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Darkeye",
@@ -1907,9 +1902,7 @@
       "scenes": [
         21
       ],
-      "reacts": [
-        "any action"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Triclops",
@@ -3259,9 +3252,7 @@
       "scenes": [
         31
       ],
-      "reacts": [
-        "any action"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Golem Punch",
@@ -7423,10 +7414,7 @@
       "scenes": [
         70
       ],
-      "reacts": [
-        "any action",
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Claw",
@@ -7606,10 +7594,7 @@
         71,
         73
       ],
-      "reacts": [
-        "any action",
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Claw",
@@ -7785,10 +7770,7 @@
         71,
         247
       ],
-      "reacts": [
-        "any action",
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Thunderball",
@@ -9613,8 +9595,7 @@
         91
       ],
       "reacts": [
-        "any action",
-        "death"
+        "any action"
       ],
       "attacks": [
         {
@@ -9675,7 +9656,7 @@
         {
           "trigger": "Init",
           "lines": [
-            "Var00E0 = Self.AttackConnects",
+            "Var00E0 = Self.[4027]",
             "Var0100 = Var00E0",
             "Self.DeathImmune = 1",
             "Var0080 = 4",
@@ -9686,8 +9667,8 @@
           "trigger": "Main",
           "lines": [
             "Var00A0 = 0",
-            "Var0000 = Opponents.IsAlly == 0",
-            "Var0020 = Opponents.IsAlly == 1",
+            "Var0000 = Opponents.[4021] == 0",
+            "Var0020 = Opponents.[4021] == 1",
             "if Var0000.Death == 0 or Var0000.Petrify == 0:",
             "  Var00A0 = Var00A0 | 1",
             "if Var0020.Death == 0 or Var0020.Petrify == 0:",
@@ -9699,7 +9680,7 @@
             "    Var00C0 = 1",
             "  Targets = random_one(Opponents)",
             "  Var0060 = Targets",
-            "  if Targets.IsAlly == Var0100:",
+            "  if Targets.[4021] == Var0100:",
             "    if Var0160 == 0:",
             "      Targets = Self",
             "      if Var0100 == Var00E0:",
@@ -9732,7 +9713,7 @@
             "    show \"Program 2 Operation\"",
             "    Var00C0 = 2",
             "  Targets = random_one(Opponents)",
-            "  if Targets.IsAlly == 1:",
+            "  if Targets.[4021] == 1:",
             "    if Var0100 == Var00E0:",
             "      Self.IdleAnimation = 0",
             "      use Rear Gun",
@@ -9756,7 +9737,7 @@
             "    Var0160 = 1",
             "Var0040 = Self.LastAttacker",
             "if Var0100 == Var00E0:",
-            "  if Var0040.IsAlly == 0:",
+            "  if Var0040.[4021] == 0:",
             "    Self.IdleAnimation = 0",
             "    Self.DamagedAnimation = 1",
             "  else:",
@@ -9764,7 +9745,7 @@
             "    Self.DamagedAnimation = 3",
             "    Var0040 = Self.LastAttacker",
             "    Var0120 = 1",
-            "elif Var0040.IsAlly == 1:",
+            "elif Var0040.[4021] == 1:",
             "  Self.IdleAnimation = 10",
             "  Self.DamagedAnimation = 1",
             "else:",
@@ -10668,9 +10649,7 @@
         99,
         100
       ],
-      "reacts": [
-        "any action"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Scratch",
@@ -11426,9 +11405,7 @@
       "scenes": [
         103
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Short Staff",
@@ -11600,9 +11577,7 @@
       "scenes": [
         134
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Short Staff",
@@ -11710,9 +11685,7 @@
       "scenes": [
         201
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Short Staff",
@@ -11812,9 +11785,7 @@
       "scenes": [
         210
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Short Staff",
@@ -11915,9 +11886,7 @@
       "scenes": [
         103
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Appear",
@@ -12045,9 +12014,7 @@
         106,
         107
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Hammer Attack",
@@ -12383,9 +12350,7 @@
       "scenes": [
         108
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Vanish",
@@ -13179,9 +13144,7 @@
       "scenes": [
         114
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Keyclaw",
@@ -13400,9 +13363,7 @@
       "scenes": [
         115
       ],
-      "reacts": [
-        "any action"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Glass Shatter",
@@ -13570,9 +13531,7 @@
       "scenes": [
         115
       ],
-      "reacts": [
-        "any action"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "AB Cannon",
@@ -13726,9 +13685,7 @@
       "scenes": [
         116
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Shotgun",
@@ -14406,7 +14363,6 @@
         120
       ],
       "reacts": [
-        "any action",
         "death"
       ],
       "attacks": [
@@ -14715,9 +14671,7 @@
       "scenes": [
         120
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Appear",
@@ -16101,9 +16055,7 @@
       "scenes": [
         133
       ],
-      "reacts": [
-        "any action"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Bio2",
@@ -16200,9 +16152,7 @@
       "scenes": [
         133
       ],
-      "reacts": [
-        "any action"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Seed Bullet",
@@ -16484,9 +16434,7 @@
       "scenes": [
         134
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Shoulder Attack",
@@ -16623,9 +16571,7 @@
       "scenes": [
         201
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Shoulder Attack",
@@ -16780,9 +16726,7 @@
       "scenes": [
         204
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Shoulder Attack",
@@ -16950,9 +16894,7 @@
       "scenes": [
         210
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Shoulder Attack",
@@ -17476,9 +17418,7 @@
       "scenes": [
         138
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Spear Attack",
@@ -17904,10 +17844,7 @@
       "scenes": [
         140
       ],
-      "reacts": [
-        "physical",
-        "magic"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Spin Attack",
@@ -18105,9 +18042,7 @@
       "scenes": [
         143
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Ying Punch",
@@ -18189,11 +18124,7 @@
       "scenes": [
         143
       ],
-      "reacts": [
-        "death",
-        "physical",
-        "magic"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Bolt2",
@@ -19173,9 +19104,7 @@
       "scenes": [
         150
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Fire2",
@@ -21981,9 +21910,7 @@
       "scenes": [
         174
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Shield Throw",
@@ -22775,8 +22702,7 @@
         179
       ],
       "reacts": [
-        "any action",
-        "death"
+        "any action"
       ],
       "attacks": [
         {
@@ -23095,9 +23021,7 @@
         182,
         184
       ],
-      "reacts": [
-        "any action"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Claw",
@@ -24457,8 +24381,7 @@
         235
       ],
       "reacts": [
-        "any action",
-        "death"
+        "any action"
       ],
       "attacks": [
         {
@@ -24917,9 +24840,7 @@
       "scenes": [
         189
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Vanish",
@@ -25798,9 +25719,7 @@
       "scenes": [
         194
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Rocket Punch",
@@ -26282,9 +26201,7 @@
       "scenes": [
         215
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Appear",
@@ -26513,9 +26430,7 @@
       "scenes": [
         215
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Appear",
@@ -28373,9 +28288,7 @@
       "scenes": [
         209
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Napalm Bomb",
@@ -28558,8 +28471,7 @@
         210
       ],
       "reacts": [
-        "any action",
-        "death"
+        "any action"
       ],
       "attacks": [
         {
@@ -29711,9 +29623,7 @@
       "scenes": [
         215
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Pile Banger",
@@ -32272,9 +32182,7 @@
       "scenes": [
         223
       ],
-      "reacts": [
-        "any action"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Golem Punch",
@@ -32455,9 +32363,7 @@
       "scenes": [
         225
       ],
-      "reacts": [
-        "any action"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Heavy Sword",
@@ -32933,9 +32839,7 @@
       "scenes": [
         228
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Sephiroth Shock",
@@ -33350,9 +33254,7 @@
       "scenes": [
         229
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Sephiroth Shock",
@@ -34331,9 +34233,7 @@
       "scenes": [
         232
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Sephiroth Shock",
@@ -36117,10 +36017,7 @@
       "scenes": [
         231
       ],
-      "reacts": [
-        "any action",
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Cut",
@@ -36470,9 +36367,7 @@
       "scenes": [
         245
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Diamond Fire",
@@ -36604,8 +36499,7 @@
         245
       ],
       "reacts": [
-        "any action",
-        "death"
+        "any action"
       ],
       "attacks": [
         {
@@ -37052,8 +36946,7 @@
         246
       ],
       "reacts": [
-        "any action",
-        "death"
+        "any action"
       ],
       "attacks": [
         {
@@ -37364,9 +37257,7 @@
       "scenes": [
         246
       ],
-      "reacts": [
-        "death"
-      ],
+      "reacts": [],
       "attacks": [
         {
           "name": "Emerald Laser",
