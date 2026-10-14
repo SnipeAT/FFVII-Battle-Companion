@@ -22,7 +22,7 @@ import asyncio
 from ffvii_companion import __version__
 from ffvii_companion.compendium import compendium
 from ffvii_companion.server.models import (
-    Enemy, BattleState, StealCalcRequest, StealCalcResponse, DetectSimulateRequest, MisdetectionReportRequest
+    AiInfo, Enemy, BattleState, StealCalcRequest, StealCalcResponse, DetectSimulateRequest, MisdetectionReportRequest
 )
 from ffvii_companion.engine.capture_service import capture_service
 from ffvii_companion.engine.calibration import calibration_manager, PRESETS, ConfigValidationError
@@ -392,6 +392,15 @@ def get_enemy_partners(enemy_id: str):
 
     partners = compendium.get_partners(enemy_id, current_observed=observed if observed else None)
     return [Enemy(**p) for p in partners]
+
+@app.get("/api/enemies/{enemy_id}/ai", response_model=AiInfo, response_model_exclude_none=True)
+def get_enemy_ai(enemy_id: str):
+    """The card's AI box: the enemy's hand-written AI summary and, per scene.bin record, its attacks
+    and decompiled AI scripts (EnemyCompendium.get_ai). 404 when the enemy has no AI scripts."""
+    info = compendium.get_ai(enemy_id)
+    if info is None:
+        raise HTTPException(status_code=404, detail="No AI scripts for this enemy")
+    return info
 
 # Both spellings are searchable: the compendium name and the game's ("Jenovalife", "Jenova·LIFE")
 _cached_searchable_enemies = [({e["name"].lower(), e.get("display_name", e["name"]).lower()}, e["id"].lower(), e)

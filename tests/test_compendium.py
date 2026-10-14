@@ -121,6 +121,32 @@ class TestMatchGuards(unittest.TestCase):
         self.assertEqual(small.match_enemy("Nabed C")["name"], "Nabedo D")
 
 
+class TestAiScripts(unittest.TestCase):
+    def test_entries_know_whether_they_have_scripts(self):
+        self.assertTrue(compendium.get_by_name("Guard Scorpion")["has_ai"])
+        self.assertFalse(compendium.get_by_name("Manhole(lid)")["has_ai"])  # no AI scripts in scene.bin
+
+    def test_ai_box(self):
+        record, = compendium.get_ai("guard-scorpion")["records"]
+        self.assertEqual(record["enemy_ids"], [22])
+        self.assertIn("Tail Laser", [a["name"] for a in record["attacks"]])
+        self.assertIsNone(compendium.get_ai("does-not-exist"))
+        self.assertIsNone(compendium.get_ai(compendium.get_by_name("Manhole(lid)")["id"]))
+
+    def test_summary_goes_out_with_the_ai_box_only(self):
+        # Battle updates send the entry dicts as they are: the summary must not ride along
+        summary = [{"title": "Each turn", "rows": [["Always", "Bites"]]}]
+        with tempfile.TemporaryDirectory() as tmp:
+            path, ai_path = Path(tmp) / "enemies.json", Path(tmp) / "ai_scripts.json"
+            path.write_text(json.dumps([{"id": "nnbed", "name": "Nnbed", "ai_summary": summary}]), encoding="utf-8")
+            ai_path.write_text(json.dumps({"nnbed": [{"enemy_ids": [1], "scenes": [2], "reacts": [], "attacks": [],
+                                                      "scripts": []}]}), encoding="utf-8")
+            small = EnemyCompendium(path, Path(tmp) / "formations.json", ai_path)
+        self.assertNotIn("ai_summary", small.get_by_id("nnbed"))
+        self.assertTrue(small.get_by_id("nnbed")["has_ai"])
+        self.assertEqual(small.get_ai("nnbed")["summary"], summary)
+
+
 class TestFormations(unittest.TestCase):
     def test_formation_deduction(self):
         deduction = compendium.deduce_formation({"Nerosuferoth": 2, "Formula": 1})

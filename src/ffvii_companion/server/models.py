@@ -61,11 +61,44 @@ class Enemy(BaseModel):
     drops: List[DropItem] = Field(default_factory=list)
     morph: Optional[str] = None
     notes: Optional[str] = None
+    has_ai: bool = False  # Has AI scripts: the card's AI button (GET /api/enemies/{id}/ai)
     count: int = 1
     instance_letter: Optional[str] = None
     steal_odds: Optional[float] = None  # Chance (%) a Steal gets any item at the party level (set when broadcast)
     variants: Optional[List[Dict[str, Any]]] = None  # Distinct scene.bin records (compendium entries only)
     variant: Optional[EnemyVariant] = None  # The record a battle shows (set when broadcast)
+
+class AiAttack(BaseModel):
+    """An attack in an enemy's attack list (tools/ai_script.py --export)."""
+    name: str
+    target: Optional[str] = None  # one, all, random or "-" (approximate: the AI usually picks the targets)
+    power: Optional[int] = None
+    mp: Optional[int] = None
+    elements: List[str] = Field(default_factory=list)
+    statuses: List[str] = Field(default_factory=list)
+    status_mode: Optional[str] = None  # inflict, remove or toggle
+    enemy_skill: bool = False
+
+class AiScript(BaseModel):
+    trigger: str  # Init, Main, Counter-General, Counter-Physical, Counter-Magic, Counter-Death, ...
+    lines: List[str]  # Decompiled pseudo-code, indented by two spaces per level
+
+class AiRecord(BaseModel):
+    """The AI of the scene.bin records with these enemy ids."""
+    enemy_ids: List[int]
+    scenes: List[int]
+    reacts: List[str] = Field(default_factory=list)  # any action, physical, magic, death
+    attacks: List[AiAttack] = Field(default_factory=list)
+    scripts: List[AiScript] = Field(default_factory=list)
+
+class AiSummarySection(BaseModel):
+    title: str
+    rows: List[List[str]]  # [when, what it does]
+    enemy_ids: Optional[List[int]] = None  # Only for the records with these ids (a boss fought twice)
+
+class AiInfo(BaseModel):
+    summary: Optional[List[AiSummarySection]] = None
+    records: List[AiRecord]
 
 class BattleState(BaseModel):
     in_battle: bool = False
