@@ -12624,12 +12624,12 @@
             "Keyclaw or Big Horn on a random member; Hell Combo instead 1 in 5, rising as its HP drops (1 in 4 below 3/4, 1 in 3 below 1/2, 1 in 2 below 1/4)."
           ],
           [
-            "Below 3/4 HP",
+            "Below 1/2 HP",
             "Every fourth turn Cure2 on itself, and Trine on the whole party on the turn after (Hell Combo when out of MP)."
           ],
           [
             "Learning Trine",
-            "Trine follows only a Cure2: bring it below 3/4 HP and wait."
+            "After the first turn, Trine follows only a Cure2: bring it below half HP and wait."
           ]
         ]
       }
