@@ -31,9 +31,9 @@ scripts for many bosses). Offsets (left column, jump targets, @labels) are relat
 """
 import argparse
 import json
+import re
 import sys
-from collections import defaultdict
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -816,6 +816,9 @@ def build_ai_scripts(scenes: List[bytes], enemies: List[dict], attack_names: Dic
     return out
 
 
+ATTACK_HELD = re.compile(r"^Var[0-9A-F]{4} = \d+ \((.+)\)$")  # Decompiler.assignment of an attack variable
+
+
 def candidates(enemies: List[dict], ai_scripts: Dict[str, list]) -> List[str]:
     """Entries whose AI is worth a hand-written summary, with the reasons."""
     lines = []
@@ -829,8 +832,11 @@ def candidates(enemies: List[dict], ai_scripts: Dict[str, list]) -> List[str]:
             for script in record["scripts"]:
                 for line in script["lines"]:
                     body = line.strip()
-                    if body.startswith("use ") and body[4:] in skills:
-                        used[body[4:]].append((script["trigger"], line != body))
+                    # "use Laser", or Laser picked through a variable: "Var0020 = 81 (Laser)"
+                    held = ATTACK_HELD.search(body)
+                    skill = body[4:] if body.startswith("use ") else (held.group(1) if held else None)
+                    if skill in skills:
+                        used[skill].append((script["trigger"], line != body))
                     if body.startswith("show "):
                         reasons.add("battle text")
                     if body.startswith(NOTABLE_FIELDS):

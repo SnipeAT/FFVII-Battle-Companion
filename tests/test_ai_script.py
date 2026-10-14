@@ -2,7 +2,7 @@
 import struct
 import unittest
 
-from tools.ai_script import address, decompile, disassemble, name_matches, reacts
+from tools.ai_script import address, candidates, decompile, disassemble, name_matches, reacts
 
 NAMES = {0x011A: "Rifle", 0x011C: "Search Scope"}
 
@@ -119,6 +119,21 @@ class TestReacts(unittest.TestCase):
         # Named animations target no one (Air Buster's "Destroyed" as it dies)
         self.assertEqual(reacts(self.block(), NAMES, {0x011A: 0x00}), [])
         self.assertEqual(reacts(self.block(), NAMES, {0x011A: 0x03}), ["physical"])
+
+
+class TestCandidates(unittest.TestCase):
+    def report(self, lines):
+        record = {"reacts": [], "attacks": [{"name": "Laser", "enemy_skill": True}],
+                  "scripts": [{"trigger": "Main", "lines": lines}]}
+        return candidates([{"id": "x", "name": "X"}], {"x": [record]})
+
+    def test_skill_never_used(self):
+        self.assertEqual(self.report(["use Claw"]), ["X (no summary): never uses Laser itself"])
+
+    def test_skill_picked_through_a_variable(self):
+        # Death Claw: Var0020 = 81 (Laser) ... use attack Var0020 (it was reported as never used)
+        self.assertEqual(self.report(["if Self.Barrier:", "  Var0020 = 81 (Laser)", "use attack Var0020"]),
+                         ["X (no summary): Laser only under a condition"])
 
 
 class TestNameMatches(unittest.TestCase):
