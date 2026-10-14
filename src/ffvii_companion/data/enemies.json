@@ -5729,7 +5729,42 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Search Scope only marks the next target and does no damage. When it raises its tail, stop attacking: any hit while the tail is up triggers Tail Laser on the whole party. Defend or heal until the tail lowers, then go back to Bolt and attacks.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn (8-turn cycle)",
+        "rows": [
+          [
+            "Turns 1, 3",
+            "Search Scope marks a random member (“Locked On Target”); it does no damage."
+          ],
+          [
+            "Turns 2, 4",
+            "Attacks the marked member: Scorpion Tail 1 in 3, and always below half HP; otherwise Rifle."
+          ],
+          [
+            "Turn 5",
+            "Raises its tail, raising its Defense and Magic Defense. The first time, Barret says to attack while the tail is up: don't."
+          ],
+          [
+            "Turns 6, 7",
+            "Waits with its tail up."
+          ],
+          [
+            "Turn 8",
+            "Lowers its tail; the cycle starts over."
+          ]
+        ]
+      },
+      {
+        "title": "Counter",
+        "rows": [
+          [
+            "Tail up",
+            "Any action against it: Tail Laser on the whole party."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "grashtrike",
@@ -6366,7 +6401,34 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Hits to its back deal far more damage, and each one draws a counter: usually it turns and uses Bodyblow on the attacker, otherwise it fires Rear Gun. On its own turns it faces the member it targets, so alternate attackers to keep reaching its back. Fires Big Bomber at one member up to 4 times, then switches to Energy Ball and Rear Gun. Below 20% HP it can no longer turn.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "First 4 attacks",
+            "Big Bomber on a random member, turning to face them first when needed (“Program 1 Operation”). After the 4th: “Big Bomber's out of ammo.”"
+          ],
+          [
+            "After that",
+            "On a random member: Energy Ball at one in front of it, Rear Gun at one behind it (“Program 2 Operation”)."
+          ]
+        ]
+      },
+      {
+        "title": "Counter",
+        "rows": [
+          [
+            "Hit from behind",
+            "Counters the attacker: 2 in 3 it turns around and uses Bodyblow, otherwise Rear Gun. Hits from the front draw no counter."
+          ],
+          [
+            "Below 1/5 HP",
+            "“Turn Function non-operational”: it can no longer turn, so counters are always Rear Gun, and a Big Bomber turn aimed at a member behind it is lost."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "hedgehog-pie",
@@ -6713,7 +6775,21 @@
     ],
     "enemy_skills": [],
     "notes": null,
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Normally",
+            "Hit on a random member."
+          ],
+          [
+            "An ally KO'd or below half HP, or Scotch hit",
+            "Machine Gun on a random member."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "scotch",
@@ -6752,7 +6828,29 @@
     ],
     "enemy_skills": [],
     "notes": null,
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Target",
+            "Picks one member at the start and keeps attacking them (a random member once they are KO'd). The last member to hit Scotch becomes its new target."
+          ],
+          [
+            "Normally",
+            "Hit."
+          ],
+          [
+            "A Lackey below half HP",
+            "Machine Gun."
+          ],
+          [
+            "Scotch hit, or a Lackey KO'd",
+            "Machine Gun twice per turn."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "aps",
@@ -6809,7 +6907,29 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Opens with Sewer Tsunami on the party. Any spell makes it use Sewer Tsunami twice over its next turns, and so does dropping below 1/3 HP (once). Otherwise it uses Tail Attack or Lick, which inflicts Sadness and slows Limit gauges. Cross-slash can paralyze it, and a paralyzed Aps cannot counter.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "First turn",
+            "Sewer Tsunami on everyone in the battle, itself included."
+          ],
+          [
+            "Normally",
+            "1 in 4: Lick (Sadness) on the second party member (a random one if they are KO'd). Otherwise Tail Attack on a random member, preferring the back row."
+          ],
+          [
+            "After any spell hits it",
+            "Its next 4 turns: nothing, Sewer Tsunami, nothing, Sewer Tsunami; then back to normal."
+          ],
+          [
+            "Below 1/3 HP (once)",
+            "The same 4-turn Sewer Tsunami pattern."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "sahagin",
@@ -7421,7 +7541,96 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Pyramid traps an ally, who then counts as KO'd; if everyone is trapped the battle is lost. Free them by attacking the Pyramid with another character. Lightning hits draw an Electro-mag Rod counter, which can paralyze. When fought with other Turks, the battle ends as soon as one Turk falls.",
-    "ai_summary": null,
+    "ai_summary": [
+      {
+        "title": "First fight (Lv 17)",
+        "enemy_ids": [
+          48
+        ],
+        "rows": [
+          [
+            "First turn",
+            "Pyramid on a random member who is not KO'd or trapped (“Try and break it if you can.”). The trapped member counts as KO'd until another member destroys the Pyramid; if everyone is trapped, the battle is lost."
+          ],
+          [
+            "Then",
+            "Pyramid again every 3 turns, plus 1 turn for each member KO'd or trapped."
+          ],
+          [
+            "Other turns",
+            "Electro-mag Rod (1 in 3, can paralyze) or Short Staff on a random member."
+          ],
+          [
+            "After a Bolt spell hits him",
+            "His next turn: Electro-mag Rod on the caster."
+          ],
+          [
+            "Defeated",
+            "Frees everyone in a Pyramid and retreats (“It's time.”)."
+          ]
+        ]
+      },
+      {
+        "title": "With Rude (Lv 22)",
+        "enemy_ids": [
+          127
+        ],
+        "rows": [
+          [
+            "Each turn",
+            "Short Staff or Turk Light (half each) on a random member."
+          ],
+          [
+            "After a Bolt spell hits him",
+            "His next turn: Electroprod on the caster."
+          ],
+          [
+            "Rude defeated",
+            "Retreats on his next turn."
+          ],
+          [
+            "Defeated",
+            "Retreats (“We may be retreating, but… we're still victorious.”)."
+          ]
+        ]
+      },
+      {
+        "title": "Lv 42 fight",
+        "enemy_ids": [
+          274
+        ],
+        "rows": [
+          [
+            "Each turn",
+            "Short Staff or Neo Turk Light (Confusion), half each, on a random member."
+          ],
+          [
+            "After a Bolt spell hits him",
+            "His next turn: Electroprod 2 on the caster."
+          ],
+          [
+            "Defeated",
+            "Retreats (“These guys are pretty tough.”)."
+          ]
+        ]
+      },
+      {
+        "title": "With Rude and Elena (Lv 50)",
+        "enemy_ids": [
+          297
+        ],
+        "rows": [
+          [
+            "Turn cycle",
+            "Short Staff; then Electroprod or Short Staff; then Turk Light; repeats. Always on a random member."
+          ],
+          [
+            "First Turk defeated",
+            "All three Turks retreat (“Let's call it a day.”) and the battle ends."
+          ]
+        ]
+      }
+    ],
     "variants": [
       {
         "enemy_ids": [
@@ -7702,7 +7911,21 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": null,
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Pyramid",
+        "rows": [
+          [
+            "Its turn",
+            "Nothing: it only holds the trapped member."
+          ],
+          [
+            "When destroyed",
+            "Frees the member inside."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "grenade-combatant",
@@ -8400,7 +8623,29 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Revives its Opt minions with Reanimagic, so ignore them and focus on H0512; they vanish when it dies. Shady Breath poisons the party and Keyclaw targets poisoned members, so cure Poison and heal everyone at once with All plus Restore.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "First turn",
+            "Shady Breath (Poison) on the whole party."
+          ],
+          [
+            "An Opt is KO'd",
+            "Reanimagic revives the KO'd Opts while it has the MP (40 per cast)."
+          ],
+          [
+            "Otherwise",
+            "Keyclaw on a random poisoned member; 1 in 4 Shady Breath again while someone is not poisoned."
+          ],
+          [
+            "Defeated",
+            "Its Opts vanish with it."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "sample-h0512-opt",
@@ -8450,7 +8695,17 @@
     ],
     "enemy_skills": [],
     "notes": null,
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Random",
+            "On a random member: Bodyblow 1 in 4; Rolling Attack 1 in 4 (not while H0512 is paralyzed); Fire 1 in 12; Ice 1 in 12. Otherwise nothing."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "hundred-gunner",
@@ -8509,7 +8764,38 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Only Barret's attacks, Limits and magic reach it; use Bolt. Below two thirds HP it switches to Main Artillery on the whole party, and below one third it charges for two turns before Wave Artillery, its strongest attack. Heli Gunner follows straight after, so heal before finishing it.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Above 2/3 HP",
+            "Aux Artillery on a random member; after the first turn, Hidden Artillery 1 in 4."
+          ],
+          [
+            "Below 2/3 HP",
+            "Main Artillery on the whole party."
+          ],
+          [
+            "Below 1/3 HP",
+            "Charges for two turns (“Sensor Cannon Charging!”, “Sensor Cannon Charged!”), then Wave Artillery on the whole party; repeats."
+          ],
+          [
+            "Sub Artillery",
+            "Never used."
+          ]
+        ]
+      },
+      {
+        "title": "Position",
+        "rows": [
+          [
+            "Out of reach",
+            "It stands far away: only long-range attacks, magic and Limits hit it."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "heli-gunner",
@@ -8574,7 +8860,25 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": null,
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Battle start",
+            "AB Cannon (Sleep) on a random member right away."
+          ],
+          [
+            "Normally",
+            "AB Cannon (Sleep) and C Cannon (Poison) in turn on random members; 1 in 4 turns Firing Line (Sleep, Poison) on the whole party instead."
+          ],
+          [
+            "Below 1/4 HP",
+            "Starts spinning: Defense and Magic Defense +50, and from then on Spinning Bodyblow or Flying Drill (half each) on a random member."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "rufus",
@@ -8629,7 +8933,25 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Cloud fights alone. Defeat Dark Nation first: it casts Barrier and MBarrier, cutting your damage. Keep Cloud healed with Cure or Potions.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Normally",
+            "Shotgun on Cloud."
+          ],
+          [
+            "Sometimes",
+            "Above 200 HP, when the last hit took less than 100 HP, 1 in 3 turns: laughs (“Heh, Heh, Heh…”) instead of attacking."
+          ],
+          [
+            "Defeated",
+            "Retreats (“Heh… That's all for today…”), taking Dark Nation with him."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "dark-nation",
@@ -8675,7 +8997,25 @@
     ],
     "enemy_skills": [],
     "notes": "Casts Barrier and MBarrier to cut your damage. Defeat it first; magic ignores its back-row position.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Rufus without Barrier",
+            "Barrier on Rufus (Bite instead when out of MP)."
+          ],
+          [
+            "Then",
+            "Barrier, then MBarrier on itself, 1 in 2 turns each until both are up; other turns Bite or Bolt on Cloud."
+          ],
+          [
+            "Both barriers up",
+            "Bolt or Bite on Cloud."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "motor-ball",
@@ -8741,7 +9081,50 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Repeats a fixed cycle: two turns of Arm Attack on the highest-HP member (sometimes twice in one turn), then Twin Burner, Deadly Wheel and Rolling Fire on the whole party. The first time it falls below 1/8 HP it skips ahead to Twin Burner. Use Bolt, link Elemental with Fire in armor, and keep party-wide healing ready.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn (7-turn cycle)",
+        "rows": [
+          [
+            "Battle start",
+            "Highway on the whole party."
+          ],
+          [
+            "Turns 1, 2",
+            "Arm Attack on the member with the most HP, half the time twice."
+          ],
+          [
+            "Turn 3",
+            "Twin Burner on the whole party (Deadly Wheel when out of MP)."
+          ],
+          [
+            "Turn 4",
+            "Nothing."
+          ],
+          [
+            "Turn 5",
+            "Deadly Wheel on the whole party."
+          ],
+          [
+            "Turn 6",
+            "Nothing."
+          ],
+          [
+            "Turn 7",
+            "Rolling Fire on the whole party (Deadly Wheel when out of MP); the cycle starts over."
+          ]
+        ]
+      },
+      {
+        "title": "When hit",
+        "rows": [
+          [
+            "First time below 1/8 HP",
+            "Skips ahead to turn 3 (Twin Burner)."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "midgar-zolom",
@@ -9081,7 +9464,38 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Flies, so only ranged attackers (Barret, Yuffie, Long Range materia) or magic reach it. Waterball traps a member in a bubble that hurts every turn; break it with magic, since the bubble is immune to physical attacks. Below 50% HP it adds Big Wave on the party, and it uses Big Wave once more as it dies.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Forms",
+        "rows": [
+          [
+            "Normal",
+            "Turns 1-3: Tail Attack on a random member. Turn 4: 1 in 3 a Tail Attack on each member, otherwise Bodyblow on the member with the most HP. Repeats."
+          ],
+          [
+            "After 6 hits, or below 3/4 HP",
+            "Fury Blast, then: Moonstrike on each member; Bodyblow on the member with the most HP; Moonstrike on a random member; then more Moonstrikes, or back to normal while above 3/4 HP."
+          ],
+          [
+            "After 6 more hits, or below 1/2 HP",
+            "Waterball traps a random free member in a Waterpolo bubble, which is immune to physical attacks: break it with magic. Two turns later Big Wave on the whole party (back to normal instead while above half HP). Another Waterball follows unless someone is trapped while another member is KO'd."
+          ]
+        ]
+      },
+      {
+        "title": "Other",
+        "rows": [
+          [
+            "Position",
+            "It flies out of reach: only long-range attacks, magic and Limits hit it."
+          ],
+          [
+            "Defeated",
+            "Big Wave on the whole party, and every trapped member is freed."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "waterpolo",
@@ -9133,7 +9547,21 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": null,
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Bubble",
+        "rows": [
+          [
+            "Always",
+            "Immune to physical attacks; it has no turns."
+          ],
+          [
+            "When destroyed",
+            "Frees the member inside."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "scrutin-eye",
@@ -9309,7 +9737,41 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Casts Stop on one member, then uses Gas on whoever is stopped. Tail Laser hits the whole party and often comes twice in one turn, so keep everyone's HP up with Restore.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn (7-turn cycle)",
+        "rows": [
+          [
+            "Battle start",
+            "Half the time it opens at turn 4."
+          ],
+          [
+            "Turn 1",
+            "Gas on a member under Stop if there is one, otherwise Stop on a member who isn't stopped."
+          ],
+          [
+            "Turns 2, 3",
+            "Nothing."
+          ],
+          [
+            "Turn 4",
+            "1 in 3: Laser on each member who isn't KO'd or stopped. Otherwise three, two or one Lasers (1 in 3 each) on members who aren't stopped."
+          ],
+          [
+            "Turn 5",
+            "Tail Laser on the whole party, half the time twice."
+          ],
+          [
+            "Turn 6",
+            "Like turn 4, with W-Laser."
+          ],
+          [
+            "Turn 7",
+            "Gas on a stopped member if there is one, otherwise 1 in 3 Gas on a random member. The cycle starts over."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "search-crown",
@@ -9916,7 +10378,37 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Barret fights alone. Dyne uses Needle Gun, adds S-Mine below 75% HP and Molotov Cocktail below 25%, and may throw one last Molotov as he falls. Let him fill Barret's Limit gauge, heal with items when low, and finish with Limits.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Above 3/4 HP",
+            "Needle Gun."
+          ],
+          [
+            "3/4 to 1/2 HP",
+            "S-Mine 1 in 4, otherwise Needle Gun."
+          ],
+          [
+            "1/2 to 1/4 HP",
+            "Needle Gun and S-Mine every turn."
+          ],
+          [
+            "Below 1/4 HP",
+            "Needle Gun and Molotov Cocktail every turn."
+          ],
+          [
+            "Defeated",
+            "Half the time a last Molotov Cocktail."
+          ],
+          [
+            "Fire",
+            "Never used."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "kimara-bug",
@@ -10308,7 +10800,96 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Will not attack Tifa unless everyone else is down. Heals allies with Cure2, can cast MBarrier, and Grand Spark hits one member hard. With the Attack Squad, clear the soldiers so melee can reach him. When fought with other Turks, the battle ends as soon as one Turk falls.",
-    "ai_summary": null,
+    "ai_summary": [
+      {
+        "title": "With Reno (Lv 23)",
+        "enemy_ids": [
+          128
+        ],
+        "rows": [
+          [
+            "Each turn",
+            "1 in 3: Fire on a random member (unless it picks Tifa). Otherwise Shoulder Attack on a random member other than Tifa."
+          ],
+          [
+            "Only Tifa left",
+            "Shoulder Attack on her 2 in 3; otherwise he only stares (“………………”)."
+          ],
+          [
+            "Reno below half HP",
+            "Every second turn: Cure on Reno."
+          ],
+          [
+            "Reno defeated",
+            "Retreats on his next turn."
+          ],
+          [
+            "Grand Spark",
+            "Never used in this fight."
+          ]
+        ]
+      },
+      {
+        "title": "Lv 49 fight",
+        "enemy_ids": [
+          275
+        ],
+        "rows": [
+          [
+            "Each turn",
+            "2 in 5: Ice2, Bolt2 or Fire2 (unless it picks Tifa). Otherwise Shoulder Attack on a random member other than Tifa; with only Tifa left, he mostly stares."
+          ],
+          [
+            "Below half HP",
+            "Every second turn: Cure2 on his side."
+          ],
+          [
+            "After his first spell",
+            "His script never clears its “already acted” flag: once he has cast a spell or Cure2, he does nothing on later turns."
+          ]
+        ]
+      },
+      {
+        "title": "With the Attack Squad (Lv 42)",
+        "enemy_ids": [
+          281
+        ],
+        "rows": [
+          [
+            "Each turn",
+            "1 in 4: MBarrier on himself if he has none. 1 in 3: Grand Spark up to three times on random members other than Tifa. Otherwise Shoulder Attack on a random member other than Tifa."
+          ],
+          [
+            "Below 1/4 HP",
+            "Cure2 on himself, and Bolt2 on the last member who hit him, on top of his other action."
+          ],
+          [
+            "Defeated",
+            "Retreats, and the Attack Squad leaves with him."
+          ]
+        ]
+      },
+      {
+        "title": "With Reno and Elena (Lv 51)",
+        "enemy_ids": [
+          298
+        ],
+        "rows": [
+          [
+            "Turn cycle",
+            "Shoulder Attack, Shoulder Attack, Grand Spark, Shoulder Attack three times, Grand Spark; repeats. Never on Tifa while someone else stands."
+          ],
+          [
+            "Only Tifa left",
+            "Mostly stares; 1 in 3 Shoulder Attack on her."
+          ],
+          [
+            "First Turk defeated",
+            "All three Turks retreat (“Reno! Elena! Let's pull out!”) and the battle ends."
+          ]
+        ]
+      }
+    ],
     "variants": [
       {
         "enemy_ids": [
@@ -10838,7 +11419,21 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Possesses a party member and casts Fire2 on them, leaving after three turns or when the host dies. All Soul Fires die as soon as Gi Nattak is defeated, so you can ignore them.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Free",
+            "Fire2 on itself: it absorbs Fire."
+          ],
+          [
+            "Possessing a member",
+            "Fire2 on its host for 4 turns, then returns; it returns at once if the host is KO'd."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "gi-nattak",
@@ -10901,7 +11496,25 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Undead: Cure, Potions and other healing damage it. Two Soul Fires possess party members and cast Fire2 on their host for three turns. Defeating Gi Nattak first destroys any remaining Soul Fires, so focus him and avoid Fire.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn (4-turn cycle)",
+        "rows": [
+          [
+            "Turns 1, 3",
+            "A Soul Fire possesses a random member (Take Over), if that Soul Fire is alive and free; otherwise Spear Attack."
+          ],
+          [
+            "Turns 2, 4",
+            "On a random member: DeBarrier 1 in 3 if they have Barrier or MBarrier; otherwise Drain 3 in 5, Aspil and then Spear Attack 1 in 5, Spear Attack 1 in 5."
+          ],
+          [
+            "Defeated",
+            "Both Soul Fires vanish with him."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "dorky-face",
@@ -11425,7 +12038,52 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Starts half physical, half magic. Below half HP it becomes the form that matches the hit that got it there: magic leaves the red magic form, which resists magic and casts spells, and physical leaves the purple physical form, which resists physical attacks and hits one member for 2000 or more with Lost Blow. Finish the first half with magic, then use physical attacks and Limits.",
-    "ai_summary": null,
+    "ai_summary": [
+      {
+        "title": "First form",
+        "enemy_ids": [
+          154
+        ],
+        "rows": [
+          [
+            "Each turn",
+            "Punch on a random member, or 1 in 3 Bolt2 on one without Reflect; the chance of a second action the same turn rises as its HP drops."
+          ],
+          [
+            "Below half HP",
+            "The hit that brings it there decides its new form: a physical hit leaves the purple physical form, a spell the red magic form."
+          ]
+        ]
+      },
+      {
+        "title": "Magic form (red)",
+        "enemy_ids": [
+          155
+        ],
+        "rows": [
+          [
+            "Each turn",
+            "On members without Reflect: Bio2 (preferring unpoisoned members), Bolt2 or Quake2, 2 in 7 each; Tentacle 1 in 7. Out of MP: Aspil on the member with the most MP."
+          ],
+          [
+            "Everyone reflecting",
+            "Tentacle only."
+          ]
+        ]
+      },
+      {
+        "title": "Physical form (purple)",
+        "enemy_ids": [
+          156
+        ],
+        "rows": [
+          [
+            "Each turn",
+            "Lost Blow 1 in 4 on a random member; otherwise Punch, half the time twice."
+          ]
+        ]
+      }
+    ],
     "variants": [
       {
         "enemy_ids": [
@@ -11887,7 +12545,29 @@
       }
     ],
     "notes": "Trine hits the whole party (learn it with Enemy Skill), Hell Combo hits one member hard, and it heals itself with Cure2. Its special attacks come more often as its HP drops, so set Big Guard and keep All plus Restore ready.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Battle start",
+            "1 in 5 its first action is Trine."
+          ],
+          [
+            "Normally",
+            "Keyclaw or Big Horn on a random member; Hell Combo instead 1 in 5, rising as its HP drops (1 in 4 below 3/4, 1 in 3 below 1/2, 1 in 2 below 1/4)."
+          ],
+          [
+            "Below 3/4 HP",
+            "Every fourth turn Cure2 on itself, and Trine on the whole party on the turn after (Hell Combo when out of MP)."
+          ],
+          [
+            "Learning Trine",
+            "Trine follows only a Cure2: bring it below 3/4 HP and wait."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "palmer",
@@ -11943,7 +12623,21 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Mostly harmless. Mako Gun casts Fire2, Ice2 or Bolt2 on a random member, and he can inflict Sadness. Attack with your strongest moves to finish quickly.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Random",
+            "1 in 4 each: “Mako Gun” Fire2, Ice2 or Bolt2 on a random member, or Incite (“Heh-hic-heh-hic!”) on a member without Sadness."
+          ],
+          [
+            "Nothing to do",
+            "Does nothing when the chosen spell needs more MP than he has, or everyone already has Sadness."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "jayjujayme",
@@ -12175,7 +12869,33 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Cloud's party fights without Materia, since Yuffie took it and Corneo has kidnapped her. Aero3 can deal over 1300 damage to one member, so keep everyone's HP high; Barret's Mindblow drains his MP to stop it. Scorpion's Tail can poison and is often used twice in one turn.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn (4-turn cycle)",
+        "rows": [
+          [
+            "Battle start",
+            "Starts at a random point of the cycle."
+          ],
+          [
+            "Turns 1, 2",
+            "Wing Cut on a random member."
+          ],
+          [
+            "Turn 3",
+            "Scorpion's Tail (Poison) on a random member."
+          ],
+          [
+            "Turn 4",
+            "Aero3 on a random member while he has 50 MP; nothing otherwise."
+          ],
+          [
+            "Second action",
+            "Wing Cut and Scorpion's Tail come twice in one turn 1 in 9, rising as his HP drops (1 in 7 below 3/4, 1 in 5 below 1/2, 1 in 3 below 1/4)."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "attack-squad",
@@ -12291,7 +13011,29 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Yuffie fights alone. His spells hit hard early but he runs out of power, so set Big Guard and outlast him.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn (3-turn cycle)",
+        "rows": [
+          [
+            "Battle start",
+            "Evade +20."
+          ],
+          [
+            "Turn 1",
+            "Barrier, Regen or Reflect on himself: the first of them he lacks. With all three up, Demi2 instead."
+          ],
+          [
+            "Turn 2",
+            "Dive Kick."
+          ],
+          [
+            "Turn 3",
+            "Demi2 or Dive Kick (half each)."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "shake",
@@ -12347,7 +13089,30 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Yuffie fights alone. Mostly uses Beak. Below half HP he counters with Rage Bomber, which inflicts Fury (faster Limit gauge, but she misses more); he also uses it while poisoned, so don't poison him.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Normally",
+            "Beak."
+          ],
+          [
+            "While poisoned",
+            "Beak or Rage Bomber (Fury), half each."
+          ]
+        ]
+      },
+      {
+        "title": "Counter",
+        "rows": [
+          [
+            "Below half HP",
+            "Every action against him: Rage Bomber (Fury) on the attacker."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "chekhov",
@@ -12403,7 +13168,34 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Yuffie fights alone. Opens with Stare Down, which paralyzes, and counters any magic with it again, so equip a Jem Ring. Below half HP he drains her with Absorb.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "First turn",
+            "Half the time Stare Down (Paralysis)."
+          ],
+          [
+            "Above half HP",
+            "Does nothing on her turns."
+          ],
+          [
+            "Below half HP",
+            "Absorb, on a paralyzed member if there is one."
+          ]
+        ]
+      },
+      {
+        "title": "Counter",
+        "rows": [
+          [
+            "Any spell",
+            "Stare Down (Paralysis) on the caster: a Jem Ring prevents it."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "staniv",
@@ -12459,7 +13251,34 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Yuffie fights alone. Alternates Ironball with War Cry (Sadness) and may counter with Iron Attack when nearly dead. Counter Attack materia speeds the fight up.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Turns 1, 3",
+            "Nothing."
+          ],
+          [
+            "Turns 2, 4",
+            "Ironball on a paralyzed member, else one with Sadness, else the member with the most HP."
+          ],
+          [
+            "After turn 4",
+            "If no one has Sadness, 1 in 3 a War Cry (Sadness) turn follows; then the cycle restarts."
+          ]
+        ]
+      },
+      {
+        "title": "Counter",
+        "rows": [
+          [
+            "First time below 1/8 HP",
+            "Half the time Iron Attack on the whole party."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "godo",
@@ -12520,7 +13339,38 @@
       }
     ],
     "notes": "Yuffie fights alone. Uses gravity attacks that take a share of her HP, Trine, and Mini (Remedy or Cornucopia cures it). Late in the fight he heals with Cure2, but poison damage does not trigger it, so Bio works well. Learn Trine with Enemy Skill.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Battle start",
+            "Starts at a random point of his move chain."
+          ],
+          [
+            "Moves",
+            "Beast Sword on the whole party; Sleepel (Sleep) or Mini on the whole party; Drain on the member with the most HP; Bio2, Trine or Demi3 on the whole party. He picks the next move at random, changing form first when needed: human for Sleepel and Mini, beast for Beast Sword and Trine, the third form for Drain, Bio2 and Demi3."
+          ],
+          [
+            "Fallback",
+            "Beast Sword when the chosen spell isn't possible: not enough MP, Reflect, or everyone already asleep or small."
+          ],
+          [
+            "Demi3",
+            "Follows Bio2 or Trine 1 in 5, rising as his HP drops (1 in 4 below 4/5, 1 in 3 below 3/5, 1 in 2 below 2/5)."
+          ]
+        ]
+      },
+      {
+        "title": "Counter",
+        "rows": [
+          [
+            "Below 2/5 HP",
+            "After every action against him, while he has MP and no Reflect: returns to human form and casts Cure2 on himself; 1 in 2 on the attacker instead when they are below 1/5 HP. Poison damage is not an action, so it never triggers this."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "toxic-frog",
@@ -12811,7 +13661,25 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Hits very hard: Cave-in and Demon Rush hit the whole party, and Petrif-Eye inflicts gradual Petrify. Its special attacks come more often as its HP drops. Use Big Guard and Regen, keep Soft or Ribbons ready, and let the damage build Limit Breaks.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Normally",
+            "Falling Rocks on a random member (a second one 1 in 8), then Cave-in on the party, then Petrif-Eye (gradual Petrify, 1 in 8) or Falling Rocks; repeats from a random step. It ignores members who are petrified or petrifying."
+          ],
+          [
+            "As its HP drops",
+            "The second Falling Rocks and Petrif-Eye come more often: 1 in 4 below 3/4 HP, 1 in 3 below 1/2, 1 in 2 below 1/4."
+          ],
+          [
+            "Below 3/4, 1/2 and 1/4 HP",
+            "Each first time: Advance on its next turn, then Demon Rush on the whole party one or two turns later, and it moves back."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "8-eye",
@@ -12917,7 +13785,21 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Usually opens with Red Dragon Breath; it and Dragon Fang each hit one member hard. Set Big Guard, heal often, and use Ice or physical attacks.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "First turn",
+            "Red Dragon Breath 3 in 4, Dragon Fang 1 in 4, on a random member."
+          ],
+          [
+            "After that",
+            "Dragon Fang 1 in 2, Red Dragon Breath 1 in 4, Tail Attack 1 in 4, on a random member."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "boundfat",
@@ -13215,7 +14097,38 @@
       }
     ],
     "notes": "Counters magic by casting Reflect on itself while it has MP, so lean on physical attacks and Limit Breaks. Aqualung hits the whole party; bring Enemy Skill to learn it. Its extra and special attacks get more frequent at 75%, 50% and 25% HP.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Battle start",
+            "Starts at a random point of the cycle."
+          ],
+          [
+            "Turns 1, 2",
+            "Blue Light on a random member, a second one 1 in 5 (rising as its HP drops: 1 in 4 below 3/4, 1 in 3 below 1/2, 1 in 2 below 1/4)."
+          ],
+          [
+            "Turn 3",
+            "Blue Flame on a random member. With the same rising chance, Aqualung on the whole party follows; otherwise the cycle restarts."
+          ],
+          [
+            "Learning Aqualung",
+            "It comes more often as its HP drops."
+          ]
+        ]
+      },
+      {
+        "title": "Counter",
+        "rows": [
+          [
+            "Any spell",
+            "Reflect on itself while it has none and has the MP."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "acrophies",
@@ -17555,7 +18468,33 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Fought with Reno and Rude; the battle ends as soon as any one Turk falls. Each Turk resists or absorbs different elements, so check each card before using all-target elemental magic. Non-elemental attacks such as Ultima or Bahamut are safest.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "With Reno and Rude",
+        "rows": [
+          [
+            "Battle start",
+            "Throw on the whole party (“Try this on for size!”)."
+          ],
+          [
+            "Normally",
+            "Kick or Throw (half each) on a random member."
+          ],
+          [
+            "After 2 hits",
+            "“Yeow! That hurts!”: she falls back. Then: a pause, Bewildered (Confusion) on a random member, four turns of Throw on the whole party, and a last Throw on the whole party as she returns (“Take THAT!!”)."
+          ],
+          [
+            "2 hits while back",
+            "Returns at once with Throw on the whole party."
+          ],
+          [
+            "First Turk defeated",
+            "All three Turks retreat (“Let's call it a day.”) and the battle ends."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "proud-clod",
