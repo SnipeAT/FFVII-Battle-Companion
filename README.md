@@ -172,7 +172,7 @@ A boss fought several times (the Turks, Ultimate Weapon) shows the record of the
 ### Enemy Skills and the player profile
 
 - **E.SKILL** in the header opens the checklist of the 24 Enemy Skills with the enemies that have each one in their attack list; "(M)" means the skill is also in that enemy's Manipulate list. Tick the skills you have learned. Cards show each enemy's skills as NEW or LEARNED.
-- The party level and Sneak Glove set in the steal calculator (**CALC ODDS**) are saved too: every card then shows your actual steal odds ("Your odds: 62.5% (party LVL 40)").
+- The party level and Sneak Glove set in the steal calculator (**CALC ODDS**) are saved too: every card then shows your actual steal odds ("Your odds per Steal: 62.5% (party LVL 40)"). For a second or later slot the figure already counts the earlier slots failing first.
 - These settings are the player profile, stored by the companion in `data\profile.json` of its data folder (see "Where files are saved"), so the desktop window and every tablet show the same odds and checklist.
 
 ### Reporting a wrong detection

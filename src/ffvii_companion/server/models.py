@@ -129,7 +129,7 @@ class StealCalcResponse(BaseModel):
     chance_value: int
     total_success_percentage: float
     formula_note: str
-    item_success_percentage: float  # Chance this slot's item is stolen once the earlier slots failed
+    item_success_percentage: float  # Chance one Steal gets this slot's item: every earlier slot fails, then this one succeeds
 
 class MisdetectionReportRequest(BaseModel):
     expected: Optional[str] = Field(None, max_length=500)  # What is really on screen, e.g. "Devil Ride x2"

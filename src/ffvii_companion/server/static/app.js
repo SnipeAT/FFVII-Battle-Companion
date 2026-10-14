@@ -390,15 +390,16 @@ function variantKey(enemy) {
 }
 
 // Steal odds of one slot at the profile's party level (computed by the server, see
-// server.main.battle_data); the game tries the slots in order, so a later slot needs the earlier ones to fail
+// server.main.battle_data): the chance one Steal gets this item. The game tries the slots in
+// order, so for a later slot that already counts the earlier slots failing first.
 function stealOddsText(enemy, slot, party) {
   const steal = (enemy.steals || [])[slot];
   if (!steal || steal.odds === null || steal.odds === undefined || !party) {
     return `Odds scale with your level vs. LVL ${enemy.level}`;
   }
   const glove = party.sneak_glove ? " + Sneak Glove" : "";
-  const order = slot > 0 ? ", if the earlier slots fail" : "";
-  return `Your odds: ${Number(steal.odds).toFixed(1)}% (party LVL ${party.party_level}${glove}${order})`;
+  const order = slot > 0 ? ", earlier slots tried first" : "";
+  return `Your odds per Steal: ${Number(steal.odds).toFixed(1)}% (party LVL ${party.party_level}${glove}${order})`;
 }
 
 function updateStealOdds(cardEl, enemy, party) {
