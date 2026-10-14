@@ -25,19 +25,23 @@ for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /i "IPv4"') do (
 :found_ip
 if defined LOCAL_IP set "LOCAL_IP=%LOCAL_IP: =%"
 
-echo [INFO] Binding server to all network interfaces (0.0.0.0:59314)...
+REM The port: 59314, or the one a --port flag passed on to the companion asks for
+set "PORT=59314"
+call :parse_port %*
+
+echo [INFO] Binding server to all network interfaces (0.0.0.0:%PORT%)...
 if not "%LOCAL_IP%"=="" (
     echo [INFO] On a phone, tablet or PC on the same network, open a browser and go to:
     echo.
-    echo        http://%LOCAL_IP%:59314
+    echo        http://%LOCAL_IP%:%PORT%
     echo.
-    echo   If another program uses port 59314, the companion takes the next free
+    echo   If another program uses port %PORT%, the companion takes the next free
     echo   port and shows it in its window title: use that port instead.
     echo.
     echo   Tip: on an iPhone or iPad, tap Share in Safari and choose "Add to Home Screen"
     echo        to run the companion full-screen, without the browser bars.
 ) else (
-    echo [INFO] On a phone, tablet or PC on the same network, open http://^<YOUR_PC_IP^>:59314
+    echo [INFO] On a phone, tablet or PC on the same network, open http://^<YOUR_PC_IP^>:%PORT%
 )
 echo.
 echo =================================================================
@@ -78,3 +82,10 @@ if %2 GEQ %BEST_METRIC% goto :eof
 set "LOCAL_IP=%1"
 set "BEST_METRIC=%2"
 goto :eof
+
+:parse_port
+REM cmd splits --port=59420 into two arguments too
+if "%~1"=="" goto :eof
+if /i "%~1"=="--port" set "PORT=%~2"
+shift
+goto :parse_port

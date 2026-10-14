@@ -328,7 +328,7 @@ def main():
 
     # Create native window WITHOUT js_api (eliminates pywebview COM deadlock)
     window_url = http_url(args.host, port)
-    # The port other devices need when the requested one was taken (the LAN launcher prints 59314)
+    # The port other devices need when the requested one was taken (the LAN launcher prints that one)
     title = "FFVII Tactical Battle Companion"
     if port != args.port:
         title += f" (port {port})"

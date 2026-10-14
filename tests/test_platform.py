@@ -274,6 +274,33 @@ class TestPortProbe(unittest.TestCase):
                 self.assertTrue(is_port_in_use(port, "::1"))
                 self.assertTrue(is_port_in_use(port, "::"))
 
+@unittest.skipUnless(os.name == "nt", "Windows batch file")
+class TestLanLauncher(unittest.TestCase):
+    def run_launcher(self, *args):
+        # A copy in an empty folder finds neither the EXE nor the virtual environment: it prints
+        # the address, reports that, and its pause reads end of input
+        import shutil
+        import subprocess
+        import tempfile
+        root = Path(__file__).resolve().parent.parent
+        with tempfile.TemporaryDirectory() as tmp:
+            shutil.copy(root / "Launch_LAN_Mode.bat", tmp)
+            result = subprocess.run(["cmd", "/c", str(Path(tmp) / "Launch_LAN_Mode.bat"), *args],
+                                    stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=30)
+        self.assertIn("Could not find compiled executable", result.stdout)
+        return result.stdout
+
+    def test_prints_the_port_the_companion_uses(self):
+        # It printed 59314 when a --port flag passed on to the companion asked for another
+        # (GEMINI-20261014-02)
+        self.assertIn("(0.0.0.0:59314)", self.run_launcher())
+        for args in (["--port", "59420"], ["--on-top", "--port=59420"]):
+            with self.subTest(args=args):
+                output = self.run_launcher(*args)
+                self.assertIn("(0.0.0.0:59420)", output)
+                self.assertNotIn("59314", output)
+
+
 class TestWinQoS(unittest.TestCase):
     def test_thread_qos_in_worker_thread(self):
         results = []
