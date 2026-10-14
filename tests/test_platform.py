@@ -189,6 +189,38 @@ class TestReleasePackage(unittest.TestCase):
                     if anchor and linked.suffix == ".md":
                         self.assertIn(anchor, self._anchors(linked))
 
+    def test_architecture_codemap_lists_every_module(self):
+        # docs/ARCHITECTURE.md's codemap is the only module map: every module of the package must be
+        # in it (a folder listed without children, like ppocr/, stands for its contents), and every
+        # path it lists under the package must exist
+        import re
+        root = Path(__file__).resolve().parent.parent
+        text = (root / "docs" / "ARCHITECTURE.md").read_text(encoding="utf-8")
+        tree = re.search(r"^## Codemap\n.*?```\n(.*?)```", text, re.DOTALL | re.MULTILINE).group(1)
+        listed, stack = set(), []  # stack: (column, name) of the entries above the current one
+        for line in tree.splitlines():
+            entry = re.search(r"[├└]── (\S+)", line)
+            if not entry:
+                continue
+            while stack and stack[-1][0] >= entry.start(1):
+                stack.pop()
+            stack.append((entry.start(1), entry.group(1)))
+            listed.add("".join(name for _, name in stack))  # folder names end with "/"
+
+        package = "src/ffvii_companion/"
+        in_package = {p[len(package):] for p in listed if p.startswith(package) and p != package}
+        self.assertIn("engine/capture_service.py", in_package)
+        leaf_folders = {p for p in in_package if p.endswith("/")
+                        and not any(q != p and q.startswith(p) for q in in_package)}
+        modules = sorted(p.relative_to(root / package).as_posix() for p in (root / package).rglob("*.py")
+                         if p.name != "__init__.py" and "__pycache__" not in p.parts)
+        for module in modules:
+            with self.subTest(module=module):
+                self.assertTrue(module in in_package or any(module.startswith(f) for f in leaf_folders))
+        for path in sorted(in_package):
+            with self.subTest(listed=path):
+                self.assertTrue((root / package / path).exists())
+
     @unittest.skipUnless((Path(__file__).resolve().parent.parent / ".git").exists(), "needs a Git checkout")
     def test_release_includes_the_committed_docs(self):
         from build_tools.package_release import doc_files
