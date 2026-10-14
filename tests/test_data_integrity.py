@@ -266,6 +266,36 @@ class TestAiScripts(unittest.TestCase):
         counter = next(s["lines"] for s in rec["scripts"] if s["trigger"] == "Counter-General")
         self.assertEqual(counter, ["if Var00E0 == 1:", "  Targets = Opponents", "  use Tail Laser"])
 
+    @staticmethod
+    def skill_targets(records, skill):
+        """The Targets each script line that uses the skill follows ("?" when the script picks the
+        attack through a variable first)."""
+        targets = set()
+        for rec in records:
+            for script in rec["scripts"]:
+                target = None
+                for line in script["lines"]:
+                    body = line.strip()
+                    if body.startswith("Targets = "):
+                        target = body[len("Targets = "):]
+                    elif body == f"use {skill}":
+                        targets.add(target or "?")
+                    elif body.endswith(f"({skill})") and re.match(r"Var[0-9A-F]{4} = \d+ \(", body):
+                        targets.add("?")
+        return targets
+
+    def test_learning_tips_name_skills_cast_on_the_party(self):
+        # A party member learns an Enemy Skill only when the skill hits them: a "Learning <skill>"
+        # tip must name a skill the script casts on the party, not only on the enemy itself or its
+        # side (Blue Dragon's Dragon Force and Wind Wing's White Wind had such tips)
+        for key, e in self.enemies.items():
+            for section in e["ai_summary"] or []:
+                for when, _ in section["rows"]:
+                    if when.startswith("Learning "):
+                        skill = when[len("Learning "):]
+                        targets = self.skill_targets(self.ai[key], skill)
+                        self.assertTrue(targets - {"Self", "Allies"}, f"{e['name']}: {skill} only on {targets}")
+
     def test_ai_summaries(self):
         # null, or sections {"title", "rows": [[when, does], ...], "enemy_ids" (optional)}
         for key, e in self.enemies.items():

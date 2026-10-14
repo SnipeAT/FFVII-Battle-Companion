@@ -15444,8 +15444,8 @@
             "The first time: its next turn is Blue Dragon Breath (at 3/4) or Great Gale (at 1/2 and 1/4)."
           ],
           [
-            "Learning Dragon Force",
-            "Only at the start of its cycle, 1 in 5, rising to 1 in 2 below 1/4 HP."
+            "Dragon Force",
+            "Cast only on itself, and not in its Manipulate list: you cannot learn it here (Dark Dragon, through Manipulate)."
           ]
         ]
       }
@@ -15949,11 +15949,11 @@
           ],
           [
             "After a hit below half HP",
-            "Its next turn: White Wind on its side while it is hurt and has 34 MP."
+            "Its next turn: White Wind on its own side (healing and curing them) while it is hurt and has 34 MP."
           ],
           [
-            "Learning White Wind",
-            "Hit it once it is below half HP."
+            "White Wind",
+            "Cast only on its own side, and not in its Manipulate list: you cannot learn it here (Zemzelett, through Manipulate)."
           ]
         ]
       }
@@ -18790,7 +18790,41 @@
       }
     ],
     "notes": null,
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn (5-turn cycle)",
+        "rows": [
+          [
+            "Battle start",
+            "Starts at a random point of the cycle."
+          ],
+          [
+            "Turns 1, 2",
+            "Big Punch on a random member."
+          ],
+          [
+            "Turn 3",
+            "Heavy Sword on a random member."
+          ],
+          [
+            "Turn 4",
+            "Atomic Ray on a random member 1 in 8 while it has 20 MP, otherwise Big Punch."
+          ],
+          [
+            "Turn 5",
+            "Big Guard on itself 1 in 8 while it has the MP and none of Barrier, MBarrier and Haste, otherwise Big Punch."
+          ],
+          [
+            "As its HP drops",
+            "Atomic Ray and Big Guard get likelier: 1 in 4 below 3/4 HP, 1 in 3 below 1/2, 1 in 2 below 1/4."
+          ],
+          [
+            "Big Guard",
+            "Cast only on itself, and not in its Manipulate list: you cannot learn it here (Beachplug, through Manipulate)."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "eagle-gun",
@@ -20483,6 +20517,10 @@
           [
             "Laser",
             "Its AI never uses it: learn it through Manipulate."
+          ],
+          [
+            "Dragon Force",
+            "Cast only on itself: learn it through Manipulate."
           ]
         ]
       },
