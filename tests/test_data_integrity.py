@@ -233,6 +233,8 @@ class TestAiScripts(unittest.TestCase):
             for rec in recs:
                 with self.subTest(enemy=key, ids=rec["enemy_ids"]):
                     self.assertLessEqual(set(rec["reacts"]), {"any action", "physical", "magic", "death"})
+                    listed = [json.dumps(a, sort_keys=True) for a in rec["attacks"]]
+                    self.assertEqual(len(listed), len(set(listed)), "identical attacks are listed once")
                     for a in rec["attacks"]:
                         self.assertTrue(a["name"])
                         self.assertIn(a["target"], {"one", "all", "random", "-"})

@@ -743,7 +743,8 @@ NOTABLE_FIELDS = tuple(f"Self.{f} " for f in ("Defense", "MagicDefense", "Evade"
 
 def export_record(scene: bytes, slot: int, attack_names: Dict[int, str]) -> Optional[dict]:
     """What the AI box shows of one scene.bin record (None without AI scripts). Unnamed attacks are
-    left out of the attack list: they are animations and form changes (the scripts name them)."""
+    left out of the attack list: they are animations and form changes (the scripts name them);
+    identical attacks are listed once."""
     block = ai_block(scene, slot)
     if block is None:
         return None
@@ -754,7 +755,8 @@ def export_record(scene: bytes, slot: int, attack_names: Dict[int, str]) -> Opti
         attack = {k: a[k] for k in EXPORT_ATTACK_FIELDS if k in a}
         if not attack.get("statuses"):
             attack.pop("status_mode", None)
-        attacks.append(attack)
+        if attack not in attacks:  # copies under another id (Guard Scorpion's two Rifles)
+            attacks.append(attack)
     lines = [(name, decompile(block, start, end, attack_names)) for name, start, end in scripts(block)]
     return {"reacts": reacts(block, attack_names), "attacks": attacks,
             "scripts": [{"trigger": name, "lines": body} for name, body in lines if body]}

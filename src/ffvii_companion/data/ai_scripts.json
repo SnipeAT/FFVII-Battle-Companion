@@ -1162,15 +1162,6 @@
           "elements": [],
           "statuses": [],
           "enemy_skill": false
-        },
-        {
-          "name": "Escape",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
         }
       ],
       "scripts": [
@@ -1324,28 +1315,6 @@
       ],
       "reacts": [],
       "attacks": [
-        {
-          "name": "Flap",
-          "target": "all",
-          "power": 16,
-          "mp": 0,
-          "elements": [
-            "Wind"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Thunderbolt",
-          "target": "one",
-          "power": 15,
-          "mp": 4,
-          "elements": [
-            "Lightning"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
         {
           "name": "Flap",
           "target": "all",
@@ -1837,17 +1806,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Silver Wheel",
-          "target": "one",
-          "power": 20,
-          "mp": 0,
-          "elements": [
-            "Shout"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Put out",
           "target": "-",
           "power": 0,
@@ -1978,17 +1936,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Silver Wheel",
-          "target": "one",
-          "power": 20,
-          "mp": 0,
-          "elements": [
-            "Shout"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Put out",
           "target": "-",
           "power": 0,
@@ -2069,17 +2016,6 @@
             "Stop"
           ],
           "status_mode": "inflict",
-          "enemy_skill": false
-        },
-        {
-          "name": "Silver Wheel",
-          "target": "one",
-          "power": 20,
-          "mp": 0,
-          "elements": [
-            "Shout"
-          ],
-          "statuses": [],
           "enemy_skill": false
         },
         {
@@ -2977,26 +2913,6 @@
       ],
       "reacts": [],
       "attacks": [
-        {
-          "name": "Claw",
-          "target": "one",
-          "power": 16,
-          "mp": 0,
-          "elements": [
-            "Punch"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Peacock",
-          "target": "all",
-          "power": 4,
-          "mp": 8,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
         {
           "name": "Claw",
           "target": "one",
@@ -5690,24 +5606,6 @@
           "elements": [],
           "statuses": [],
           "enemy_skill": false
-        },
-        {
-          "name": "Advance",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Retreat",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
         }
       ],
       "scripts": [
@@ -5906,17 +5804,6 @@
           "mp": 0,
           "elements": [
             "Shoot"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "???",
-          "target": "one",
-          "power": 48,
-          "mp": 16,
-          "elements": [
-            "Hit"
           ],
           "statuses": [],
           "enemy_skill": false
@@ -8915,17 +8802,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Rifle",
-          "target": "one",
-          "power": 16,
-          "mp": 0,
-          "elements": [
-            "Shoot"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Tail Laser",
           "target": "all",
           "power": 48,
@@ -9753,64 +9629,11 @@
           "enemy_skill": false
         },
         {
-          "name": "Rear Gun",
-          "target": "one",
-          "power": 20,
-          "mp": 0,
-          "elements": [
-            "Shoot"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Destroyed",
           "target": "-",
           "power": 0,
           "mp": 0,
           "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Destroyed",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Bodyblow",
-          "target": "one",
-          "power": 40,
-          "mp": 0,
-          "elements": [
-            "Hit"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Big Bomber",
-          "target": "one",
-          "power": 50,
-          "mp": 0,
-          "elements": [
-            "Shoot"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Energy Ball",
-          "target": "one",
-          "power": 30,
-          "mp": 0,
-          "elements": [
-            "Shout"
-          ],
           "statuses": [],
           "enemy_skill": false
         },
@@ -10582,17 +10405,6 @@
             "Sadness"
           ],
           "status_mode": "inflict",
-          "enemy_skill": false
-        },
-        {
-          "name": "Sewer Tsunami",
-          "target": "all",
-          "power": 20,
-          "mp": 0,
-          "elements": [
-            "Water"
-          ],
-          "statuses": [],
           "enemy_skill": false
         },
         {
@@ -11642,48 +11454,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Pyramid",
-          "target": "one",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [
-            "Imprisoned"
-          ],
-          "status_mode": "inflict",
-          "enemy_skill": false
-        },
-        {
-          "name": "Pyramid",
-          "target": "one",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [
-            "Imprisoned"
-          ],
-          "status_mode": "inflict",
-          "enemy_skill": false
-        },
-        {
-          "name": "Pyramid Release",
-          "target": "one",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Pyramid Release",
-          "target": "one",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Pyramid Release",
           "target": "one",
           "power": 0,
@@ -12395,24 +12165,6 @@
             "Confusion"
           ],
           "status_mode": "inflict",
-          "enemy_skill": false
-        },
-        {
-          "name": "Appear",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Vanish",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
           "enemy_skill": false
         },
         {
@@ -13480,15 +13232,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Order",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Vanish",
           "target": "-",
           "power": 0,
@@ -13580,28 +13323,6 @@
           "mp": 4,
           "elements": [
             "Ice"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Rolling Attack",
-          "target": "one",
-          "power": 48,
-          "mp": 0,
-          "elements": [
-            "Hit"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Rolling Attack",
-          "target": "one",
-          "power": 48,
-          "mp": 0,
-          "elements": [
-            "Hit"
           ],
           "statuses": [],
           "enemy_skill": false
@@ -13742,15 +13463,6 @@
           "elements": [
             "Shoot"
           ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Destroyed",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
           "statuses": [],
           "enemy_skill": false
         },
@@ -14267,17 +13979,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Deadly Wheel",
-          "target": "all",
-          "power": 16,
-          "mp": 0,
-          "elements": [
-            "Hit"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Rolling Fire",
           "target": "all",
           "power": 16,
@@ -14395,17 +14096,6 @@
         "any action"
       ],
       "attacks": [
-        {
-          "name": "Bite",
-          "target": "one",
-          "power": 16,
-          "mp": 0,
-          "elements": [
-            "Hit"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
         {
           "name": "Bite",
           "target": "one",
@@ -14752,17 +14442,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Bodyblow",
-          "target": "one",
-          "power": 40,
-          "mp": 0,
-          "elements": [
-            "Hit"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Moonstrike",
           "target": "one",
           "power": 20,
@@ -14771,50 +14450,6 @@
             "Hit"
           ],
           "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Fury Blast",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Fury Blast",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Waterball",
-          "target": "one",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [
-            "Death",
-            "Imprisoned"
-          ],
-          "status_mode": "inflict",
-          "enemy_skill": false
-        },
-        {
-          "name": "Waterball",
-          "target": "one",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [
-            "Death",
-            "Imprisoned"
-          ],
-          "status_mode": "inflict",
           "enemy_skill": false
         },
         {
@@ -15717,17 +15352,6 @@
         "any action"
       ],
       "attacks": [
-        {
-          "name": "Bodyblow",
-          "target": "one",
-          "power": 16,
-          "mp": 0,
-          "elements": [
-            "Hit"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
         {
           "name": "Bodyblow",
           "target": "one",
@@ -17877,15 +17501,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Take Over",
-          "target": "one",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Drain",
           "target": "one",
           "power": 6,
@@ -18320,17 +17935,6 @@
           "power": 0,
           "mp": 0,
           "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Spin Attack",
-          "target": "one",
-          "power": 16,
-          "mp": 0,
-          "elements": [
-            "Hit"
-          ],
           "statuses": [],
           "enemy_skill": false
         },
@@ -19900,15 +19504,6 @@
           "elements": [],
           "statuses": [],
           "enemy_skill": false
-        },
-        {
-          "name": "Dance",
-          "target": "one",
-          "power": 8,
-          "mp": 8,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
         }
       ],
       "scripts": [
@@ -20595,24 +20190,6 @@
           "target": "one",
           "power": 6,
           "mp": 1,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "to Beast",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "to Human",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
           "elements": [],
           "statuses": [],
           "enemy_skill": false
@@ -21356,15 +20933,6 @@
         {
           "name": "Eyesight",
           "target": "one",
-          "power": 24,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Eyesight",
-          "target": "one",
           "power": 48,
           "mp": 0,
           "elements": [],
@@ -21852,15 +21420,6 @@
           "elements": [
             "Hit"
           ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Spin Shield",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
           "statuses": [],
           "enemy_skill": false
         },
@@ -22455,15 +22014,6 @@
         },
         {
           "name": "Shield Defense",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Vanish",
           "target": "-",
           "power": 0,
           "mp": 0,
@@ -23428,17 +22978,6 @@
         "any action"
       ],
       "attacks": [
-        {
-          "name": "Bodyblow",
-          "target": "one",
-          "power": 16,
-          "mp": 0,
-          "elements": [
-            "Hit"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
         {
           "name": "Bodyblow",
           "target": "one",
@@ -24503,39 +24042,6 @@
           ],
           "statuses": [],
           "enemy_skill": false
-        },
-        {
-          "name": "Right Breath",
-          "target": "one",
-          "power": 35,
-          "mp": 10,
-          "elements": [
-            "Fire"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Right Breath 2",
-          "target": "all",
-          "power": 45,
-          "mp": 0,
-          "elements": [
-            "Lightning"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Tremor",
-          "target": "all",
-          "power": 24,
-          "mp": 8,
-          "elements": [
-            "Earth"
-          ],
-          "statuses": [],
-          "enemy_skill": false
         }
       ],
       "scripts": [
@@ -24672,39 +24178,6 @@
           "elements": [
             "Fire",
             "Ice"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Tremor",
-          "target": "all",
-          "power": 25,
-          "mp": 8,
-          "elements": [
-            "Earth"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Left Breath",
-          "target": "one",
-          "power": 35,
-          "mp": 10,
-          "elements": [
-            "Ice"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Left Breath 2",
-          "target": "all",
-          "power": 45,
-          "mp": 0,
-          "elements": [
-            "Lightning"
           ],
           "statuses": [],
           "enemy_skill": false
@@ -24988,28 +24461,6 @@
         "death"
       ],
       "attacks": [
-        {
-          "name": "Fire Roulette",
-          "target": "one",
-          "power": 30,
-          "mp": 0,
-          "elements": [
-            "Shoot"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Fire Roulette",
-          "target": "one",
-          "power": 30,
-          "mp": 0,
-          "elements": [
-            "Shoot"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
         {
           "name": "Fire Roulette",
           "target": "one",
@@ -25550,17 +25001,6 @@
           "power": 0,
           "mp": 0,
           "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Machine Gun",
-          "target": "one",
-          "power": 16,
-          "mp": 0,
-          "elements": [
-            "Shoot"
-          ],
           "statuses": [],
           "enemy_skill": false
         }
@@ -26543,33 +25983,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Lapis Laser",
-          "target": "all",
-          "power": 50,
-          "mp": 10,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Lapis Laser",
-          "target": "all",
-          "power": 50,
-          "mp": 10,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Lapis Laser",
-          "target": "all",
-          "power": 50,
-          "mp": 10,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Damage Attack",
           "target": "one",
           "power": 15,
@@ -26712,31 +26125,6 @@
         "death"
       ],
       "attacks": [
-        {
-          "name": "Arm Punch",
-          "target": "one",
-          "power": 24,
-          "mp": 0,
-          "elements": [
-            "Hit"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Arm Grab",
-          "target": "one",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [
-            "Death",
-            "Near-death",
-            "Imprisoned"
-          ],
-          "status_mode": "inflict",
-          "enemy_skill": false
-        },
         {
           "name": "Arm Punch",
           "target": "one",
@@ -26968,31 +26356,6 @@
         "death"
       ],
       "attacks": [
-        {
-          "name": "Arm Punch",
-          "target": "one",
-          "power": 24,
-          "mp": 0,
-          "elements": [
-            "Hit"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Arm Grab",
-          "target": "one",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [
-            "Death",
-            "Near-death",
-            "Imprisoned"
-          ],
-          "status_mode": "inflict",
-          "enemy_skill": false
-        },
         {
           "name": "Arm Punch",
           "target": "one",
@@ -27833,17 +27196,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Tongue",
-          "target": "one",
-          "power": 48,
-          "mp": 0,
-          "elements": [
-            "Hit"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Blaster",
           "target": "one",
           "power": 28,
@@ -28554,15 +27906,6 @@
           "elements": [
             "Fire"
           ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Vanish",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
           "statuses": [],
           "enemy_skill": false
         },
@@ -30448,26 +29791,6 @@
           "power": 0,
           "mp": 0,
           "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Appear",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Pile Banger",
-          "target": "one",
-          "power": 50,
-          "mp": 0,
-          "elements": [
-            "Punch"
-          ],
           "statuses": [],
           "enemy_skill": false
         },
@@ -32775,68 +32098,6 @@
           ],
           "statuses": [],
           "enemy_skill": false
-        },
-        {
-          "name": "Exchange",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Bodyblow",
-          "target": "one",
-          "power": 16,
-          "mp": 0,
-          "elements": [
-            "Shoot"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Triangle Attack",
-          "target": "one",
-          "power": 16,
-          "mp": 0,
-          "elements": [
-            "Shoot"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Exchange",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Bodyblow",
-          "target": "one",
-          "power": 16,
-          "mp": 0,
-          "elements": [
-            "Shoot"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Triangle Attack",
-          "target": "one",
-          "power": 16,
-          "mp": 0,
-          "elements": [
-            "Shoot"
-          ],
-          "statuses": [],
-          "enemy_skill": false
         }
       ],
       "scripts": [
@@ -33086,24 +32347,6 @@
         },
         {
           "name": "Defense Down",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Advance",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Retreat",
           "target": "-",
           "power": 0,
           "mp": 0,
@@ -33377,20 +32620,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Repeating Slap",
-          "target": "one",
-          "power": 20,
-          "mp": 0,
-          "elements": [
-            "Hit"
-          ],
-          "statuses": [
-            "Fury"
-          ],
-          "status_mode": "inflict",
-          "enemy_skill": false
-        },
-        {
           "name": "Cure3",
           "target": "all",
           "power": 130,
@@ -33399,32 +32628,6 @@
             "Restorative"
           ],
           "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Left Hand Revived",
-          "target": "one",
-          "power": 255,
-          "mp": 0,
-          "elements": [
-            "Restorative"
-          ],
-          "statuses": [
-            "Death"
-          ],
-          "status_mode": "remove",
-          "enemy_skill": false
-        },
-        {
-          "name": "Absorb",
-          "target": "one",
-          "power": 20,
-          "mp": 0,
-          "elements": [],
-          "statuses": [
-            "Sadness"
-          ],
-          "status_mode": "inflict",
           "enemy_skill": false
         },
         {
@@ -33437,20 +32640,6 @@
             "Stop"
           ],
           "status_mode": "inflict",
-          "enemy_skill": false
-        },
-        {
-          "name": "Right Hand Revived",
-          "target": "one",
-          "power": 255,
-          "mp": 0,
-          "elements": [
-            "Restorative"
-          ],
-          "statuses": [
-            "Death"
-          ],
-          "status_mode": "remove",
           "enemy_skill": false
         },
         {
@@ -33760,17 +32949,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Sephiroth Shock",
-          "target": "one",
-          "power": 10,
-          "mp": 0,
-          "elements": [
-            "Cut"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Aurora Fence",
           "target": "all",
           "power": 1,
@@ -33893,15 +33071,6 @@
           "name": "Heartless Angel",
           "target": "all",
           "power": 255,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Vanish",
-          "target": "-",
-          "power": 0,
           "mp": 0,
           "elements": [],
           "statuses": [],
@@ -34197,17 +33366,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Sephiroth Shock",
-          "target": "one",
-          "power": 10,
-          "mp": 0,
-          "elements": [
-            "Cut"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Aurora Fence",
           "target": "all",
           "power": 1,
@@ -34334,15 +33492,6 @@
             "Slow"
           ],
           "status_mode": "inflict",
-          "enemy_skill": false
-        },
-        {
-          "name": "Vanish",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
           "enemy_skill": false
         },
         {
@@ -34702,17 +33851,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Sephiroth Shock",
-          "target": "one",
-          "power": 10,
-          "mp": 0,
-          "elements": [
-            "Cut"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Aurora Fence",
           "target": "all",
           "power": 1,
@@ -34840,15 +33978,6 @@
             "Slow"
           ],
           "status_mode": "inflict",
-          "enemy_skill": false
-        },
-        {
-          "name": "Vanish",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
           "enemy_skill": false
         },
         {
@@ -35218,17 +34347,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Sephiroth Shock",
-          "target": "one",
-          "power": 10,
-          "mp": 0,
-          "elements": [
-            "Cut"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Aurora Fence",
           "target": "all",
           "power": 1,
@@ -35356,15 +34474,6 @@
             "Slow"
           ],
           "status_mode": "inflict",
-          "enemy_skill": false
-        },
-        {
-          "name": "Vanish",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
           "enemy_skill": false
         },
         {
@@ -35760,17 +34869,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Sephiroth Shock",
-          "target": "one",
-          "power": 10,
-          "mp": 0,
-          "elements": [
-            "Cut"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Aurora Fence",
           "target": "all",
           "power": 1,
@@ -35907,15 +35005,6 @@
             "Slow"
           ],
           "status_mode": "inflict",
-          "enemy_skill": false
-        },
-        {
-          "name": "Vanish",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
           "enemy_skill": false
         },
         {
@@ -36301,17 +35390,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Sephiroth Shock",
-          "target": "one",
-          "power": 10,
-          "mp": 0,
-          "elements": [
-            "Cut"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Aurora Fence",
           "target": "all",
           "power": 1,
@@ -36438,15 +35516,6 @@
             "Slow"
           ],
           "status_mode": "inflict",
-          "enemy_skill": false
-        },
-        {
-          "name": "Vanish",
-          "target": "-",
-          "power": 0,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
           "enemy_skill": false
         },
         {
@@ -37435,26 +36504,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Diamond Fire",
-          "target": "one",
-          "power": 24,
-          "mp": 0,
-          "elements": [
-            "Fire"
-          ],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Foot Stamp",
-          "target": "one",
-          "power": 32,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
           "name": "Diamond Flash",
           "target": "all",
           "power": 28,
@@ -37616,15 +36665,6 @@
           "target": "all",
           "power": 105,
           "mp": 130,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Whirlsand",
-          "target": "one",
-          "power": 0,
-          "mp": 0,
           "elements": [],
           "statuses": [],
           "enemy_skill": false
@@ -38066,22 +37106,6 @@
           "enemy_skill": false
         },
         {
-          "name": "Emerald Shoot",
-          "target": "one",
-          "power": 91,
-          "mp": 0,
-          "elements": [],
-          "statuses": [
-            "Barrier",
-            "MBarrier",
-            "Shield",
-            "DeathForce",
-            "Resist"
-          ],
-          "status_mode": "remove",
-          "enemy_skill": false
-        },
-        {
           "name": "Emerald Beam",
           "target": "all",
           "power": 21,
@@ -38357,33 +37381,6 @@
           "name": "Emerald Laser",
           "target": "one",
           "power": 19,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Emerald Laser",
-          "target": "one",
-          "power": 19,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Emerald Laser",
-          "target": "one",
-          "power": 111,
-          "mp": 0,
-          "elements": [],
-          "statuses": [],
-          "enemy_skill": false
-        },
-        {
-          "name": "Vanish",
-          "target": "-",
-          "power": 0,
           "mp": 0,
           "elements": [],
           "statuses": [],
