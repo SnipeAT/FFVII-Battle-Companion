@@ -1,3 +1,15 @@
+"""
+Desktop host: what the EXE and `python -m ffvii_companion` run (main()).
+
+Sets Per-Monitor DPI Awareness V2 and single-threaded math libraries before anything imports
+them, puts the process in Windows Efficiency mode (below-normal priority and EcoQoS; off with
+--normal-priority), mirrors the log to logs/companion.log, starts the FastAPI server
+(server/main.py) on a uvicorn thread and the capture loop, then runs the pywebview (WebView2)
+window on the main thread until it closes, and stops both. A second instance on the same port
+exits instead of running a second capture loop on the same game window. The window has no js_api:
+desktop features go through REST (/api/desktop/*). Startup errors are shown in a message box
+(show_startup_error()), since the EXE has no console.
+"""
 import sys
 import os
 

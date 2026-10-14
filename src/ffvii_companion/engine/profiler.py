@@ -1,3 +1,8 @@
+"""
+Performance tracking (`perf_tracker` singleton): stage timings of every sampling step, the measured
+sampling rate, the share of steps that ran OCR, and the capture thread's CPU use, for the
+dashboard's performance panel and the rotating logs/performance.log.
+"""
 import time
 import math
 import logging

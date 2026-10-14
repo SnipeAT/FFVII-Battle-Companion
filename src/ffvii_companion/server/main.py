@@ -1,3 +1,23 @@
+"""
+The FastAPI app: REST API, the /ws WebSocket hub and the dashboard files.
+
+- Wires the capture loop's callbacks (handle_live_battle_detected / _cleared,
+  handle_capture_phase_changed) to broadcasts. They run on the capture thread (or the worker
+  thread of a CLEAR), so they go through ConnectionManager.threadsafe_broadcast() onto the
+  server's event loop.
+- `current_battle` (guarded by battle_lock) is what the dashboards see: set by the capture loop,
+  manual lookups, added partners and the simulator. Every battle message goes through
+  battle_data(): the scene.bin variant of each enemy for this battle, steal odds at the profile's
+  party level, the battle summary.
+- On connect, a WebSocket client receives DASHBOARD_VERSION, BATTLE_UPDATE, PROFILE_UPDATE and
+  CAPTURE_STATUS, in that order; it sends MANUAL_SELECT, ADD_ENEMY and CLEAR_BATTLE.
+- SameOriginGuard rejects requests to host names that are not allowed (DNS rebinding) and
+  cross-origin state-changing requests and WebSockets; there is no CORS. GET endpoints must not
+  change state.
+- DashboardFiles serves server/static/ with Cache-Control: no-cache.
+
+docs/ARCHITECTURE.md describes the messages and the security boundary.
+"""
 import hashlib
 import ipaddress
 import json

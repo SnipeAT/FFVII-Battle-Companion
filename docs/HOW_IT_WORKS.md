@@ -2,7 +2,7 @@
 
 How the companion turns the game window into enemy cards: the capture pipeline, how often it looks at the screen, how it stays light on the PC, where its game data comes from, and how the steal odds and the enemy AI are worked out. Back to the [README](../README.md).
 
-Module and data paths on this page are relative to the package folder `src/ffvii_companion/`.
+Module and data paths on this page are relative to the package folder `src/ffvii_companion/`. How the code itself is organized: [Architecture](ARCHITECTURE.md).
 
 ## The pipeline
 

@@ -43,54 +43,7 @@ Without the game, the dashboard's **TEST HARNESS** button and the manual lookup 
 
 ## Project layout
 
-The application is one Python package in `src/` (the "src layout"); tests, tools, build files and docs sit next to it and are not part of the app.
-
-```
-FFVII-Battle-Companion/
-├── src/ffvii_companion/          # The application package (what the EXE contains)
-│   ├── __main__.py               # python -m ffvii_companion; entry script of the EXE
-│   ├── desktop.py                # Native desktop host (pywebview + embedded FastAPI server, PMv2 DPI, Efficiency mode)
-│   ├── paths.py                  # Bundled resources vs. the writable data folder (EXE folder, .dev_home, tests)
-│   ├── compendium.py             # Compendium: matching, formations, partners, variants, steal formula, battle summary, AI box data
-│   ├── data/
-│   │   ├── ai_scripts.json       # Enemy attacks and decompiled AI scripts
-│   │   ├── enemies.json          # Enemy compendium
-│   │   └── formations.json       # Encounter formations
-│   ├── ppocr/                    # OCR models and their post-processing from RapidOCR (Apache-2.0: the .onnx files, postprocess.py)
-│   ├── engine/
-│   │   ├── capture_service.py    # Capture loop: text gate, OCR, battle state machine, adaptive sampling
-│   │   ├── ocr_engine.py         # Lean PP-OCRv4 det + rec engine (ONNX Runtime) with recognition cache
-│   │   ├── text_gate.py          # Sub-millisecond "did the on-screen text change?" check
-│   │   ├── detector.py           # OCR line parsing, HUD detection, enemy matching
-│   │   ├── capture.py            # mss screen capture and monitor selection
-│   │   ├── window_finder.py      # Win32 FFVII window / process discovery
-│   │   ├── calibration.py        # Settings, defaults, presets, validation, atomic persistence
-│   │   ├── player_profile.py     # Party level, Sneak Glove, learned Enemy Skills
-│   │   ├── detection_report.py   # Misdetection reports in the test-fixture format
-│   │   ├── profiler.py           # Stage timings, sampling rate, OCR share, capture CPU, rotating log
-│   │   └── win_qos.py            # Windows priority / EcoQoS helpers
-│   └── server/
-│       ├── main.py               # FastAPI app: REST API, /ws WebSocket hub, static dashboard
-│       ├── models.py             # Pydantic models (Enemy, BattleState, steal calculator, AI box)
-│       ├── simulator.py          # Preset encounters + CLI for exercising the dashboard
-│       └── static/               # Dashboard (index.html, app.js, style.css)
-├── tests/                        # unittest suite + recorded real-frame fixtures
-├── tools/                        # Frame recorder, loop benchmark, synthetic frames, game-data tools
-├── build_tools/                  # build_exe.py, package_release.py (release zip), ffvii_companion.spec (PyInstaller), licenses/
-├── docs/                         # These documents and the README's screenshots
-├── .github/workflows/tests.yml   # CI: the test suite on every push and pull request
-├── pyproject.toml                # Package metadata and dependencies
-├── Launch_Desktop_App.bat / Launch_LAN_Mode.bat                     # Double-click launchers
-├── README.md / LICENSE / .gitignore                                 # User guide, MIT License, ignore rules
-│
-│   Not in the repository (git-ignored):
-├── .venv/                        # Python environment (the package is installed here in editable mode)
-├── .dev_home/                    # Data folder of runs from source: data/, logs/, reports/
-├── recordings/                   # Recordings for tools/benchmark_loop.py
-└── dist/FFVII_Companion/         # Packaged EXE, with its own data/, logs/, reports/; release zips next to it
-```
-
-`.gitignore` also lists the maintainer's local files (old code and AI agent instructions), which are not published.
+The application is one Python package in `src/` (the "src layout"); tests, tools, build files and docs sit next to it and are not part of the app. The annotated tree, how the parts talk to each other and the design decisions are in [Architecture](ARCHITECTURE.md#codemap).
 
 ## Tests
 
@@ -171,7 +124,7 @@ Smart App Control treats an EXE you build like a downloaded one: where it blocks
 .\.venv\Scripts\python.exe build_tools\package_release.py
 ```
 
-Builds the EXE as above, then writes `dist\FFVII_Companion-<version>-windows-x64.zip`: the build without the `data\`, `logs\` and `reports\` folders next to the EXE (your own settings, profile, logs and reports), plus `LICENSE.txt`, `README.md`, the `docs\` folder, `Launch_LAN_Mode.bat` and `THIRD_PARTY_LICENSES.txt` (the licenses of Python, the OCR models and the packages in the EXE). It refuses to run with uncommitted changes, so the zip always matches a commit; the zip's comment names it. The version comes from `__version__` in `src/ffvii_companion/__init__.py`.
+Builds the EXE as above, then writes `dist\FFVII_Companion-<version>-windows-x64.zip`: the build without the `data\`, `logs\` and `reports\` folders next to the EXE (your own settings, profile, logs and reports), plus `LICENSE.txt`, `README.md`, `CHANGELOG.md`, the `docs\` folder, `Launch_LAN_Mode.bat` and `THIRD_PARTY_LICENSES.txt` (the licenses of Python, the OCR models and the packages in the EXE). It refuses to run with uncommitted changes, so the zip always matches a commit; the zip's comment names it. The version comes from `__version__` in `src/ffvii_companion/__init__.py`.
 
 ## Git tips
 

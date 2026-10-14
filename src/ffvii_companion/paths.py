@@ -1,3 +1,8 @@
+"""
+Where the app's files are: read-only resources next to the code (PACKAGE_DIR) and the writable
+data folder (get_user_data_dir(): settings, player profile, reports, logs). Nothing here creates
+a folder; each writer creates its own on its first write, so importing the app writes nothing.
+"""
 import os
 import sys
 from pathlib import Path

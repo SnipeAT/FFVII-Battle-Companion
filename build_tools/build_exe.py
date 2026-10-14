@@ -1,3 +1,15 @@
+"""
+Builds the EXE with PyInstaller (build_tools/ffvii_companion.spec) into dist/FFVII_Companion/.
+
+PyInstaller runs in a build folder outside the project (DEFAULT_BUILD_ROOT, or the folder named by
+FFVII_COMPANION_BUILD_ROOT), because a synced project folder can delete freshly built files. Only
+a successful build is copied into dist/FFVII_Companion/, in place: no folder is deleted or renamed,
+and the user data next to the EXE (PRESERVED_DIRS) is kept. The build uses the code of its own
+project tree (its src/ first on PYTHONPATH), whichever virtual environment runs it, and writes
+FFVII_Companion.exe.config (EXE_CONFIG) next to the EXE.
+
+    .\\.venv\\Scripts\\python.exe build_tools\\build_exe.py
+"""
 import sys
 import os
 import time

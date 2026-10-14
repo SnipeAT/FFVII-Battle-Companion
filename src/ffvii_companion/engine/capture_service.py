@@ -1,3 +1,32 @@
+"""
+The capture loop (`capture_service` singleton): samples the capture region of the game window,
+reads it, and keeps the battle state the dashboards are told about.
+
+One sampling step is process_frame(), which the tests drive directly: the text-change gate, OCR
+when the text may have changed, enemy matching, then _update_battle_state() (accumulated enemies
+and counts, formation deduction, Battle Square round changes, battle-menu items named like
+enemies) and the phase change. _loop() runs the steps on the FFVIICaptureLoop thread: find the
+window, grab the region, process_frame(), record the timings (perf_tracker), then sleep at the
+rate of the phase the step ended in. Nothing is grabbed between samples.
+
+Phases: idle (idle_fps); hunting (active_fps) while the battle HUD shows without a registered
+enemy, and for HUNTING_BURST_FRAMES after a new enemy; settled (settled_fps) once enemies are
+registered. The battle clears after idle_timeout_seconds without enemies or HUD. MAX_GATED_SKIPS
+forces OCR after that many skipped frames. The thread runs at below-normal priority, with EcoQoS
+(eco_mode) except while hunting.
+
+Callbacks, set by server/main.py: on_battle_detected(enemies, title) when the encounter changed,
+on_battle_cleared() when it ended or was cleared, on_phase_changed() for a phase change without
+an encounter change. They fire outside _state_lock but inside _capture_lock, which a sampling
+step and clear_battle() both hold, so a CLEAR never interleaves with a step's broadcast.
+
+Locks: _capture_lock serializes the grabber, the OCR session and the text gate, which are not
+thread-safe (a sampling step, capture_snapshot(), save_detection_report(), clear_battle());
+_state_lock guards the battle state fields the server reads; _lock guards start() and stop().
+
+After changing the loop, compare CPU and detection times with tools/benchmark_loop.py on a real
+recording (docs/DEVELOPMENT.md, "Tools").
+"""
 import time
 import threading
 import logging
@@ -653,8 +682,9 @@ class CaptureService:
         phase_after = self._sync_current_fps(cfg)
         match_ms = (time.perf_counter() - t_match) * 1000.0
 
-        # 4. Callbacks (outside of all locks). Encounter broadcasts carry the phase themselves;
-        # a phase change on its own (hunting -> settled) needs a dedicated notification.
+        # 4. Callbacks, outside _state_lock (_loop still holds _capture_lock). Encounter broadcasts
+        # carry the phase themselves; a phase change on its own (hunting -> settled) needs a
+        # dedicated notification.
         if snapshot and self.on_battle_detected:
             try:
                 self.on_battle_detected(snapshot, title)

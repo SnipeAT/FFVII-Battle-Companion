@@ -1,3 +1,8 @@
+"""
+mss screen grabber: a screen region (virtual-screen coordinates) as a BGRA array, and the monitor
+captured when the region is not the game window's (modes other than auto_window, snapshots and
+reports without the window).
+"""
 from typing import Dict, Optional
 import mss
 import numpy as np

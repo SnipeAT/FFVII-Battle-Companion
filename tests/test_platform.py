@@ -143,31 +143,51 @@ class TestReleasePackage(unittest.TestCase):
         self.assertIn("==== PP-OCRv4 models and post-processing from RapidOCR ====", text)
         self.assertIn("Copyright (c) 2021 RapidOCR Authors. All rights reserved.", text)
 
-    def test_readme_and_docs_links_work_in_the_release_zip(self):
-        # The zip ships README.md with docs/ next to it: every relative link of those pages must
-        # reach one of them (src/ is not in the zip), and every #anchor a heading of its page
+    @staticmethod
+    def _relative_links(page):
+        """(target, linked file, #anchor) of every relative Markdown link of a page, outside code blocks."""
         import re
+        text = re.sub(r"```.*?```", "", page.read_text(encoding="utf-8"), flags=re.DOTALL)
+        for target in re.findall(r"\]\(([^)\s]+)\)", text):
+            if target.startswith(("http://", "https://")):
+                continue
+            path, _, anchor = target.partition("#")
+            yield target, (page.parent / path).resolve() if path else page, anchor
+
+    @staticmethod
+    def _anchors(page):
+        # GitHub's heading ids: lower case, punctuation dropped, spaces to hyphens
+        import re
+        headings = re.findall(r"^#+ (.+)$", page.read_text(encoding="utf-8"), re.MULTILINE)
+        return {re.sub(r"[^\w\- ]", "", h.lower()).replace(" ", "-") for h in headings}
+
+    def test_readme_and_docs_links_work_in_the_release_zip(self):
+        # The zip ships README.md and CHANGELOG.md with docs/ next to them: every relative link of
+        # those pages must reach one of them (src/ is not in the zip), and every #anchor a heading
+        # of its page
         root = Path(__file__).resolve().parent.parent
-        pages = [root / "README.md", *sorted((root / "docs").glob("*.md"))]
-        self.assertGreater(len(pages), 1)
-
-        def anchors(page):
-            # GitHub's heading ids: lower case, punctuation dropped, spaces to hyphens
-            headings = re.findall(r"^#+ (.+)$", page.read_text(encoding="utf-8"), re.MULTILINE)
-            return {re.sub(r"[^\w\- ]", "", h.lower()).replace(" ", "-") for h in headings}
-
+        in_zip = {root / "README.md", root / "CHANGELOG.md"}
+        pages = [*sorted(in_zip), *sorted((root / "docs").glob("*.md"))]
+        self.assertGreater(len(pages), 2)
         for page in pages:
-            text = re.sub(r"```.*?```", "", page.read_text(encoding="utf-8"), flags=re.DOTALL)
-            for target in re.findall(r"\]\(([^)\s]+)\)", text):
-                if target.startswith(("http://", "https://")):
-                    continue
-                path, _, anchor = target.partition("#")
-                linked = (page.parent / path).resolve() if path else page
+            for target, linked, anchor in self._relative_links(page):
                 with self.subTest(page=page.name, link=target):
                     self.assertTrue(linked.is_file())
-                    self.assertTrue(linked == root / "README.md" or (root / "docs") in linked.parents)
+                    self.assertTrue(linked in in_zip or (root / "docs") in linked.parents)
                     if anchor:
-                        self.assertIn(anchor, anchors(linked))
+                        self.assertIn(anchor, self._anchors(linked))
+
+    def test_repository_pages_links_work(self):
+        # CONTRIBUTING.md and SECURITY.md are read on GitHub only (not in the zip): their relative
+        # links must reach a file of the repository, and every #anchor a heading of its page
+        root = Path(__file__).resolve().parent.parent
+        for page in (root / "CONTRIBUTING.md", root / "SECURITY.md"):
+            for target, linked, anchor in self._relative_links(page):
+                with self.subTest(page=page.name, link=target):
+                    self.assertTrue(linked.is_file())
+                    self.assertIn(root, linked.parents)
+                    if anchor and linked.suffix == ".md":
+                        self.assertIn(anchor, self._anchors(linked))
 
     @unittest.skipUnless((Path(__file__).resolve().parent.parent / ".git").exists(), "needs a Git checkout")
     def test_release_includes_the_committed_docs(self):
@@ -181,7 +201,7 @@ class TestReleasePackage(unittest.TestCase):
         # Dropping one of them from the zip passed every test (GEMINI-20261014-01)
         from build_tools.package_release import project_files
         files = dict((name, path) for path, name in project_files())
-        for name in ("LICENSE.txt", "README.md", "docs/CONFIGURATION.md", "Launch_LAN_Mode.bat"):
+        for name in ("LICENSE.txt", "README.md", "CHANGELOG.md", "docs/CONFIGURATION.md", "Launch_LAN_Mode.bat"):
             with self.subTest(name=name):
                 self.assertIn(name, files)
                 self.assertTrue(files[name].is_file())

@@ -121,8 +121,10 @@ Instead of cloning, you can download **Source code (zip)** from a release and ru
 
 - [Configuration](docs/CONFIGURATION.md): launchers, command-line flags, calibration, every setting, where files are saved.
 - [How it works](docs/HOW_IT_WORKS.md): the capture pipeline, sampling phases, low system impact, the game data, the steal formula, how the enemy AI is decoded.
-- [Development](docs/DEVELOPMENT.md): setup, project layout, tests, tools, building and packaging.
+- [Development](docs/DEVELOPMENT.md): setup, tests, tools, building and packaging.
+- [Architecture](docs/ARCHITECTURE.md): the codemap, threads and locks, the server's messages, where state lives, the design decisions.
 - [Benchmarks](docs/BENCHMARKS.md): the CPU measurements.
+- [Changelog](CHANGELOG.md): what changed in each release.
 
 ## License
 
