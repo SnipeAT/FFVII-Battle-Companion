@@ -20540,7 +20540,42 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Below 15,000 HP it starts a countdown and then casts Ultima, which ends the fight with no EXP or AP, so defeat it before the count runs out. Repeating Slap can inflict Fury and Absorb Sadness; it also casts Bio2 (Poison) and Stop.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn (5-turn cycle)",
+        "rows": [
+          [
+            "Turns 1, 3",
+            "Repeating Slap (Fury) on a random member while its left hand stands."
+          ],
+          [
+            "Turns 2, 4",
+            "Absorb (Sadness) on a random member while its right hand stands."
+          ],
+          [
+            "Turn 5",
+            "Both hands up: Bio2 on the whole party. Only the left hand: Stop on a random member. Only the right hand: Cure3 on its side. Both hands down: revives them at 1/4 HP and raises its defenses again."
+          ]
+        ]
+      },
+      {
+        "title": "Hands and countdown",
+        "rows": [
+          [
+            "A hand destroyed",
+            "Jenova's Defense (left hand) or Magic Defense (right hand) drops, and the turns that hand would act are lost."
+          ],
+          [
+            "Below 15000 HP",
+            "Counts down 5, 4, 3, 2, 1 over five turns, then Ultima on the whole party ends the battle. Defeat it before the count runs out."
+          ],
+          [
+            "Next battle",
+            "Your party's levels and the number of turns this fight took set up the Bizarro·Sephiroth battle that follows."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "bizarrosephiroth",
@@ -20600,7 +20635,71 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Its Core restores a large share of the main body's HP almost every turn, so put your heaviest damage on the main body, or defeat the Core if the healing outpaces you.",
-    "ai_summary": null,
+    "ai_summary": [
+      {
+        "title": "Parts",
+        "rows": [
+          [
+            "Body (A)",
+            "Defeating it ends the battle; every part vanishes with it."
+          ],
+          [
+            "Head (B)",
+            "Revived by the body 1 to 3 turns after it falls."
+          ],
+          [
+            "Core (C)",
+            "Immune to physical attacks and magic until both magic parts (D, E) are down. Each turn: Bizzarro Enegy, a large heal on the body."
+          ],
+          [
+            "Magic parts (D, E)",
+            "Right Magic (D) absorbs Ice and Lightning and lets the body cast Bolt3 and Ice3; Left Magic (E) absorbs Fire and Earth and lets it cast Quake3 and Fire3."
+          ]
+        ]
+      },
+      {
+        "title": "Body, each turn (8-turn cycle)",
+        "rows": [
+          [
+            "Turn 1",
+            "If D and E have both been down for more than 8 turns: revives them and the core closes up again. Otherwise, with the head down: Aurora Fence removes every status from everyone."
+          ],
+          [
+            "Turns 2, 3",
+            "Bolt3 (needs D), then Quake3 (needs E), on a random member."
+          ],
+          [
+            "Turn 4",
+            "Stigma (Poison, Slow) on the whole party while the core and head stand; with the core down: Heartless Angel."
+          ],
+          [
+            "Turns 5, 6",
+            "Nothing."
+          ],
+          [
+            "Turns 7, 8",
+            "Ice3 (needs D), then Fire3 (needs E), on a random member."
+          ],
+          [
+            "Otherwise",
+            "Sephiroth Shock on a random member whenever the turn's move is not possible."
+          ]
+        ]
+      },
+      {
+        "title": "Battle setups",
+        "rows": [
+          [
+            "HP",
+            "The parts' HP grows with the number of party members at level 99."
+          ],
+          [
+            "Several parties",
+            "Its other records are the battles fought by several parties in turn: their HP differs, and the parts destroyed carry over from one party's battle to the next."
+          ]
+        ]
+      }
+    ],
     "variants": [
       {
         "enemy_ids": [
@@ -20980,7 +21079,62 @@
       }
     ],
     "notes": "Equip Ribbons: Pale Horse, Break and his wing attack inflict statuses, and DeSpell strips your buffs. Super Nova hits the whole party. Use Big Guard, Regen, and your strongest summons and Limits; Shadow Flare can be learned here.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn (8-turn cycle)",
+        "rows": [
+          [
+            "Turn 1",
+            "Wall (Barrier, MBarrier) on himself, or, every other cycle, DeSpell on the whole party; DeSpell on himself when he is slowed."
+          ],
+          [
+            "Turn 2",
+            "After Wall: Shadow Flare on a random member. After DeSpell: Deen on the whole party."
+          ],
+          [
+            "Turn 3",
+            "An unnamed attack on the member with the most HP."
+          ],
+          [
+            "Turn 4",
+            "Rises out of reach of short-range attacks."
+          ],
+          [
+            "Turn 5",
+            "Pale Horse (Sadness, Frog, Small) on a random member."
+          ],
+          [
+            "Turn 6",
+            "Super Nova (Confusion, Silence, Slow) on the whole party."
+          ],
+          [
+            "Turn 7",
+            "Break (Petrify) on a random member; below 1/4 HP Heartless Angel instead."
+          ],
+          [
+            "Turn 8",
+            "Comes back down; the cycle starts over."
+          ]
+        ]
+      },
+      {
+        "title": "Other",
+        "rows": [
+          [
+            "MP",
+            "Refilled every turn."
+          ],
+          [
+            "HP and stats",
+            "Grow with the number of party members at level 99."
+          ],
+          [
+            "Learning Shadow Flare",
+            "It comes on turn 2 of the cycles that start with Wall."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "sephiroth",
@@ -21032,7 +21186,21 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Final one-on-one with Cloud, who starts with a full Limit gauge. Any attack wins.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Final duel",
+        "rows": [
+          [
+            "Each turn",
+            "Cut on Cloud, then Cloud strikes back by himself."
+          ],
+          [
+            "Any hit",
+            "Ends the battle."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "scissors",
@@ -21378,7 +21546,58 @@
       }
     ],
     "notes": "Cannot be damaged until it plants its tentacles in the sand. Whirlsand removes a member from the battle for good but cannot target the last active character, so start with two members KO'd and revive them once the tentacles are down. Not immune to Paralysis: Dazers stop its attacks.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Before the tentacles",
+        "rows": [
+          [
+            "Defense",
+            "Immune to physical attacks and magic until it plants its tentacles for the first time."
+          ],
+          [
+            "Turns 1-6",
+            "With more than one member standing: Big Claw, Whirlsand and Big Swing (Paralysis) in turn. With only one member standing it plants its tentacles at once."
+          ],
+          [
+            "Turns 7-15",
+            "Big Claw, Big Swing or Comet2 at random."
+          ],
+          [
+            "After turn 15",
+            "1 in 5 it plants its tentacles, otherwise Big Swing, Big Claw or Comet2."
+          ],
+          [
+            "Counter",
+            "Any action against it: Whirlsand on a random member while more than one member stands. Whirlsand removes them from the battle."
+          ]
+        ]
+      },
+      {
+        "title": "Tentacles planted",
+        "rows": [
+          [
+            "Defense",
+            "It can be damaged from now on, even after pulling the tentacles back."
+          ],
+          [
+            "Each turn",
+            "Ruby Flame, Ruby Ray (Confusion), Left or Right Revenge; from turn 11 also Shadow Flare, Ultima and the Thrusts. Whirlsand returns from turn 26 while more than two members stand, from turn 33 while more than one stands."
+          ],
+          [
+            "A tentacle destroyed",
+            "It pulls its tentacles back."
+          ],
+          [
+            "Counter",
+            "Any action against it: Right Thrust (Frog, Small) or Left Thrust (Poison, gradual Petrify) on a random member."
+          ],
+          [
+            "Learning Shadow Flare",
+            "Only with its tentacles planted, from turn 11."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "ruby's-tentacle",
@@ -21497,7 +21716,34 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Without Underwater materia the fight has a 20-minute timer. Aire Tam Storm deals 1111 damage per equipped materia to each character, so keep everyone at 8 or fewer. Emerald Beam hits the whole party and removes Regen.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Each turn",
+        "rows": [
+          [
+            "Eyes closed",
+            "Emerald Shoot on a random member (removes Barrier, MBarrier, Shield), Foot Stamp on the whole party, Emerald Shoot again; the first two may repeat. Below half HP it skips the Foot Stamps."
+          ],
+          [
+            "Then",
+            "Opens up: its four Eyes return at full HP, and Emerald Beam (removes Regen) hits the whole party."
+          ],
+          [
+            "Eyes out",
+            "Emerald Beam and Aire Tam Storm on the whole party in turn, until all four Eyes are destroyed; then it closes and starts over."
+          ]
+        ]
+      },
+      {
+        "title": "Counter",
+        "rows": [
+          [
+            "Eyes out",
+            "Every action against it except a Limit: Revenge Stamp (removes Haste) on the whole party."
+          ]
+        ]
+      }
+    ]
   },
   {
     "id": "leg",
@@ -21613,6 +21859,20 @@
     "manipulate": [],
     "enemy_skills": [],
     "notes": "Emerald Weapon's eyes: blue eyes fire damaging lasers and orange eyes drain MP. The fight is won by defeating Emerald Weapon itself.",
-    "ai_summary": null
+    "ai_summary": [
+      {
+        "title": "Emerald Weapon's eye",
+        "rows": [
+          [
+            "Each turn",
+            "Emerald Laser on a random member."
+          ],
+          [
+            "All four destroyed",
+            "Emerald Weapon closes up and stops using Aire Tam Storm until it opens again."
+          ]
+        ]
+      }
+    ]
   }
 ]
