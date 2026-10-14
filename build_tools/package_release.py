@@ -3,8 +3,8 @@ Packages a release of the desktop app for GitHub: dist/FFVII_Companion-<version>
 
 Builds the EXE with build_exe.py (which updates dist/FFVII_Companion/ as usual), then zips that
 build without the data folders next to the EXE (PRESERVED_DIRS: the settings, profile, logs and
-reports of whoever built it), together with LICENSE, README.md and the docs/ it links to (so the
-links work offline), the LAN launcher and THIRD_PARTY_LICENSES.txt (the license texts of Python,
+reports of whoever built it), together with LICENSE, README.md, CHANGELOG.md and the docs/ they
+link to (so the links work offline), the LAN launcher and THIRD_PARTY_LICENSES.txt (the license texts of Python,
 the bundled OCR models and the packages in the bundle).
 Refuses to run with uncommitted changes, so every release is built from a commit; the zip's
 comment names it (and, with --allow-dirty, says the build had uncommitted changes).
@@ -165,8 +165,9 @@ def doc_files() -> list:
 
 def project_files() -> list:
     """(source, path in the release folder) of the project's files the zip adds to the build:
-    the license, the user guide with the docs/ it links to, and the LAN launcher."""
-    files = [(ROOT / "LICENSE", "LICENSE.txt"), (ROOT / "README.md", "README.md")]
+    the license, the user guide and the changelog with the docs/ they link to, and the LAN launcher."""
+    files = [(ROOT / "LICENSE", "LICENSE.txt"), (ROOT / "README.md", "README.md"),
+             (ROOT / "CHANGELOG.md", "CHANGELOG.md")]
     files += [(ROOT / rel, rel) for rel in doc_files()]
     files.append((ROOT / "Launch_LAN_Mode.bat", "Launch_LAN_Mode.bat"))
     return files
