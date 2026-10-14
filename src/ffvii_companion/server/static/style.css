@@ -1182,6 +1182,171 @@ button {
   border-radius: 0 4px 4px 0;
 }
 
+/* Enemy AI box */
+.card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-ai {
+  background-color: transparent;
+  border: 1px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-ai:hover {
+  background-color: var(--accent-cyan);
+  color: #000000;
+}
+
+.modal-window.ai-window {
+  max-width: 720px;
+  border-color: var(--accent-cyan);
+}
+
+.ai-window .modal-header h3 {
+  color: var(--accent-cyan);
+}
+
+.ai-record {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ai-record + .ai-record {
+  border-top: 1px solid var(--border-color);
+  padding-top: 14px;
+}
+
+.ai-record-label {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  color: var(--accent-cyan);
+}
+
+.badge-react {
+  background-color: rgba(249, 115, 22, 0.15);
+  border: 1px solid var(--accent-orange);
+  color: #fdba74;
+  font-size: 0.68rem;
+}
+
+.ai-table-wrap {
+  overflow-x: auto;
+}
+
+.ai-attacks {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.ai-attacks th {
+  text-align: left;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.ai-attacks td {
+  padding: 5px 6px;
+  border-bottom: 1px solid rgba(42, 58, 84, 0.5);
+  vertical-align: top;
+}
+
+.ai-attacks .num {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.ai-attacks .badge-eskill {
+  padding: 1px 5px;
+}
+
+.ai-summary-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-top: 4px;
+}
+
+.ai-summary {
+  display: grid;
+  grid-template-columns: minmax(80px, max-content) 1fr;
+  gap: 4px 12px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.ai-when {
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
+.ai-does {
+  color: #e2e8f0;
+  text-wrap: pretty;
+}
+
+.ai-script summary {
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.ai-script .modal-hint {
+  margin-top: 8px;
+}
+
+.ai-trigger {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-cyan);
+  margin: 10px 0 4px;
+}
+
+.ai-code {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+  background-color: #05070a;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+@media (max-width: 480px) {
+  .ai-summary {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .ai-does {
+    padding-left: 10px;
+    margin-bottom: 6px;
+  }
+}
+
 /* Modal & Native Dialog */
 dialog.modal-dialog {
   border: none;

@@ -158,6 +158,17 @@ One strip above the cards, computed from every enemy on screen:
 - **Status (all)**: ailments no enemy in the battle is immune to.
 - **E.Skill (new)**: Enemy Skills of these enemies that are not ticked in the checklist, highlighted; learned ones are listed without highlight.
 
+### Enemy AI
+
+**AI** next to a card's level opens what the enemy does, decoded from the game's battle data:
+
+- **Can counter / can act on death**: the enemy answers any action, physical attacks or magic with an attack, or acts as it dies (possibly only under a condition: the full script says which).
+- **Attacks**: every attack in its list with target, power, MP cost, element and statuses (inflicted, removed or toggled). Enemy Skills are marked NEW or LEARNED, as in the checklist; one the enemy never uses by itself can only be learned through Manipulate.
+- **Behavior**: for bosses and enemies with notable AI, a plain-language summary of when it does what.
+- **Full script**: its AI scripts decompiled into readable pseudo-code (battle start, its turn, each counter, its death). `VarXXXX` are the enemy's own counters and flags; numbers in brackets are values whose meaning is unknown. It is open from the start when there is no summary.
+
+A boss fought several times (the Turks, Ultimate Weapon) shows the record of the current fight, or each possible one when the enemies on screen fit several.
+
 ### Enemy Skills and the player profile
 
 - **E.SKILL** in the header opens the checklist of the 24 Enemy Skills with the enemies that have each one in their attack list; "(M)" means the skill is also in that enemy's Manipulate list. Tick the skills you have learned. Cards show each enemy's skills as NEW or LEARNED.
@@ -400,7 +411,7 @@ FFVII-Battle-Companion/
 │   │   └── win_qos.py            # Windows priority / EcoQoS helpers
 │   └── server/
 │       ├── main.py               # FastAPI app: REST API, /ws WebSocket hub, static dashboard
-│       ├── models.py             # Pydantic models (Enemy, BattleState, steal calculator)
+│       ├── models.py             # Pydantic models (Enemy, BattleState, steal calculator, AI box)
 │       ├── simulator.py          # Preset encounters + CLI for exercising the dashboard
 │       └── static/               # Dashboard (index.html, app.js, style.css)
 ├── tests/                        # unittest suite + recorded real-frame fixtures

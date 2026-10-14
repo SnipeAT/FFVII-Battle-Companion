@@ -86,6 +86,12 @@ const reportNoteInput = document.getElementById("reportNoteInput");
 const reportResult = document.getElementById("reportResult");
 const saveReportBtn = document.getElementById("saveReportBtn");
 
+// Enemy AI box
+const aiModal = document.getElementById("aiModal");
+const aiModalTitle = document.getElementById("aiModalTitle");
+const aiModalBody = document.getElementById("aiModalBody");
+const closeAiModalBtn = document.getElementById("closeAiModalBtn");
+
 // Player profile (party level, Sneak Glove, learned Enemy Skills), kept on the server and
 // pushed to every dashboard as PROFILE_UPDATE
 let playerProfile = { party_level: 15, sneak_glove: false, learned_enemy_skills: [] };
@@ -603,7 +609,10 @@ function createEnemyCard(enemy, party) {
         <div class="card-zones">${escapeHtml(zonesText)}</div>
         ${variantHtml(enemy)}
       </div>
-      <div class="level-badge">LVL ${enemy.level}</div>
+      <div class="card-header-actions">
+        ${enemy.has_ai ? `<button class="btn-ai" aria-label="AI of ${escapeHtml(enemyLabel(enemy))}">AI</button>` : ""}
+        <div class="level-badge">LVL ${enemy.level}</div>
+      </div>
     </div>
 
     <div class="stats-strip">
@@ -680,6 +689,141 @@ enemiesGrid.addEventListener("click", (e) => {
     const enemy = currentEnemiesMap.get(enemyId);
     if (enemy) openStealCalculator(enemy, Number(calcBtn.getAttribute("data-slot")) || 0);
   }
+});
+
+// Enemy AI box: attacks, the hand-written behavior summary and the decompiled AI scripts of the
+// scene.bin record a card shows (server: GET /api/enemies/{id}/ai, EnemyCompendium.get_ai)
+const aiCache = new Map();  // enemy id -> AI box data (static while the server runs)
+let aiBoxEnemyId = null;
+
+const AI_TRIGGERS = {
+  "Init": "Battle start", "Main": "Its turn", "Counter-General": "Counter: any action",
+  "Counter-Physical": "Counter: physical attack", "Counter-Magic": "Counter: magic", "Counter-Death": "On death",
+  "Battle End": "Battle end", "Pre-Action": "Before each action",
+};
+const AI_REACTS = {
+  "any action": "CAN COUNTER ANY ACTION", "physical": "CAN COUNTER PHYSICAL", "magic": "CAN COUNTER MAGIC",
+  "death": "CAN ACT ON DEATH",
+};
+const AI_TARGETS = { "one": "One", "all": "All", "random": "Random" };
+
+// The records of the variant the card shows: its enemy ids once the formation is known, otherwise
+// every candidate's scenes (a boss fought several times has one record per fight)
+function aiRecordsShown(enemy, records) {
+  const v = enemy.variant;
+  if (!v || records.length < 2) return records;
+  let shown;
+  if (v.resolved) {
+    const ids = new Set(v.enemy_ids || []);
+    shown = records.filter(r => r.enemy_ids.some(id => ids.has(id)));
+  } else {
+    const scenes = new Set((v.candidates || []).flatMap(c => c.scenes || []));
+    shown = records.filter(r => r.scenes.some(s => scenes.has(s)));
+  }
+  return shown.length ? shown : records;
+}
+
+function aiStatusText(attack) {
+  const list = (attack.statuses || []).join(", ");
+  if (!list) return "-";
+  if (attack.status_mode === "remove") return `Removes ${list}`;
+  if (attack.status_mode === "toggle") return `Toggles ${list}`;
+  return list;
+}
+
+function aiAttacksHtml(attacks) {
+  if (!attacks.length) return `<span class="empty-notice">No named attacks</span>`;
+  const rows = attacks.map(a => {
+    const learned = a.enemy_skill && isSkillLearned(a.name);
+    const skill = a.enemy_skill
+      ? ` <span class="badge badge-eskill ${learned ? "learned" : ""}"><span class="eskill-state">E.SKILL ${learned ? "LEARNED" : "NEW"}</span></span>`
+      : "";
+    return `<tr><td>${escapeHtml(a.name)}${skill}</td><td>${AI_TARGETS[a.target] || "-"}</td>` +
+      `<td class="num">${Number(a.power) || "-"}</td><td class="num">${Number(a.mp) || "-"}</td>` +
+      `<td>${escapeHtml((a.elements || []).join(", ") || "-")}</td><td>${escapeHtml(aiStatusText(a))}</td></tr>`;
+  }).join("");
+  return `<div class="ai-table-wrap"><table class="ai-attacks"><thead><tr><th>Attack</th><th>Target</th>` +
+    `<th class="num">Power</th><th class="num">MP</th><th>Element</th><th>Status</th></tr></thead>` +
+    `<tbody>${rows}</tbody></table></div>`;
+}
+
+function aiSummaryHtml(sections) {
+  return sections.map(s => `
+    ${s.title ? `<div class="ai-summary-title">${escapeHtml(s.title)}</div>` : ""}
+    <div class="ai-summary">${s.rows.map(([when, does]) =>
+      `<div class="ai-when">${escapeHtml(when)}</div><div class="ai-does">${escapeHtml(does)}</div>`).join("")}</div>
+  `).join("");
+}
+
+function aiRecordHtml(record, sections, label) {
+  const reacts = (record.reacts || []).map(r =>
+    `<span class="badge badge-react">${escapeHtml(AI_REACTS[r] || r)}</span>`).join("");
+  const scripts = (record.scripts || []).map(s =>
+    `<div class="ai-trigger">${escapeHtml(AI_TRIGGERS[s.trigger] || `${s.trigger} (run by its other scripts)`)}</div>` +
+    `<pre class="ai-code">${escapeHtml(s.lines.join("\n"))}</pre>`).join("");
+  return `
+    <div class="ai-record">
+      ${label ? `<div class="ai-record-label">${escapeHtml(label)}</div>` : ""}
+      ${reacts ? `<div class="badge-row">${reacts}</div>` : ""}
+      <div class="section-block">
+        <div class="section-label">Attacks</div>
+        ${aiAttacksHtml(record.attacks || [])}
+      </div>
+      ${sections.length ? `<div class="section-block"><div class="section-label">Behavior</div>${aiSummaryHtml(sections)}</div>` : ""}
+      <details class="ai-script"${sections.length ? "" : " open"}>
+        <summary>Full script</summary>
+        <p class="modal-hint">Decompiled from the game's battle data. VarXXXX are the enemy's own counters and flags; numbers in [brackets] are values whose meaning is unknown.</p>
+        ${scripts || '<span class="empty-notice">No scripts</span>'}
+      </details>
+    </div>
+  `;
+}
+
+function renderAiBox(enemy, info) {
+  const records = aiRecordsShown(enemy, info.records || []);
+  const summary = info.summary || [];
+  aiModalBody.innerHTML = records.map((record, n) => {
+    // A section for some records only (a boss fought twice) goes with those; the others with the first
+    const ids = new Set(record.enemy_ids);
+    const sections = summary.filter(s => s.enemy_ids ? s.enemy_ids.some(id => ids.has(id)) : n === 0);
+    const label = records.length > 1 ? `Scene ${record.scenes.join(", ")} (enemy id ${record.enemy_ids.join(", ")})` : "";
+    return aiRecordHtml(record, sections, label);
+  }).join("");
+}
+
+function openAiBox(enemy) {
+  aiBoxEnemyId = enemy.id;
+  aiModalTitle.textContent = `${enemyLabel(enemy).toUpperCase()} - AI`;
+  aiModalBody.innerHTML = `<p class="modal-hint">Loading…</p>`;
+  if (aiModal && typeof aiModal.showModal === "function" && !aiModal.open) {
+    aiModal.showModal();
+  }
+  const cached = aiCache.get(enemy.id);
+  const load = cached ? Promise.resolve(cached) : fetch(`/api/enemies/${encodeURIComponent(enemy.id)}/ai`)
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    });
+  load
+    .then(info => {
+      aiCache.set(enemy.id, info);
+      if (aiBoxEnemyId === enemy.id) renderAiBox(enemy, info);
+    })
+    .catch(err => {
+      console.error("Error loading the AI scripts:", err);
+      if (aiBoxEnemyId === enemy.id) aiModalBody.innerHTML = `<p class="modal-hint">Could not load the AI scripts.</p>`;
+    });
+}
+
+enemiesGrid.addEventListener("click", (e) => {
+  const aiBtn = e.target.closest(".btn-ai");
+  if (!aiBtn) return;
+  const enemy = currentEnemiesMap.get(aiBtn.closest(".enemy-card")?.getAttribute("data-enemy-id"));
+  if (enemy) openAiBox(enemy);
+});
+
+closeAiModalBtn.addEventListener("click", () => {
+  if (aiModal) aiModal.close();
 });
 
 // Battle summary strip: encounter-wide tactics from EnemyCompendium.battle_summary
@@ -1221,7 +1365,7 @@ saveCalibBtn.addEventListener("click", () => {
 });
 
 // Light Dismiss on Backdrop Click for Native Dialogs
-[calibModal, stealModal, skillsModal, reportModal].forEach(dialog => {
+[calibModal, stealModal, skillsModal, reportModal, aiModal].forEach(dialog => {
   if (!dialog) return;
   dialog.addEventListener("click", (e) => {
     if (e.target === dialog || !e.target.closest(".modal-window")) {
@@ -1233,7 +1377,7 @@ saveCalibBtn.addEventListener("click", () => {
 // Global Keyboard Shortcuts
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
-    [stealModal, calibModal, skillsModal, reportModal].forEach(dialog => {
+    [stealModal, calibModal, skillsModal, reportModal, aiModal].forEach(dialog => {
       if (dialog && dialog.open) dialog.close();
     });
     simDrawer.classList.add("hidden");
