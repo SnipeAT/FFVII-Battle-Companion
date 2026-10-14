@@ -176,6 +176,16 @@ class TestReleasePackage(unittest.TestCase):
         self.assertIn("docs/CONFIGURATION.md", files)
         self.assertIn("docs/images/dashboard.png", files)
 
+    @unittest.skipUnless((Path(__file__).resolve().parent.parent / ".git").exists(), "needs a Git checkout")
+    def test_release_includes_the_license_guide_and_lan_launcher(self):
+        # Dropping one of them from the zip passed every test (GEMINI-20261014-01)
+        from build_tools.package_release import project_files
+        files = dict((name, path) for path, name in project_files())
+        for name in ("LICENSE.txt", "README.md", "docs/CONFIGURATION.md", "Launch_LAN_Mode.bat"):
+            with self.subTest(name=name):
+                self.assertIn(name, files)
+                self.assertTrue(files[name].is_file())
+
     def test_build_writes_the_exe_config(self):
         # Files extracted from a downloaded zip that was not unblocked carry Zone.Identifier, and
         # .NET then refused to load pywebview's Python.Runtime.dll: the EXE exited without a window

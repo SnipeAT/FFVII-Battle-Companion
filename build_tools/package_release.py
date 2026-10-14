@@ -163,6 +163,15 @@ def doc_files() -> list:
     return _git("ls-files", "--", "docs").splitlines() if (ROOT / "docs").is_dir() else []
 
 
+def project_files() -> list:
+    """(source, path in the release folder) of the project's files the zip adds to the build:
+    the license, the user guide with the docs/ it links to, and the LAN launcher."""
+    files = [(ROOT / "LICENSE", "LICENSE.txt"), (ROOT / "README.md", "README.md")]
+    files += [(ROOT / rel, rel) for rel in doc_files()]
+    files.append((ROOT / "Launch_LAN_Mode.bat", "Launch_LAN_Mode.bat"))
+    return files
+
+
 def _git(*args) -> str:
     result = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
     if result.returncode != 0:
@@ -196,11 +205,8 @@ def main() -> None:
     with zipfile.ZipFile(partial, "w", zipfile.ZIP_DEFLATED) as zf:
         for path, rel in release_files(app_dir):
             zf.write(path, f"{APP_NAME}/{rel.as_posix()}")
-        zf.write(ROOT / "LICENSE", f"{APP_NAME}/LICENSE.txt")
-        zf.write(ROOT / "README.md", f"{APP_NAME}/README.md")
-        for rel in doc_files():
-            zf.write(ROOT / rel, f"{APP_NAME}/{rel}")
-        zf.write(ROOT / "Launch_LAN_Mode.bat", f"{APP_NAME}/Launch_LAN_Mode.bat")
+        for path, name in project_files():
+            zf.write(path, f"{APP_NAME}/{name}")
         zf.writestr(f"{APP_NAME}/THIRD_PARTY_LICENSES.txt", notices)
         zf.comment = f"{APP_NAME} {version}, built from commit {commit}".encode()
     os.replace(partial, out)
