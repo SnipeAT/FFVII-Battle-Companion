@@ -276,6 +276,10 @@ class Decompiler:
         self.stack: List[Expr] = []
         self.labels: set = set()      # goto targets, printed as "@XXXX:"
         self.wanted: set = set()
+        # Variables that hold the attack to use (Hundred Gunner: Var0060 = 405 ... use attack Var0060)
+        self.attack_vars = {ins[k - 1].arg for k, x in enumerate(ins)
+                            if x.op == PERFORM and k >= 2 and ins[k - 2].op in PUSH_CONST and ins[k - 2].arg == CMD_ATTACK
+                            and is_push(ins[k - 1].op) and ins[k - 1].arg < 0x2000}
 
     def run(self) -> list:
         # The first pass finds the goto targets, the second prints their labels
@@ -417,6 +421,8 @@ class Decompiler:
         if value.op in ("+", "-") and value.left is not None and value.left.text == target.text:
             rest = value.text[len(wrap(value.left, 60)) + len(value.op) + 2:]
             return f"{target.text} {value.op}= {rest}"
+        if target.field in self.attack_vars and value.value is not None and value.value in self.attack_names:
+            return f"{target.text} = {value.text} ({self.attack_names[value.value]})"
         return f"{target.text} = {value.text}"
 
     def perform(self, command: Expr, attack: Expr) -> str:

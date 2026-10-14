@@ -87,6 +87,12 @@ class TestDecompile(unittest.TestCase):
         self.assertEqual(self.pseudo(block), ["Targets = random_one(lowest(Opponents.HP))",
                                               "Self.MagicDefense = 384", "if not Targets.Death:", "  use Rifle"])
 
+    def test_attack_held_in_a_variable_is_named(self):
+        # Var0060 = 282; use attack Var0060 (Hundred Gunner picks its attack this way)
+        block = (bytes([0x12, 0x60, 0x00, 0x61, 0x1A, 0x01, 0x90])
+                 + bytes([0x60, 0x20, 0x02, 0x60, 0x00, 0x92, 0x73]))
+        self.assertEqual(self.pseudo(block), ["Var0060 = 282 (Rifle)", "use attack Var0060"])
+
     def test_status_addresses(self):
         self.assertEqual(address(0x401F, 0x00), "Imprisoned")   # read as a bit: status 31
         self.assertEqual(address(0x4000, 0x00), "Death")
