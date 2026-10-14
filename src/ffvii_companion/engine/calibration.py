@@ -1,3 +1,13 @@
+"""
+The settings (`calibration_manager` singleton; data/calibration.json in the data folder).
+
+DEFAULT_CONFIG is the only place a default lives: get_config() returns it with the saved values
+over it, so every key is always present and code reads cfg["key"] without fallback values. The
+file holds only the values the user saved, so a default a later version changes reaches everyone
+who never set it. Every change goes through validate_settings(), and a save is written (atomically)
+before it is applied: a failed save changes nothing. FILE_ONLY_KEYS (allowed_hosts) can be changed
+only in the file. PRESETS are the capture region presets.
+"""
 import json
 import logging
 import os

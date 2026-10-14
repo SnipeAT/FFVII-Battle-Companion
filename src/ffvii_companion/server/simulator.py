@@ -1,3 +1,13 @@
+"""
+Preset encounters (PRESET_BATTLES, also served at /api/simulate/presets) and a command-line client
+that drives a running companion through /api/simulate/*, for trying the dashboard without the game:
+
+    python -m ffvii_companion.server.simulator          # one preset battle
+    python -m ffvii_companion.server.simulator tour     # cycle through the presets
+    python -m ffvii_companion.server.simulator clear    # clear the battle
+
+Uses only the standard library (urllib).
+"""
 import json
 import time
 import urllib.request

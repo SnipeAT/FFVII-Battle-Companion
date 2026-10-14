@@ -1,3 +1,18 @@
+"""
+Turns OCR output into enemies. BattleDetector owns the OCR engine (engine/ocr_engine.py, loaded on
+first use) and parses its lines:
+
+- parse_enemy_line(): drops stop words (commands, HUD labels, party names, overlay text) and row
+  designations, and splits off an instance letter ("Devil Ride B": at least two Devil Rides). A
+  letter counts only up to the most of that enemy one formation holds (compendium.max_count()),
+  so a misread name cannot multiply an enemy.
+- identify_enemies_from_lines(): fuzzy-matches the candidates against the compendium, one result
+  per enemy with its highest count.
+- is_combat_hud_active(): whether the battle HUD is on screen, telling it apart from field menus
+  that show the same words (its docstring has the rules).
+
+The constructor's defaults are the settings' defaults (DEFAULT_CONFIG in engine/calibration.py).
+"""
 import os
 # Keep numerical libraries single-threaded; OCR parallelism is controlled explicitly
 # through the ONNX Runtime session options in engine/ocr_engine.py.

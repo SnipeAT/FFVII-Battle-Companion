@@ -1,3 +1,8 @@
+"""
+Finds the FFVII window through Win32 (ctypes): a cached window handle first, then the window title,
+then the windows of ff7* / ffvii* processes; full scans are throttled. Returns the window's screen
+rectangle for the capture region. Without Win32 (other platforms) it finds nothing.
+"""
 import sys
 import time
 import threading

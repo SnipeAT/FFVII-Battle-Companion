@@ -1,3 +1,8 @@
+"""
+Pydantic models of the API: an enemy card (Enemy with its stats, steals, drops, skills and
+variants), the battle state the dashboards see (BattleState), the AI box (AiInfo), and the request
+and response bodies of the steal calculator, misdetection reports and simulated encounters.
+"""
 from typing import Annotated, Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 import time
