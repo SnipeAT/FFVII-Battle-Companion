@@ -3,9 +3,9 @@ Packages a release of the desktop app for GitHub: dist/FFVII_Companion-<version>
 
 Builds the EXE with build_exe.py (which updates dist/FFVII_Companion/ as usual), then zips that
 build without the data folders next to the EXE (PRESERVED_DIRS: the settings, profile, logs and
-reports of whoever built it), together with LICENSE, README.md, the LAN launcher and
-THIRD_PARTY_LICENSES.txt (the license texts of Python, the bundled OCR models and the packages in
-the bundle).
+reports of whoever built it), together with LICENSE, README.md and the docs/ it links to (so the
+links work offline), the LAN launcher and THIRD_PARTY_LICENSES.txt (the license texts of Python,
+the bundled OCR models and the packages in the bundle).
 Refuses to run with uncommitted changes, so every release is built from a commit; the zip's
 comment names it (and, with --allow-dirty, says the build had uncommitted changes).
 
@@ -157,6 +157,12 @@ def release_files(app_dir: Path):
             yield path, rel
 
 
+def doc_files() -> list:
+    """The committed files of docs/ (paths relative to the root): the pages README.md links to and
+    their images. Read from Git, so nothing untracked in the folder ends up in a release."""
+    return _git("ls-files", "--", "docs").splitlines() if (ROOT / "docs").is_dir() else []
+
+
 def _git(*args) -> str:
     result = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
     if result.returncode != 0:
@@ -192,6 +198,8 @@ def main() -> None:
             zf.write(path, f"{APP_NAME}/{rel.as_posix()}")
         zf.write(ROOT / "LICENSE", f"{APP_NAME}/LICENSE.txt")
         zf.write(ROOT / "README.md", f"{APP_NAME}/README.md")
+        for rel in doc_files():
+            zf.write(ROOT / rel, f"{APP_NAME}/{rel}")
         zf.write(ROOT / "Launch_LAN_Mode.bat", f"{APP_NAME}/Launch_LAN_Mode.bat")
         zf.writestr(f"{APP_NAME}/THIRD_PARTY_LICENSES.txt", notices)
         zf.comment = f"{APP_NAME} {version}, built from commit {commit}".encode()
