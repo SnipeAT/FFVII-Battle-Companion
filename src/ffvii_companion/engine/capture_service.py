@@ -498,18 +498,14 @@ class CaptureService:
                         detected_count = e.get("count", 1)
                         self.observed_counts[name] = max(detected_count, self.observed_counts.get(name, 0))
 
-                    # Perform formation deduction against game encounter tables
+                    # Perform formation deduction against game encounter tables. The enemies
+                    # collected so far need no pruning: within an encounter the observation only
+                    # grows, which only narrows the matching formations, so every enemy seen and
+                    # every partner that all earlier matches contained stays allowed (an
+                    # incompatible new enemy starts a new encounter above). test_compendium checks
+                    # this on every formation (GEMINI-20261013-03).
                     deduction = compendium.deduce_formation(self.observed_counts)
-                    allowed_enemies = deduction.get("allowed_enemies", set())
                     certain_partners = deduction.get("certain_partners", [])
-
-                    # Prune any previously added enemies that are impossible in the deduced formation
-                    if allowed_enemies and len(self.current_enemies) > 0:
-                        pruned = [e for e in self.current_enemies if e["name"] in allowed_enemies]
-                        if len(pruned) != len(self.current_enemies):
-                            logger.info(f"Pruned invalid formation partners. Allowed: {allowed_enemies}")
-                            self.current_enemies = pruned
-                            self.observed_counts = {k: v for k, v in self.observed_counts.items() if k in allowed_enemies}
 
                     existing_names = {e["name"] for e in self.current_enemies}
                     added = False

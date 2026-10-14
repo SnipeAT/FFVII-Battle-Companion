@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from ffvii_companion.compendium import compendium, EnemyCompendium, RE_TRAILING_INSTANCE_LETTER
+from ffvii_companion.compendium import FORMATIONS_PATH, compendium, EnemyCompendium, RE_TRAILING_INSTANCE_LETTER
 
 
 class TestCompendiumLookup(unittest.TestCase):
@@ -121,7 +121,50 @@ class TestMatchGuards(unittest.TestCase):
         self.assertEqual(small.match_enemy("Nabed C")["name"], "Nabedo D")
 
 
+class TestAiScripts(unittest.TestCase):
+    def test_entries_know_whether_they_have_scripts(self):
+        self.assertTrue(compendium.get_by_name("Guard Scorpion")["has_ai"])
+        self.assertFalse(compendium.get_by_name("Manhole(lid)")["has_ai"])  # no AI scripts in scene.bin
+
+    def test_ai_box(self):
+        record, = compendium.get_ai("guard-scorpion")["records"]
+        self.assertEqual(record["enemy_ids"], [22])
+        self.assertIn("Tail Laser", [a["name"] for a in record["attacks"]])
+        self.assertIsNone(compendium.get_ai("does-not-exist"))
+        self.assertIsNone(compendium.get_ai(compendium.get_by_name("Manhole(lid)")["id"]))
+
+    def test_summary_goes_out_with_the_ai_box_only(self):
+        # Battle updates send the entry dicts as they are: the summary must not ride along
+        summary = [{"title": "Each turn", "rows": [["Always", "Bites"]]}]
+        with tempfile.TemporaryDirectory() as tmp:
+            path, ai_path = Path(tmp) / "enemies.json", Path(tmp) / "ai_scripts.json"
+            path.write_text(json.dumps([{"id": "nnbed", "name": "Nnbed", "ai_summary": summary}]), encoding="utf-8")
+            ai_path.write_text(json.dumps({"nnbed": [{"enemy_ids": [1], "scenes": [2], "reacts": [], "attacks": [],
+                                                      "scripts": []}]}), encoding="utf-8")
+            small = EnemyCompendium(path, Path(tmp) / "formations.json", ai_path)
+        self.assertNotIn("ai_summary", small.get_by_id("nnbed"))
+        self.assertTrue(small.get_by_id("nnbed")["has_ai"])
+        self.assertEqual(small.get_ai("nnbed")["summary"], summary)
+
+
 class TestFormations(unittest.TestCase):
+    def test_growing_observation_keeps_earlier_enemies_allowed(self):
+        # GEMINI-20261013-03: the capture loop never prunes the enemies it collected. Within an
+        # encounter the observation only grows (more names, higher counts), which can only narrow
+        # the matching formations, so the enemies seen and the partners that were certain before
+        # stay allowed. Checked from each enemy of every real formation.
+        formations = [f for f in json.loads(FORMATIONS_PATH.read_text(encoding="utf-8")) if not f.get("unused")]
+        for form in formations:
+            names = sorted(form["enemies"])
+            for first in names:
+                before = compendium.deduce_formation({first: 1})
+                kept = {first} | {p["name"] for p in before["certain_partners"]}
+                grown = [{first: form["enemies"][first]}] + [{first: 1, other: 1} for other in names if other != first]
+                for observed in grown:
+                    allowed = compendium.deduce_formation(observed)["allowed_enemies"]
+                    self.assertTrue(allowed, observed)  # a formation that holds them exists: this one
+                    self.assertLessEqual(kept, allowed, observed)
+
     def test_formation_deduction(self):
         deduction = compendium.deduce_formation({"Nerosuferoth": 2, "Formula": 1})
         self.assertTrue(deduction["is_disambiguated"])

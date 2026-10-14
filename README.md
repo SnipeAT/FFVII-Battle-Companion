@@ -1,6 +1,6 @@
 # Final Fantasy VII - Automated Real-Time Tactical Companion
 
-A real-time combat companion for the PC release of Final Fantasy VII (1998 / 2012-2013 Steam edition and its re-release, with or without 7th Heaven / FFNx mods). It watches a small region of the game window, reads the battle text with on-device OCR, identifies the enemies you are fighting, and shows their full profile - stats and AP, elemental weaknesses and resistances, status immunities, steal items and your odds, drops and morphs, Enemy Skills and Manipulate commands - plus a summary of the whole encounter, on a second monitor, in a native desktop window, or on an iPad / tablet over your local network.
+A real-time combat companion for the PC release of Final Fantasy VII (1998 / 2012-2013 Steam edition and its re-release, with or without 7th Heaven / FFNx mods). It watches a small region of the game window, reads the battle text with on-device OCR, identifies the enemies you are fighting, and shows their full profile - stats and AP, elemental weaknesses and resistances, status immunities, steal items and your odds, drops and morphs, Enemy Skills and Manipulate commands, and their battle AI (what they do and when, decoded from the game's data) - plus a summary of the whole encounter, on a second monitor, in a native desktop window, or on an iPad / tablet over your local network.
 
 This is a fan project, not affiliated with or endorsed by Square Enix. It only reads what is on screen: it does not modify the game or read its memory. You need your own copy of Final Fantasy VII.
 
@@ -55,7 +55,7 @@ Module and data paths in this README are relative to the package folder `src/ffv
 2. **Text-change gate.** `engine/text_gate.py` reduces the region to a tiny "bright, low-saturation pixel" signature (FFVII's menu and target text is white) and compares it with the signature from the last OCR pass. If no text-like pixels changed, OCR is skipped and the last result is reused. The animated 3D scene, colored gauges and the blue windows do not trigger OCR.
 3. **OCR.** `engine/ocr_engine.py` runs the PP-OCRv4 detection and recognition models (RapidOCR's ONNX conversion, bundled in `ppocr/`) in single-threaded ONNX Runtime sessions with thread spinning disabled. Recognition is cached per text box: boxes that did not move or change keep their text, and only new or changed boxes are recognized.
 4. **Parsing and matching.** `engine/detector.py` drops HUD labels, commands, party names and overlay text, extracts instance letters (`Devil Ride B` means at least two Devil Rides; a letter only counts when some formation holds that many of the enemy, so a misread `Jenova·BlRTH` is not eight Jenovas), and fuzzy-matches the remaining candidates against `data/enemies.json`, trying each name both as read and without a trailing letter or digit (`Unkn0wn 2` is Unknown 2, not Unknown).
-5. **Formation deduction.** `compendium.py` narrows the encounter using `data/formations.json`: it prunes impossible enemies, predicts formation partners, and detects Battle Square / Arena round changes (a new enemy that cannot share any formation with the current ones starts a new encounter).
+5. **Formation deduction.** `compendium.py` narrows the encounter using `data/formations.json`: it predicts formation partners, ignores a battle-menu item named like an enemy (Grenade) that cannot join the current enemies, and detects Battle Square / Arena round changes (any other new enemy that cannot share a formation with the current ones starts a new encounter).
 6. **Broadcast.** `server/main.py` pushes battle updates over the `/ws` WebSocket to every connected dashboard (`server/static/`). Requests from other web origins are rejected for anything that changes state.
 
 ### Adaptive sampling (three phases)
@@ -158,10 +158,21 @@ One strip above the cards, computed from every enemy on screen:
 - **Status (all)**: ailments no enemy in the battle is immune to.
 - **E.Skill (new)**: Enemy Skills of these enemies that are not ticked in the checklist, highlighted; learned ones are listed without highlight.
 
+### Enemy AI
+
+**AI** next to a card's level opens what the enemy does, decoded from the game's battle data:
+
+- **Can counter / can act on death**: the enemy answers any action, physical attacks or magic with an attack, or acts as it dies (possibly only under a condition: the full script says which).
+- **Attacks**: every attack in its list with target, power, MP cost, element and statuses (inflicted, removed or toggled). Enemy Skills are marked NEW or LEARNED, as in the checklist; one the enemy never uses by itself can only be learned through Manipulate.
+- **Behavior**: for bosses and enemies with notable AI, a plain-language summary of when it does what.
+- **Full script**: its AI scripts decompiled into readable pseudo-code (battle start, its turn, each counter, its death). `VarXXXX` are the enemy's own counters and flags; numbers in brackets are values whose meaning is unknown. It is open from the start when there is no summary.
+
+A boss fought several times (the Turks, Ultimate Weapon) shows the record of the current fight, or each possible one when the enemies on screen fit several.
+
 ### Enemy Skills and the player profile
 
 - **E.SKILL** in the header opens the checklist of the 24 Enemy Skills with the enemies that have each one in their attack list; "(M)" means the skill is also in that enemy's Manipulate list. Tick the skills you have learned. Cards show each enemy's skills as NEW or LEARNED.
-- The party level and Sneak Glove set in the steal calculator (**CALC ODDS**) are saved too: every card then shows your actual steal odds ("Your odds: 62.5% (party LVL 40)").
+- The party level and Sneak Glove set in the steal calculator (**CALC ODDS**) are saved too: every card then shows your actual steal odds ("Your odds per Steal: 62.5% (party LVL 40)"). For a second or later slot the figure already counts the earlier slots failing first.
 - These settings are the player profile, stored by the companion in `data\profile.json` of its data folder (see "Where files are saved"), so the desktop window and every tablet show the same odds and checklist.
 
 ### Reporting a wrong detection
@@ -229,10 +240,11 @@ Security note: in LAN mode every device on your network can open the dashboard a
 
 ## Data
 
-- `data/enemies.json` - 295 enemies from the game's battle data (level, HP / MP, EXP / AP / Gil, combat stats, elemental affinities for all 16 elements including Cut, Hit, Punch, Shoot, Shout and Hidden, status immunities, every steal slot, drops, morph, Enemy Skills, Manipulate commands, encounter scenes, the name as the game writes it) plus curated tactical notes.
+- `data/enemies.json` - 295 enemies from the game's battle data (level, HP / MP, EXP / AP / Gil, combat stats, elemental affinities for all 16 elements including Cut, Hit, Punch, Shoot, Shout and Hidden, status immunities, every steal slot, drops, morph, Enemy Skills, Manipulate commands, encounter scenes, the name as the game writes it) plus curated tactical notes and AI summaries (`ai_summary`: when the enemy does what, in plain words).
+- `data/ai_scripts.json` - each enemy's attacks (target, power, MP, elements, statuses) and battle AI scripts decompiled into readable pseudo-code, one record per distinct scene.bin record, with the actions it answers with an attack (`reacts`). Generated by `tools/ai_script.py --export`.
 - `data/formations.json` - 961 encounter formations (enemy counts and scene.bin enemy ids per formation, whether the battle can be escaped, battle layout) used for partner prediction, round-change detection, variant selection and the battle summary. Enemy names match `enemies.json` exactly; one debug formation (scene 6, 6 x Adamantaimai) is marked `unused` and ignored.
 
-`tools/enrich_compendium.py` reads the game's `scene.bin` and `kernel.bin` (Steam edition install) and rewrites every game-data field of the two files, keeping the curated ones (`id`, `name`, `notes`) and the order of the entries. Enemy Skills are taken from each enemy's attack list: it shows that the enemy has the skill, not when its AI uses it.
+`tools/enrich_compendium.py` reads the game's `scene.bin` and `kernel.bin` (Steam edition install) and rewrites every game-data field of the two files, keeping the curated ones (`id`, `name`, `notes`, `ai_summary`) and the order of the entries. Enemy Skills are taken from each enemy's attack list: it shows that the enemy has the skill, not when its AI uses it (`ai_scripts.json` shows that). `tools/ai_script.py --export` regenerates `ai_scripts.json` the same way (`--check` only reports whether it is up to date), and `--candidates` lists the enemies whose AI deserves an `ai_summary`.
 
 **Variants.** Sixteen enemies have several different records under one name: bosses fought more than once (the Turks, Right / Left Arm, Ultimate Weapon, Bizarro·Sephiroth), Battle Arena tiers (CMD.Grand Horn, Mystery Ninja), the Chocobo of each area, and forms that share one battle (Mighty Grunt, Flower Prong, Lost Number, Hell House, Aero Combatant, Gargoyle). Such entries carry a `variants` list, and the dashboard shows the record of the current battle: the formation deduced from the enemies on screen says which record it is. When the enemies on screen fit several of them (Rude with Reno at Gongaga and at Midgar, Ultimate Weapon's flights), the card lists the candidates and shows the one closest to your party level. Formation totals add up each instance's own record.
 
@@ -270,9 +282,11 @@ The item steal value comes from the enemy data (8 = rare, 32 = common, 63 = very
   .\.venv\Scripts\python.exe -m tools.benchmark_loop recordings\session1
   ```
 - `tools/ff7_synthetic.py` - synthetic battle / field frames in the FFNx layout, used by the tests.
-- `tools/ai_script.py` - prints an enemy's attacks (targets, power, status effects, elements) and its battle AI scripts from the game's `scene.bin` (Steam edition install), to check the tactical notes against what the enemy really does:
+- `tools/ai_script.py` - prints an enemy's attacks (targets, power, status effects, elements) and its battle AI scripts from the game's `scene.bin` (Steam edition install), to check the tactical notes against what the enemy really does. `--pseudo` decompiles the scripts into readable pseudo-code (if / else, switch, while, `use <attack>`) instead of listing the instructions:
   ```powershell
   .\.venv\Scripts\python.exe -m tools.ai_script "Motor Ball"
+  .\.venv\Scripts\python.exe -m tools.ai_script "Guard Scorpion" --pseudo
+  .\.venv\Scripts\python.exe -m tools.ai_script --export     # regenerate data/ai_scripts.json (--check, --candidates)
   ```
 - Simulator CLI (needs the app running):
   ```powershell
@@ -320,14 +334,14 @@ Individual suites:
 .\.venv\Scripts\python.exe -m unittest tests.test_ocr_engine -v        # OCR engine, cache, recorded OCR output
 .\.venv\Scripts\python.exe -m unittest tests.test_text_gate -v         # text-change gate
 .\.venv\Scripts\python.exe -m unittest tests.test_compendium -v        # matching, formations, steal formula
-.\.venv\Scripts\python.exe -m unittest tests.test_data_integrity -v    # enemies.json / formations.json checks
+.\.venv\Scripts\python.exe -m unittest tests.test_data_integrity -v    # enemies.json / formations.json / ai_scripts.json checks
 .\.venv\Scripts\python.exe -m unittest tests.test_server -v            # REST API and WebSocket
 .\.venv\Scripts\python.exe -m unittest tests.test_calibration -v       # settings validation and persistence
 .\.venv\Scripts\python.exe -m unittest tests.test_player_profile -v    # party level, Sneak Glove, learned Enemy Skills
 .\.venv\Scripts\python.exe -m unittest tests.test_profiler -v
 .\.venv\Scripts\python.exe -m unittest tests.test_detector -v
 .\.venv\Scripts\python.exe -m unittest tests.test_platform -v          # screen capture, window finder, QoS
-.\.venv\Scripts\python.exe -m unittest tests.test_ai_script -v         # tools/ai_script.py disassembler and name matching
+.\.venv\Scripts\python.exe -m unittest tests.test_ai_script -v         # tools/ai_script.py disassembler, decompiler and name matching
 ```
 
 The test package redirects all writable files (settings, player profile, reports, logs) to a temporary folder, so running the tests never changes your settings. `tests/fixtures/real/` holds capture-region frames recorded from real FFNx sessions, battles and field menus (see its `manifest.json` for the expected result of each frame).
@@ -379,6 +393,7 @@ FFVII-Battle-Companion/
 │   ├── paths.py                  # Bundled resources vs. the writable data folder (EXE folder, .dev_home, tests)
 │   ├── compendium.py             # Compendium: matching, formations, partners, variants, steal formula, battle summary
 │   ├── data/
+│   │   ├── ai_scripts.json       # Enemy attacks and decompiled AI scripts
 │   │   ├── enemies.json          # Enemy compendium
 │   │   └── formations.json       # Encounter formations
 │   ├── ppocr/                    # OCR models and their post-processing from RapidOCR (Apache-2.0: the .onnx files, postprocess.py)
@@ -396,7 +411,7 @@ FFVII-Battle-Companion/
 │   │   └── win_qos.py            # Windows priority / EcoQoS helpers
 │   └── server/
 │       ├── main.py               # FastAPI app: REST API, /ws WebSocket hub, static dashboard
-│       ├── models.py             # Pydantic models (Enemy, BattleState, steal calculator)
+│       ├── models.py             # Pydantic models (Enemy, BattleState, steal calculator, AI box)
 │       ├── simulator.py          # Preset encounters + CLI for exercising the dashboard
 │       └── static/               # Dashboard (index.html, app.js, style.css)
 ├── tests/                        # unittest suite + recorded real-frame fixtures

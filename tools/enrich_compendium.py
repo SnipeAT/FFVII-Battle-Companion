@@ -7,7 +7,8 @@ and curated afterwards, so this tool keeps the curated fields and the order of t
 rewrites everything that comes from the game data. It adds no enemy and removes none.
 
 enemies.json (an entry is joined to its scene.bin records by punctuation-insensitive name):
-  kept           id, name (the key OCR matching and formations.json use), notes
+  kept           id, name (the key OCR matching and formations.json use), notes, ai_summary (the
+                 AI box's hand-written behavior summary; tools/ai_script.py --candidates)
   display_name   the name as the game writes it ("Jenova·LIFE", "Turks:Reno", "CMD.Grand Horn")
   zones          "Scene #N" for every scene that has a record of the enemy
   variant fields (VARIANT_FIELDS in ffvii_companion/compendium.py), taken from the default variant:
@@ -356,6 +357,7 @@ def enrich_enemies(enemies: List[dict], records: Dict[str, List[dict]]) -> List[
                  "zones": [f"Scene #{s}" for s in sorted({r["scene"] for r in recs})]}
         entry.update({k: variants[0][k] for k in VARIANT_FIELDS})
         entry["notes"] = enemy.get("notes")
+        entry["ai_summary"] = enemy.get("ai_summary")
         if len(variants) > 1:
             entry["variants"] = variants
         enemies[i] = entry

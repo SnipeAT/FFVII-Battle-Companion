@@ -211,6 +211,20 @@ class TestRestApi(unittest.TestCase):
             for name in preset["enemies"]:
                 self.assertIsNotNone(compendium.match_enemy(name), name)
 
+    def test_enemy_ai_endpoint(self):
+        record, = self.client.get("/api/enemies/guard-scorpion/ai").json()["records"]
+        self.assertEqual(record["enemy_ids"], [22])
+        self.assertEqual(record["reacts"], ["any action"])
+        self.assertIn("Main", [s["trigger"] for s in record["scripts"]])
+        self.assertEqual(self.client.get("/api/enemies/does-not-exist/ai").status_code, 404)
+        self.assertEqual(self.client.get("/api/enemies/manhole(lid)/ai").status_code, 404)  # no AI scripts
+
+    def test_every_ai_box_is_served(self):
+        from ffvii_companion.compendium import compendium
+        for enemy in compendium.get_all():
+            if enemy["has_ai"]:
+                self.assertEqual(self.client.get(f"/api/enemies/{enemy['id']}/ai").status_code, 200, enemy["id"])
+
     def test_partners_endpoint(self):
         resp = self.client.get("/api/enemies/prowler/partners")
         self.assertEqual(resp.status_code, 200)
