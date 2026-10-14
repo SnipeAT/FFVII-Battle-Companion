@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from ffvii_companion.compendium import compendium, EnemyCompendium, RE_TRAILING_INSTANCE_LETTER
+from ffvii_companion.compendium import FORMATIONS_PATH, compendium, EnemyCompendium, RE_TRAILING_INSTANCE_LETTER
 
 
 class TestCompendiumLookup(unittest.TestCase):
@@ -148,6 +148,23 @@ class TestAiScripts(unittest.TestCase):
 
 
 class TestFormations(unittest.TestCase):
+    def test_growing_observation_keeps_earlier_enemies_allowed(self):
+        # GEMINI-20261013-03: the capture loop never prunes the enemies it collected. Within an
+        # encounter the observation only grows (more names, higher counts), which can only narrow
+        # the matching formations, so the enemies seen and the partners that were certain before
+        # stay allowed. Checked from each enemy of every real formation.
+        formations = [f for f in json.loads(FORMATIONS_PATH.read_text(encoding="utf-8")) if not f.get("unused")]
+        for form in formations:
+            names = sorted(form["enemies"])
+            for first in names:
+                before = compendium.deduce_formation({first: 1})
+                kept = {first} | {p["name"] for p in before["certain_partners"]}
+                grown = [{first: form["enemies"][first]}] + [{first: 1, other: 1} for other in names if other != first]
+                for observed in grown:
+                    allowed = compendium.deduce_formation(observed)["allowed_enemies"]
+                    self.assertTrue(allowed, observed)  # a formation that holds them exists: this one
+                    self.assertLessEqual(kept, allowed, observed)
+
     def test_formation_deduction(self):
         deduction = compendium.deduce_formation({"Nerosuferoth": 2, "Formula": 1})
         self.assertTrue(deduction["is_disambiguated"])
