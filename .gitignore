@@ -26,5 +26,8 @@ recordings/
 # The maintainer's rebuild shortcut (local only; contributors run build_tools/build_exe.py)
 /Rebuild_EXE.bat
 
+# The maintainer's release and repository notes (local only; the public docs are README.md and docs/)
+/MAINTAINER_NOTES.md
+
 # Old code from before the public release, kept on the maintainer's computer only
 archive/

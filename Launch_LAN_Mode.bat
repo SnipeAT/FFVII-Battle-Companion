@@ -1,9 +1,9 @@
 @echo off
-title FFVII Tactical Companion - LAN / iPad Access Mode
+title FFVII Tactical Companion - LAN Mode (phones, tablets, other PCs)
 cd /d "%~dp0"
 
 echo =================================================================
-echo   FFVII TACTICAL COMPANION - LAN / IPAD ACCESS MODE
+echo   FFVII TACTICAL COMPANION - LAN MODE (PHONES, TABLETS, OTHER PCS)
 echo =================================================================
 echo.
 
@@ -18,17 +18,17 @@ set "LOCAL_IP=%LOCAL_IP: =%"
 
 echo [INFO] Binding server to all network interfaces (0.0.0.0:59314)...
 if not "%LOCAL_IP%"=="" (
-    echo [INFO] On your iPad or tablet, open Safari/Chrome and navigate to:
+    echo [INFO] On a phone, tablet or PC on the same network, open a browser and go to:
     echo.
     echo        http://%LOCAL_IP%:59314
     echo.
     echo   If another program uses port 59314, the companion takes the next free
     echo   port and shows it in its window title: use that port instead.
     echo.
-    echo   Tip: Tap the Share button in Safari and choose "Add to Home Screen"
-    echo        to run the companion as a full-screen, borderless tablet app.
+    echo   Tip: on an iPhone or iPad, tap Share in Safari and choose "Add to Home Screen"
+    echo        to run the companion full-screen, without the browser bars.
 ) else (
-    echo [INFO] On your iPad, open Safari and navigate to http://^<YOUR_PC_IP^>:59314
+    echo [INFO] On a phone, tablet or PC on the same network, open http://^<YOUR_PC_IP^>:59314
 )
 echo.
 echo =================================================================
