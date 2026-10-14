@@ -7901,7 +7901,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Pyramid traps an ally, who then counts as KO'd; if everyone is trapped the battle is lost. Free them by attacking the Pyramid with another character. Lightning hits draw an Electro-mag Rod counter, which can paralyze. When fought with other Turks, the battle ends as soon as one Turk falls.",
+    "notes": "Pyramid traps an ally, who then counts as KO'd; if everyone is trapped the battle is lost. Free them by attacking the Pyramid with another character. In his first three fights, a Bolt spell on him makes his next turn an attack on the caster (Electro-mag Rod, which can paralyze, in the first; Electroprod and Electroprod 2 in the next two). When fought with other Turks, the battle ends as soon as one Turk falls.",
     "ai_summary": [
       {
         "title": "First fight (Lv 17)",
@@ -9293,7 +9293,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Cloud fights alone. Defeat Dark Nation first: it casts Barrier and MBarrier, cutting your damage. Keep Cloud healed with Cure or Potions.",
+    "notes": "Cloud fights alone. Dark Nation casts Barrier on Rufus, halving physical damage to him, so defeat it first or use magic on Rufus. Keep Cloud healed with Cure or Potions.",
     "ai_summary": [
       {
         "title": "Each turn",
@@ -9357,7 +9357,7 @@
       "Bite"
     ],
     "enemy_skills": [],
-    "notes": "Casts Barrier and MBarrier to cut your damage. Defeat it first; magic ignores its back-row position.",
+    "notes": "Casts Barrier on Rufus, then Barrier and MBarrier on itself. Defeat it first; magic ignores its back-row position.",
     "ai_summary": [
       {
         "title": "Each turn",
@@ -11920,7 +11920,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Possesses a party member and casts Fire2 on them, leaving after three turns or when the host dies. All Soul Fires die as soon as Gi Nattak is defeated, so you can ignore them.",
+    "notes": "Possesses a party member and casts Fire2 on them for four turns, leaving early if the host dies. All Soul Fires die as soon as Gi Nattak is defeated, so you can ignore them.",
     "ai_summary": [
       {
         "title": "Each turn",
@@ -11997,7 +11997,7 @@
     "morph": null,
     "manipulate": [],
     "enemy_skills": [],
-    "notes": "Undead: Cure, Potions and other healing damage it. Two Soul Fires possess party members and cast Fire2 on their host for three turns. Defeating Gi Nattak first destroys any remaining Soul Fires, so focus him and avoid Fire.",
+    "notes": "Undead: Cure, Potions and other healing damage it. Two Soul Fires possess party members and cast Fire2 on their host for four turns. Defeating Gi Nattak first destroys any remaining Soul Fires, so focus him and avoid Fire.",
     "ai_summary": [
       {
         "title": "Each turn (4-turn cycle)",

@@ -197,6 +197,17 @@ class TestEnemyData(unittest.TestCase):
         # CLAUDE-20261012-B10: Arm Attack comes back in every cycle, not only at the start
         self.assertNotIn("Starts with Arm Attack", notes["Motor Ball"])
         self.assertIn("cycle", notes["Motor Ball"])
+        # GEMINI-20261013-01: Dark Nation casts Barrier on Rufus and MBarrier only on itself
+        self.assertNotIn("MBarrier", self.by_name["Rufus"]["notes"])
+        self.assertIn("Barrier on Rufus", self.by_name["Rufus"]["notes"])
+        self.assertIn("MBarrier on itself", self.by_name["Dark Nation"]["notes"])
+        # Reno answers a Bolt spell on his next turn (Counter-Magic only sets a flag), not as a counter
+        self.assertNotIn("counter", self.by_name["Turks:reno"]["notes"])
+        self.assertIn("next turn", self.by_name["Turks:reno"]["notes"])
+        # Soul Fire casts Fire2 on its host four times (it leaves once its count passes 3)
+        for name in ("Soul Fire", "Gi Nattak"):
+            self.assertNotIn("three turns", self.by_name[name]["notes"], name)
+            self.assertIn("four turns", self.by_name[name]["notes"], name)
 
 
 class TestAiScripts(unittest.TestCase):
