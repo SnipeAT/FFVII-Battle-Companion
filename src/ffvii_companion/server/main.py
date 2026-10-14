@@ -120,7 +120,7 @@ class SameOriginGuard:
 
 
 # No CORS middleware: the dashboard is always served by this same server (desktop window,
-# browser, or iPad on the LAN), so cross-origin access is never needed. Leaving it off
+# browser, or a phone or tablet on the LAN), so cross-origin access is never needed. Leaving it off
 # prevents unrelated web pages from reading screen OCR results; SameOriginGuard blocks
 # them from changing state, and DNS-rebinding pages from reaching the server at all.
 app.add_middleware(GZipMiddleware, minimum_size=1000)

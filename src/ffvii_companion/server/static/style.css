@@ -1419,7 +1419,7 @@ dialog.modal-dialog[open]::backdrop {
   overflow: hidden;
   overscroll-behavior: contain;
   /* Never taller than the viewport: the body scrolls, header and footer stay visible
-     (the calibration modal is taller than an iPad in landscape or a small window). */
+     (the calibration modal is taller than a tablet in landscape or a small window). */
   max-height: calc(100vh - 32px);
   max-height: calc(100dvh - 32px);
   display: flex;
@@ -1621,7 +1621,7 @@ dialog.modal-dialog[open]::backdrop {
   color: var(--border-color);
 }
 
-/* Responsive Breakpoints for Tablet, iPad & Compact Screens */
+/* Responsive Breakpoints for Tablets, Phones & Compact Screens */
 @media (max-width: 960px) {
   .app-header {
     flex-wrap: wrap;

@@ -485,7 +485,7 @@ class TestWebSocket(unittest.TestCase):
 
     def test_capture_start_and_stop_reach_every_dashboard(self):
         # Regression: the CAPTURE button changed only the dashboard it was clicked on; the desktop
-        # window, a browser tab and the iPad each kept showing their own on/off state
+        # window, a browser tab and a phone each kept showing their own on/off state
         from unittest import mock
         from ffvii_companion.engine.capture_service import capture_service
         set_running = lambda running: lambda: setattr(capture_service, "_running", running)
@@ -494,20 +494,20 @@ class TestWebSocket(unittest.TestCase):
         with mock.patch.object(capture_service, "start", side_effect=set_running(True)), \
                 mock.patch.object(capture_service, "stop", side_effect=set_running(False)), \
                 TestClient(app, base_url=BASE_URL) as client, \
-                client.websocket_connect(WS_URL) as desktop, client.websocket_connect(WS_URL) as ipad:
+                client.websocket_connect(WS_URL) as desktop, client.websocket_connect(WS_URL) as phone:
             self.assertFalse(receive_connect_messages(desktop)["capture"]["running"])
-            self.assertFalse(receive_connect_messages(ipad)["capture"]["running"])
+            self.assertFalse(receive_connect_messages(phone)["capture"]["running"])
 
             started = client.post("/api/capture/start").json()
             self.assertTrue(started["running"])
             self.assertIn("combat_phase", started, "The clicking dashboard shows the phase right away")
-            for ws in (desktop, ipad):
+            for ws in (desktop, phone):
                 msg = ws.receive_json()
                 self.assertEqual(msg["type"], "CAPTURE_STATUS")
                 self.assertTrue(msg["data"]["running"])
 
             self.assertFalse(client.post("/api/capture/stop").json()["running"])
-            for ws in (desktop, ipad):
+            for ws in (desktop, phone):
                 msg = ws.receive_json()
                 self.assertEqual(msg["type"], "CAPTURE_STATUS")
                 self.assertFalse(msg["data"]["running"])
@@ -560,9 +560,9 @@ class TestWebSocket(unittest.TestCase):
         # One client context, so both sockets share one event loop as under uvicorn: without it each
         # socket gets its own loop and the broadcast from the other loop can leave receive_json hanging
         with TestClient(app, base_url=BASE_URL) as client, client.websocket_connect(WS_URL) as ws, \
-                client.websocket_connect(WS_URL) as ipad:
+                client.websocket_connect(WS_URL) as phone:
             receive_connect_messages(ws)
-            receive_connect_messages(ipad)
+            receive_connect_messages(phone)
             with capture_service._state_lock:
                 capture_service.current_enemies = [dict(compendium.get_by_name("Prowler"), count=1)]
                 capture_service.observed_counts = {"Prowler": 1}
@@ -570,7 +570,7 @@ class TestWebSocket(unittest.TestCase):
                 capture_service.combat_phase = "settled"
                 capture_service.current_fps = 0.35
             ws.send_json({"action": "CLEAR_BATTLE"})
-            for client_ws in (ws, ipad):
+            for client_ws in (ws, phone):
                 msg = client_ws.receive_json()
                 self.assertEqual(msg["type"], "BATTLE_UPDATE")
                 self.assertFalse(msg["data"]["in_battle"])

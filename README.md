@@ -1,6 +1,6 @@
 # Final Fantasy VII - Automated Real-Time Tactical Companion
 
-A real-time combat companion for the PC release of Final Fantasy VII (1998 / 2012-2013 Steam edition and its re-release, with or without 7th Heaven / FFNx mods). It watches a small region of the game window, reads the battle text with on-device OCR, identifies the enemies you are fighting, and shows their full profile - stats and AP, elemental weaknesses and resistances, status immunities, steal items and your odds, drops and morphs, Enemy Skills and Manipulate commands, and their battle AI (what they do and when, decoded from the game's data) - plus a summary of the whole encounter, on a second monitor, in a native desktop window, or on an iPad / tablet over your local network.
+A real-time combat companion for the PC release of Final Fantasy VII (1998 / 2012-2013 Steam edition and its re-release, with or without 7th Heaven / FFNx mods). It watches a small region of the game window, reads the battle text with on-device OCR, identifies the enemies you are fighting, and shows their full profile - stats and AP, elemental weaknesses and resistances, status immunities, steal items and your odds, drops and morphs, Enemy Skills and Manipulate commands, and their battle AI (what they do and when, decoded from the game's data) - plus a summary of the whole encounter, on a second monitor, in a native desktop window, or on a phone, tablet or another PC over your local network.
 
 This is a fan project, not affiliated with or endorsed by Square Enix. It only reads what is on screen: it does not modify the game or read its memory. You need your own copy of Final Fantasy VII.
 
@@ -17,7 +17,7 @@ Windows 10 or 11 (64-bit) only. Pick one of the two ways below; both end with th
 3. Extract the zip to a folder you can write to, for example `Documents`. Not `Program Files`: the companion saves its settings and logs next to the EXE. Keep the folder path short, under about 150 characters (`C:\Users\<you>\Documents` is fine): some bundled files sit deep inside the `_internal` folder, and in a longer path Windows refuses them and the EXE stops with "DLL load failed ... The filename or extension is too long".
 4. Double-click `FFVII_Companion.exe` in the extracted `FFVII_Companion` folder. If Windows SmartScreen says it protected your PC, click **More info**, then **Run anyway**: the EXE is not code-signed.
    - If Windows says **Smart App Control** blocked it (Windows 11 with Smart App Control on), there is no "Run anyway": Smart App Control blocks unsigned programs until Microsoft's cloud service has assessed them, which can take a while after a new release. Try again later, or run the companion from source instead (Option 2, which then needs no EXE).
-5. Start the game and enter a battle: the companion finds the game window and reads the battle text by itself. See [Using it with 7th Heaven / FFNx](#using-it-with-7th-heaven--ffnx) for the dashboard, and [iPad, tablet or phone](#ipad-tablet-or-phone-local-wi-fi) to show it on another device (`Launch_LAN_iPad.bat` is in the same folder).
+5. Start the game and enter a battle: the companion finds the game window and reads the battle text by itself. See [Using it with 7th Heaven / FFNx](#using-it-with-7th-heaven--ffnx) for the dashboard, and [Phone, tablet or another PC](#phone-tablet-or-another-pc-local-network) to show it on another device (`Launch_LAN_Mode.bat` is in the same folder).
 
 To update, delete `FFVII_Companion.exe` and the `_internal` folder, then extract the new release into the same place: the `data`, `logs` and `reports` folders (your settings, profile, logs and reports) stay. To uninstall, delete the folder.
 
@@ -46,7 +46,7 @@ Smart App Control treats an EXE you build like a downloaded one. Where it blocks
                                            + recognition cache  instance letters  the compendium
                                                                                      │
  dashboard <── WebSocket /ws <── battle state machine <── formation deduction <──────┘
- (desktop / iPad)                idle / hunting / settled    data/formations.json
+ (desktop / LAN)                 idle / hunting / settled    data/formations.json
 ```
 
 Module and data paths in this README are relative to the package folder `src/ffvii_companion/` (see [Project layout](#project-layout)).
@@ -110,9 +110,9 @@ The dependencies are declared in `pyproject.toml`. The editable install (`-e`) m
 | Method | Command |
 | :--- | :--- |
 | Double-click launcher (recommended) | `Launch_Desktop_App.bat` - starts the packaged EXE if it exists, otherwise the app from source without a console |
-| iPad / LAN mode | `Launch_LAN_iPad.bat` - binds to `0.0.0.0:59314` and prints the URL to open on the tablet |
+| LAN mode | `Launch_LAN_Mode.bat` - binds to `0.0.0.0:59314` and prints the URL to open on a phone, tablet or another PC |
 | Packaged executable | `.\dist\FFVII_Companion\FFVII_Companion.exe` |
-| Release download | `FFVII_Companion.exe` in the extracted folder; `Launch_LAN_iPad.bat` next to it starts LAN mode |
+| Release download | `FFVII_Companion.exe` in the extracted folder; `Launch_LAN_Mode.bat` next to it starts LAN mode |
 | Development | `.\.venv\Scripts\python.exe -m ffvii_companion` |
 
 Note: the launchers prefer `dist\FFVII_Companion\FFVII_Companion.exe`. After changing the source, rebuild it (`build_tools\build_exe.py`) or the launchers keep running the previous build.
@@ -123,7 +123,7 @@ Note: the launchers prefer `dist\FFVII_Companion\FFVII_Companion.exe`. After cha
 
 | Flag | Default | Description |
 | :--- | :--- | :--- |
-| `--host <IP>` | `127.0.0.1` | Interface to bind. `0.0.0.0` lets iPads / other devices on your LAN connect; one LAN address (`192.168.1.5`) or an IPv6 address (`::1`, `::`) works too. |
+| `--host <IP>` | `127.0.0.1` | Interface to bind. `0.0.0.0` lets phones, tablets and other PCs on your LAN connect; one LAN address (`192.168.1.5`) or an IPv6 address (`::1`, `::`) works too. |
 | `--port <PORT>` | `59314` | HTTP and WebSocket port. If occupied, the next free port is used, and the window title shows it. |
 | `--on-top` | off | Start pinned Always on Top (also toggled with the **PIN** button). |
 | `--no-capture` | off | Do not start the capture loop on launch (start it with **CAPTURE**). |
@@ -137,7 +137,7 @@ Note: the launchers prefer `dist\FFVII_Companion\FFVII_Companion.exe`. After cha
 ## Using it with 7th Heaven / FFNx
 
 1. Start your modded game from 7th Heaven as usual (borderless or windowed both work; exclusive fullscreen may capture black frames).
-2. Start the companion (`FFVII_Companion.exe` from a release, or `Launch_Desktop_App.bat` / `Launch_LAN_iPad.bat`). Move the window to your second monitor or pin it on top.
+2. Start the companion (`FFVII_Companion.exe` from a release, or `Launch_Desktop_App.bat` / `Launch_LAN_Mode.bat`). Move the window to your second monitor or pin it on top.
 3. **CAPTURE: LIVE** glows green while the loop runs; the label shows the current phase.
 4. In battle, open a command's target menu: the targeted name (`Custom Sweeper B`, `Devil Ride`) is recognized and its card appears. Instance letters raise the enemy count.
 5. With one enemy identified, the **Formation Partners** bar lists enemies that can appear with it in that encounter; click one to add its card. Enable **Auto-Include Formation Partners** in Calibration to add the partners that are certain (in every matching formation) automatically.
@@ -173,7 +173,7 @@ A boss fought several times (the Turks, Ultimate Weapon) shows the record of the
 
 - **E.SKILL** in the header opens the checklist of the 24 Enemy Skills with the enemies that have each one in their attack list; "(M)" means the skill is also in that enemy's Manipulate list. Tick the skills you have learned. Cards show each enemy's skills as NEW or LEARNED.
 - The party level and Sneak Glove set in the steal calculator (**CALC ODDS**) are saved too: every card then shows your actual steal odds ("Your odds per Steal: 62.5% (party LVL 40)"). For a second or later slot the figure already counts the earlier slots failing first.
-- These settings are the player profile, stored by the companion in `data\profile.json` of its data folder (see "Where files are saved"), so the desktop window and every tablet show the same odds and checklist.
+- These settings are the player profile, stored by the companion in `data\profile.json` of its data folder (see "Where files are saved"), so the desktop window and every other device show the same odds and checklist.
 
 ### Reporting a wrong detection
 
@@ -207,7 +207,7 @@ Open **CALIBRATION** in the header:
 | `text_gate` | `true` | Skip OCR when the text in the region has not changed. |
 | `eco_mode` | `true` | Run the capture thread on efficiency cores outside the hunting phase. |
 | `auto_add_scene_partners` | `false` | Automatically add formation partners that are certain: enemies that every formation matching the enemies seen so far contains. Merely possible partners stay on the partners bar. |
-| `allowed_hosts` | `[]` | Extra host names the dashboard may be opened under, such as a name your router gives the PC (`["gaming-pc.lan"]`); `["*"]` allows any name. IP addresses, `localhost` and the PC's own name (also with `.local`) always work. Only a hand edit of the file changes it (the API refuses it); restart the companion afterwards. See the security note under "iPad, tablet or phone". |
+| `allowed_hosts` | `[]` | Extra host names the dashboard may be opened under, such as a name your router gives the PC (`["gaming-pc.lan"]`); `["*"]` allows any name. IP addresses, `localhost` and the PC's own name (also with `.local`) always work. Only a hand edit of the file changes it (the API refuses it); restart the companion afterwards. See the security note under "Phone, tablet or another PC". |
 
 Values are validated: the API rejects invalid settings (HTTP 422), and out-of-range values in a hand-edited file are clamped on load. The defaults are the ones in this table (`DEFAULT_CONFIG` in `engine/calibration.py`); the file in the data folder holds only what was saved from the dashboard or edited by hand, so a default that a later version changes reaches you unless you set that value yourself. Files saved by version 2.0.4 or earlier hold every value: delete a line to go back to its default. A save that fails (for example while another program holds the file) changes nothing, and the dashboard shows the old value again.
 
@@ -225,14 +225,14 @@ The `FFVII_COMPANION_HOME` environment variable overrides the folder. Folders an
 
 ---
 
-## iPad, tablet or phone (local Wi-Fi)
+## Phone, tablet or another PC (local network)
 
-1. Launch in LAN mode: double-click `Launch_LAN_iPad.bat`, in the project folder or next to `FFVII_Companion.exe` in a release download (or start the app with `--host 0.0.0.0`). The script prints your PC's address.
-2. Make sure the tablet is on the same network, then open `http://<YOUR_PC_IP>:59314` in Safari or Chrome. Find the address with `ipconfig` (IPv4 Address) if needed.
-3. Optional: in Safari tap **Share > Add to Home Screen** for a full-screen, borderless app.
+1. Launch in LAN mode: double-click `Launch_LAN_Mode.bat`, in the project folder or next to `FFVII_Companion.exe` in a release download (or start the app with `--host 0.0.0.0`). The script prints your PC's address.
+2. Make sure the device is on the same network, then open `http://<YOUR_PC_IP>:59314` in its browser. Find the address with `ipconfig` (IPv4 Address) if needed.
+3. Optional: on an iPhone or iPad, tap **Share > Add to Home Screen** in Safari for a full-screen app.
 4. The first LAN launch may show a Windows Defender Firewall prompt: allow access on **Private networks**.
 
-After an update of the companion, a dashboard left open on the tablet reloads itself when it reconnects, so it never runs the old version against the new server.
+After an update of the companion, a dashboard left open on another device reloads itself when it reconnects, so it never runs the old version against the new server.
 
 Security note: in LAN mode every device on your network can open the dashboard and use its controls (start/stop capture, calibration, diagnostic snapshots of the capture region). There is no login, so only use LAN mode on a network you trust. Web pages from other sites cannot use the companion: the server sends no cross-origin (CORS) headers, so they cannot read its responses, and it rejects state-changing requests and WebSocket connections whose `Origin` does not match the server. It also answers only requests addressed to an IP address, `localhost` or the PC's name: a web page that points its own domain name at your PC (DNS rebinding) would otherwise count as the same site. A home router does not protect against that, because the page runs in your own browser. `allowed_hosts` in the settings file adds names; `["*"]` turns this check off.
 
@@ -360,7 +360,7 @@ PyInstaller runs outside the project (`%LOCALAPPDATA%\FFVIIBuild`, or the folder
 .\.venv\Scripts\python.exe build_tools\package_release.py
 ```
 
-Builds the EXE as above, then writes `dist\FFVII_Companion-<version>-windows-x64.zip`: the build without the `data\`, `logs\` and `reports\` folders next to the EXE (your own settings, profile, logs and reports), plus `LICENSE.txt`, `README.md`, `Launch_LAN_iPad.bat` and `THIRD_PARTY_LICENSES.txt` (the licenses of Python, the OCR models and the packages in the EXE). It refuses to run with uncommitted changes, so the zip always matches a commit; the zip's comment names it. The version comes from `__version__` in `src/ffvii_companion/__init__.py`.
+Builds the EXE as above, then writes `dist\FFVII_Companion-<version>-windows-x64.zip`: the build without the `data\`, `logs\` and `reports\` folders next to the EXE (your own settings, profile, logs and reports), plus `LICENSE.txt`, `README.md`, `Launch_LAN_Mode.bat` and `THIRD_PARTY_LICENSES.txt` (the licenses of Python, the OCR models and the packages in the EXE). It refuses to run with uncommitted changes, so the zip always matches a commit; the zip's comment names it. The version comes from `__version__` in `src/ffvii_companion/__init__.py`.
 
 To publish it: tag the commit and push the tag (`git tag -a v<version> -m "Version <version>"`, then `git push origin v<version>`), then on GitHub open **Releases > Draft a new release**, choose the tag, attach the zip and click **Publish release**. GitHub adds the source code archives by itself.
 
@@ -418,7 +418,7 @@ FFVII-Battle-Companion/
 ├── tools/                        # Frame recorder, loop benchmark, synthetic frames, scene.bin enrichment, AI scripts
 ├── build_tools/                  # build_exe.py, package_release.py (release zip), ffvii_companion.spec (PyInstaller), licenses/
 ├── pyproject.toml                # Package metadata and dependencies
-├── Launch_Desktop_App.bat / Launch_LAN_iPad.bat                     # Double-click launchers
+├── Launch_Desktop_App.bat / Launch_LAN_Mode.bat                     # Double-click launchers
 ├── README.md / LICENSE / .gitignore                                 # This file, MIT License, ignore rules
 │
 │   Not in the repository (git-ignored):

@@ -192,7 +192,7 @@ def main() -> None:
             zf.write(path, f"{APP_NAME}/{rel.as_posix()}")
         zf.write(ROOT / "LICENSE", f"{APP_NAME}/LICENSE.txt")
         zf.write(ROOT / "README.md", f"{APP_NAME}/README.md")
-        zf.write(ROOT / "Launch_LAN_iPad.bat", f"{APP_NAME}/Launch_LAN_iPad.bat")
+        zf.write(ROOT / "Launch_LAN_Mode.bat", f"{APP_NAME}/Launch_LAN_Mode.bat")
         zf.writestr(f"{APP_NAME}/THIRD_PARTY_LICENSES.txt", notices)
         zf.comment = f"{APP_NAME} {version}, built from commit {commit}".encode()
     os.replace(partial, out)
