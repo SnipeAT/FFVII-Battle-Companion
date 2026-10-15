@@ -2,7 +2,7 @@
 
 What changed in each release, newest first. The downloads and the full release notes are on the [Releases page](https://github.com/SnipeAT/FFVII-Battle-Companion/releases). Versions follow `MAJOR.MINOR.PATCH`: a minor version adds features, a patch fixes things or corrects data.
 
-## Unreleased
+## 2.2.2 - 2026-10-14
 
 ### LAN mode
 - The setting `allowed_hosts` is now `dashboard_host_names`, because it lists names for the dashboard's address, not devices that may connect; settings files with the old name still work. Opening the dashboard under a name that is not allowed shows "Host name not allowed" with what to do, and the log warns while `"*"` turns the protection off.
