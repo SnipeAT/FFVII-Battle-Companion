@@ -57,6 +57,8 @@ logger = logging.getLogger("ffvii-server")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     manager.loop = asyncio.get_running_loop()
+    if "*" in calibration_manager.get_config()["dashboard_host_names"]:
+        logger.warning('dashboard_host_names holds "*": any host name is answered, the DNS rebinding protection is off')
     yield
     if capture_service.is_running():
         capture_service.stop()
@@ -73,16 +75,17 @@ def _host_name(host_header: str) -> str:
         return ""
 
 
-def is_allowed_host(host_header: str, allowed_hosts: List[str]) -> bool:
+def is_allowed_host(host_header: str, host_names: List[str]) -> bool:
     """
     Whether a request sent to this Host may be answered. A DNS-rebinding web page reaches the
     companion under its own host name (one it points at 127.0.0.1 after the page loaded), so the
     browser sends that name as Host and as Origin, which then match: only the Host shows it. The
     dashboard is always opened under an IP address, localhost (or a *.localhost name, which
     browsers resolve to the PC themselves) or the PC's name (also with ".local", as tablets find
-    it on the LAN); allowed_hosts (settings file) adds names, "*" allows any.
+    it on the LAN); dashboard_host_names (settings file) adds names, "*" allows any. It decides
+    which addresses the dashboard may be opened under, not which devices may connect.
     """
-    if "*" in allowed_hosts:
+    if "*" in host_names:
         return True
     name = _host_name(host_header)
     if not name:
@@ -94,10 +97,16 @@ def is_allowed_host(host_header: str, allowed_hosts: List[str]) -> bool:
         pass
     if name == "localhost" or name.endswith(".localhost") or name in _PC_NAMES:
         return True
-    return name in allowed_hosts
+    return name in host_names
 
 
 _PC_NAMES = {socket.gethostname().lower(), socket.gethostname().lower() + ".local"}
+
+# What a browser shows when the dashboard is opened under a name that is not allowed. A device
+# that cannot reach the companion at all never gets here (README, "Troubleshooting").
+HOST_NAME_REJECTED = ("Host name not allowed. Open the dashboard by this PC's IP address, or add "
+                      "this name to dashboard_host_names in the settings file (see the companion's "
+                      "Configuration page).")
 
 
 class SameOriginGuard:
@@ -124,17 +133,20 @@ class SameOriginGuard:
             host = headers.get("host", "")
             origin = headers.get("origin")
             unsafe = scope["type"] == "websocket" or scope.get("method", "GET") not in self.SAFE_METHODS
-            reason = None
-            if not is_allowed_host(host, calibration_manager.get_config()["allowed_hosts"]):
-                reason = f"to host {host[:100]!r} (not an allowed host, see allowed_hosts)"
+            reason = message = None
+            if not is_allowed_host(host, calibration_manager.get_config()["dashboard_host_names"]):
+                reason = (f"{scope['type']} request to host name {host[:100]!r}: not an IP address, "
+                          "localhost, this PC's name or a name in dashboard_host_names")
+                message = HOST_NAME_REJECTED
             elif origin and unsafe and urlsplit(origin).netloc.lower() != host.lower():
-                reason = f"from {origin[:100]!r}"
+                reason = f"cross-origin {scope['type']} request from {origin[:100]!r}"
+                message = "Cross-origin request rejected"
             if reason:
-                logger.warning(f"Rejected cross-origin {scope['type']} request {reason}")
+                logger.warning(f"Rejected {reason}")
                 if scope["type"] == "websocket":
                     await WebSocketClose(code=1008)(scope, receive, send)
                 else:
-                    await PlainTextResponse("Cross-origin request rejected", status_code=403)(scope, receive, send)
+                    await PlainTextResponse(message, status_code=403)(scope, receive, send)
                 return
         await self.app(scope, receive, send)
 

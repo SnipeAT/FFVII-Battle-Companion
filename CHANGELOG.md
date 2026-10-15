@@ -4,6 +4,9 @@ What changed in each release, newest first. The downloads and the full release n
 
 ## Unreleased
 
+### LAN mode
+- The setting `allowed_hosts` is now `dashboard_host_names`, because it lists names for the dashboard's address, not devices that may connect; settings files with the old name still work. Opening the dashboard under a name that is not allowed shows "Host name not allowed" with what to do, and the log warns while `"*"` turns the protection off.
+
 ### Documentation
 - New [Architecture](docs/ARCHITECTURE.md) page: the codemap, threads and locks, the server's messages, where state lives, and the design decisions behind the unusual parts.
 - New `CHANGELOG.md` (this file, also in the download), `CONTRIBUTING.md` and `SECURITY.md`.

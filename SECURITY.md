@@ -10,7 +10,7 @@ The companion runs a small web server on your PC so its window and other devices
 
 - By default it listens on `127.0.0.1` only: nothing else on your network can reach it.
 - In LAN mode (`Launch_LAN_Mode.bat`, `--host 0.0.0.0`) every device on your network can open the dashboard and change the companion's settings. There is no login: use LAN mode only on networks you trust.
-- It answers only requests addressed to an IP address, `localhost`, your PC's name or a name in `allowed_hosts`, and rejects state-changing requests and WebSockets from other web sites. How this works: [Architecture](docs/ARCHITECTURE.md#security-boundary).
+- It answers only requests addressed to an IP address, `localhost`, your PC's name or a name in `dashboard_host_names`, and rejects state-changing requests and WebSockets from other web sites. How this works: [Architecture](docs/ARCHITECTURE.md#security-boundary).
 - It sends nothing over the internet, and it reads only the screen region of the game window, never the game's files.
 
 ## Reporting a vulnerability

@@ -90,6 +90,8 @@ class TestRestApi(unittest.TestCase):
         # it could also read every response, the battle and the profile included
         self.assertEqual(client.get("/api/profile").status_code, 403)
         self.assertEqual(client.get("/").status_code, 403)
+        # GEMINI-20261014-04: the page names the fix, so nobody reaches for "*" to fix connections
+        self.assertIn("dashboard_host_names", client.get("/").text)
         from starlette.websockets import WebSocketDisconnect
         with self.assertRaises(WebSocketDisconnect):
             with client.websocket_connect("ws://rebind.attacker.example:59314/ws", headers={"Origin": rebound}) as ws:
@@ -104,7 +106,7 @@ class TestRestApi(unittest.TestCase):
             self.assertEqual(client.get("/api/health").status_code, 200, base)
             self.assertEqual(client.post("/api/capture/stop", headers={"Origin": base}).status_code, 200, base)
 
-    def test_allowed_hosts_setting(self):
+    def test_dashboard_host_names_setting(self):
         from ffvii_companion.server.main import is_allowed_host
         self.assertFalse(is_allowed_host("companion.lan:59314", []))
         self.assertTrue(is_allowed_host("Companion.LAN.:59314", ["companion.lan"]))
@@ -113,11 +115,17 @@ class TestRestApi(unittest.TestCase):
         self.assertFalse(is_allowed_host("[not-an-ip", []))
         config = calibration_manager.get_config()
         try:
-            config["allowed_hosts"] = ["companion.lan"]
+            config["dashboard_host_names"] = ["companion.lan"]
             client = TestClient(app, base_url="http://companion.lan:59314")
             self.assertEqual(client.get("/api/health").status_code, 200)
+            # "*" turns the protection off: the log says so at every start
+            config["dashboard_host_names"] = ["*"]
+            with self.assertLogs("ffvii-server", "WARNING") as logs:
+                with TestClient(app, base_url=BASE_URL):
+                    pass
+            self.assertIn("DNS rebinding protection is off", "\n".join(logs.output))
         finally:
-            config["allowed_hosts"] = []
+            config["dashboard_host_names"] = []
 
     def test_failed_saves_answer_503_and_change_nothing(self):
         # CLAUDE-20261012-A04: a failed save answered 500 but kept the new value in memory
@@ -133,10 +141,13 @@ class TestRestApi(unittest.TestCase):
         self.assertEqual(self.client.get("/api/profile").json()["party_level"], level)
         self.assertEqual(calibration_manager.get_config()["idle_fps"], idle_fps)
 
-    def test_allowed_hosts_cannot_be_changed_through_the_api(self):
-        resp = self.client.post("/api/calibration/config", json={"allowed_hosts": ["*"]})
+    def test_dashboard_host_names_cannot_be_changed_through_the_api(self):
+        resp = self.client.post("/api/calibration/config", json={"dashboard_host_names": ["*"]})
         self.assertEqual(resp.status_code, 422)
-        self.assertEqual(calibration_manager.get_config()["allowed_hosts"], [])
+        # the old name is not a setting any more: dropped like any unknown key
+        self.client.post("/api/calibration/config", json={"allowed_hosts": ["*"]})
+        self.assertEqual(calibration_manager.get_config()["dashboard_host_names"], [])
+        self.assertNotIn("allowed_hosts", calibration_manager.get_config())
 
     def test_cross_origin_websocket_is_rejected(self):
         from starlette.websockets import WebSocketDisconnect
