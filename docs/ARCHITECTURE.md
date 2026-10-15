@@ -55,6 +55,7 @@ FFVII-Battle-Companion/
 ├── build_tools/                  # build_exe.py, package_release.py (release zip), ffvii_companion.spec (PyInstaller), licenses/
 ├── docs/                         # These documents and the README's screenshots
 ├── .github/workflows/tests.yml   # CI: the test suite on every push and pull request
+├── .github/dependabot.yml        # Weekly update PRs for the workflow actions and Python dependencies
 ├── pyproject.toml                # Package metadata and dependencies
 ├── Launch_Desktop_App.bat / Launch_LAN_Mode.bat                     # Double-click launchers
 ├── README.md / CHANGELOG.md / CONTRIBUTING.md / SECURITY.md / LICENSE  # User guide, release history, contributing, security policy, MIT License
