@@ -68,7 +68,7 @@ Individual suites:
 .\.venv\Scripts\python.exe -m unittest tests.test_ai_script -v         # tools/ai_script.py disassembler, decompiler and name matching
 ```
 
-The test package redirects all writable files (settings, player profile, reports, logs) to a temporary folder, so running the tests never changes your settings. GitHub Actions runs the whole suite on Windows for every push and pull request.
+The test package redirects all writable files (settings, player profile, reports, logs) to a temporary folder, so running the tests never changes your settings. GitHub Actions runs the whole suite on Windows for every push and pull request, and CodeQL scans every pull request to `main`. Dependabot opens a pull request each week when the workflow's actions or the Python dependencies have updates (`.github/dependabot.yml`).
 
 `tests/fixtures/real/` holds capture-region frames recorded from real FFNx sessions, battles and field menus; its `manifest.json` gives the expected result of each frame, and `ocr_expected.json` the OCR output of each frame. `tests.test_ocr_engine` compares the engine's output with that file, so run it after changing the OCR pipeline, ONNX Runtime, NumPy, OpenCV or Python; re-record the file (`python -m tests.test_ocr_engine --record`) only for a deliberate change of what the engine reads, and check the diff.
 

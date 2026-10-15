@@ -15,6 +15,6 @@ The companion runs a small web server on your PC so its window and other devices
 
 ## Reporting a vulnerability
 
-Please report security problems privately, not in a public issue: use **Report a vulnerability** on the repository's [Security tab](https://github.com/SnipeAT/FFVII-Battle-Companion/security) if it is offered, or otherwise open an issue that asks for a private contact without giving details. Include the version, how to reproduce the problem, and what an attacker could do with it.
+Please report security problems privately, not in a public issue: use **Report a vulnerability** on the repository's [Security tab](https://github.com/SnipeAT/FFVII-Battle-Companion/security). Include the version, how to reproduce the problem, and what an attacker could do with it.
 
 Reports about the documented LAN-mode behavior above (no login on a trusted network) are not vulnerabilities, but ways to reach the companion that this page does not describe are.
