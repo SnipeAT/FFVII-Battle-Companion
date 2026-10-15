@@ -135,7 +135,7 @@ The dashboard (`server/static/`) is plain HTML, JavaScript and CSS without a bui
 
 The data folder (`paths.get_user_data_dir()`) is the EXE's folder when packaged and `.dev_home/` in the project from source; the `FFVII_COMPANION_HOME` environment variable overrides both, and the test package sets it to a temporary folder. Where users find these files: [Configuration](CONFIGURATION.md#where-files-are-saved).
 
-**Settings.** `DEFAULT_CONFIG` in `engine/calibration.py` holds every default, and nothing else does: no settings file is bundled. `get_config()` returns the defaults with the saved values over them, so code reads `cfg["key"]` without fallback values. The file holds only the values the user saved, so a default a later version changes reaches everyone who never set it. `validate_settings()` checks every change, a save is written (atomically) before it is applied, so a failed save changes nothing, and `allowed_hosts` can only be changed in the file. The player profile follows the same pattern (`validate_profile()`).
+**Settings.** `DEFAULT_CONFIG` in `engine/calibration.py` holds every default, and nothing else does: no settings file is bundled. `get_config()` returns the defaults with the saved values over them, so code reads `cfg["key"]` without fallback values. The file holds only the values the user saved, so a default a later version changes reaches everyone who never set it. `validate_settings()` checks every change, a save is written (atomically) before it is applied, so a failed save changes nothing, and `dashboard_host_names` can only be changed in the file. `RENAMED_KEYS` maps old setting names to new ones when a file is loaded. The player profile follows the same pattern (`validate_profile()`).
 
 ## Game data
 
@@ -153,7 +153,7 @@ What the data holds and how the AI is decoded: [How it works](HOW_IT_WORKS.md#ga
 
 The server listens on `127.0.0.1` unless LAN mode binds it to `0.0.0.0`; LAN mode has no login and is for trusted networks. `SameOriginGuard` (in `server/main.py`) is the only gate:
 
-- Every request and WebSocket addressed to a host name other than an IP address, `localhost`, the PC's name or a name in `allowed_hosts` is rejected, so a DNS-rebinding page cannot reach the server.
+- Every request and WebSocket addressed to a host name other than an IP address, `localhost`, the PC's name or a name in `dashboard_host_names` is rejected, so a DNS-rebinding page cannot reach the server. The 403 page says how to open the dashboard instead; `"*"` turns the check off, and the server logs a warning at every start while it does.
 - State-changing requests (anything but GET, HEAD, OPTIONS) and WebSockets whose `Origin` does not match their `Host` are rejected. Requests without an `Origin` (the simulator, scripts, tests) pass.
 - There are no CORS headers: the dashboard is always served by the same server, so other origins cannot read responses.
 

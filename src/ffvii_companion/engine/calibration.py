@@ -5,8 +5,9 @@ DEFAULT_CONFIG is the only place a default lives: get_config() returns it with t
 over it, so every key is always present and code reads cfg["key"] without fallback values. The
 file holds only the values the user saved, so a default a later version changes reaches everyone
 who never set it. Every change goes through validate_settings(), and a save is written (atomically)
-before it is applied: a failed save changes nothing. FILE_ONLY_KEYS (allowed_hosts) can be changed
-only in the file. PRESETS are the capture region presets.
+before it is applied: a failed save changes nothing. FILE_ONLY_KEYS (dashboard_host_names) can be
+changed only in the file; RENAMED_KEYS carries values over from older files. PRESETS are the capture
+region presets.
 """
 import json
 import logging
@@ -44,7 +45,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "ocr_threads": 1,            # ONNX Runtime threads per OCR session (1 = lowest CPU impact)
     "text_gate": True,           # Skip OCR when the text in the capture region has not changed
     "eco_mode": True,            # Run OCR on efficiency cores (EcoQoS) outside the hunting phase
-    "allowed_hosts": [],         # Host names the server answers besides IP addresses, localhost and the PC's name ("*": any); settings file only
+    "dashboard_host_names": [],  # Extra names the dashboard's address may use besides IP addresses, localhost and the PC's name; not devices ("*": any name, rebinding protection off); settings file only
 }
 
 PRESETS = {
@@ -91,10 +92,13 @@ NUMERIC_RANGES = {
 INTEGER_KEYS = {"det_limit_side_len", "monitor_index", "ocr_threads"}
 BOOLEAN_KEYS = {"auto_add_scene_partners", "text_gate", "eco_mode"}
 ROI_KEYS = ("top_pct", "left_pct", "width_pct", "height_pct")
-# Settings that only a hand edit of the file can change, not the API: allowed_hosts decides which
-# requests the server answers at all, so a request must not be able to widen it.
-FILE_ONLY_KEYS = {"allowed_hosts"}
-MAX_ALLOWED_HOSTS = 32
+# Settings that only a hand edit of the file can change, not the API: dashboard_host_names decides
+# which requests the server answers at all, so a request must not be able to widen it.
+FILE_ONLY_KEYS = {"dashboard_host_names"}
+MAX_HOST_NAMES = 32
+# Old name -> new name, applied to the file on load. allowed_hosts (2.1.0 to 2.2.1) read like a list
+# of devices allowed to connect, so players added "*" to fix connection problems it cannot fix.
+RENAMED_KEYS = {"allowed_hosts": "dashboard_host_names"}
 
 
 class ConfigValidationError(ValueError):
@@ -131,12 +135,12 @@ def _coerce_roi(value: Any) -> Dict[str, float]:
 
 
 def _coerce_hosts(value: Any) -> list:
-    if not isinstance(value, list) or len(value) > MAX_ALLOWED_HOSTS:
-        raise ConfigValidationError(f"allowed_hosts must be a list of at most {MAX_ALLOWED_HOSTS} host names")
+    if not isinstance(value, list) or len(value) > MAX_HOST_NAMES:
+        raise ConfigValidationError(f"dashboard_host_names must be a list of at most {MAX_HOST_NAMES} host names")
     hosts = []
     for item in value:
         if not isinstance(item, str) or not item.strip() or len(item) > 253:
-            raise ConfigValidationError("allowed_hosts entries must be host names")
+            raise ConfigValidationError("dashboard_host_names entries must be host names")
         host = item.strip().lower().rstrip(".")
         if host and host not in hosts:
             hosts.append(host)
@@ -170,7 +174,7 @@ def validate_settings(settings: Dict[str, Any], clamp: bool = False) -> Dict[str
                 clean[key] = value
             elif key == "roi":
                 clean[key] = _coerce_roi(value)
-            elif key == "allowed_hosts":
+            elif key == "dashboard_host_names":
                 clean[key] = _coerce_hosts(value)
             elif key == "target_menu_preset":
                 if not isinstance(value, str) or len(value) > 64:
@@ -204,6 +208,11 @@ class CalibrationManager:
                     data = json.load(f)
                 if not isinstance(data, dict):
                     raise ValueError("the file does not hold an object")
+                for old, new in RENAMED_KEYS.items():
+                    if old in data:
+                        value = data.pop(old)
+                        data.setdefault(new, value)
+                        logger.info(f"Setting {old!r} is now {new!r}; the next save writes the new name")
                 # Validated (clamped) file values
                 return validate_settings(data, clamp=True)
             except Exception as e:

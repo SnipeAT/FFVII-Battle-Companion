@@ -95,6 +95,25 @@ class TestCalibrationManager(unittest.TestCase):
         self.assertEqual(CalibrationManager(self.path).get_config()["idle_fps"], 1.0)
         self.assertFalse(self.path.with_suffix(".json.tmp").exists())
 
+    def test_allowed_hosts_is_read_as_dashboard_host_names(self):
+        # GEMINI-20261014-04: allowed_hosts (2.1.0 to 2.2.1) read like a list of devices; files
+        # that set it keep their names under the new key, and the next save writes only that
+        self.path.parent.mkdir(parents=True)
+        with open(self.path, "w", encoding="utf-8") as f:
+            json.dump({"allowed_hosts": ["Gaming-PC.lan"], "idle_fps": 2.0}, f)
+        mgr = CalibrationManager(self.path)
+        self.assertEqual(mgr.get_config()["dashboard_host_names"], ["gaming-pc.lan"])
+        self.assertNotIn("allowed_hosts", mgr.get_config())
+        mgr.update_config({"eco_mode": False})
+        with open(self.path, "r", encoding="utf-8") as f:
+            saved = json.load(f)
+        self.assertEqual(saved["dashboard_host_names"], ["gaming-pc.lan"])
+        self.assertNotIn("allowed_hosts", saved)
+        # a file that holds both keeps the new one
+        with open(self.path, "w", encoding="utf-8") as f:
+            json.dump({"allowed_hosts": ["*"], "dashboard_host_names": ["a.lan"]}, f)
+        self.assertEqual(CalibrationManager(self.path).get_config()["dashboard_host_names"], ["a.lan"])
+
     def test_validate_settings_drops_unknown_keys(self):
         # capture_fps is a retired setting that older calibration files still contain
         self.assertEqual(validate_settings({"idle_fps": 2.0, "capture_fps": 1.5, "malicious_key": 1}),
