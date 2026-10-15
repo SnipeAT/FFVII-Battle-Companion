@@ -362,7 +362,7 @@ function updatePartnersBar(currentEnemies) {
   }
   partnersAbortController = new AbortController();
 
-  fetch(`/api/enemies/${primaryEnemy.id}/partners`, { signal: partnersAbortController.signal })
+  fetch(`/api/enemies/${encodeURIComponent(primaryEnemy.id)}/partners`, { signal: partnersAbortController.signal })
     .then(res => res.json())
     .then(partners => {
       partnersCache.set(cacheKey, partners);
@@ -1525,7 +1525,7 @@ if (presetSelectGrid) {
     btn.classList.add("active");
     const presetKey = btn.getAttribute("data-preset");
     if (presetKey) {
-      fetch(`/api/calibration/preset/${presetKey}`, { method: "POST" })
+      fetch(`/api/calibration/preset/${encodeURIComponent(presetKey)}`, { method: "POST" })
         .then(res => res.json())
         .catch(err => console.error("Error setting preset:", err));
     }

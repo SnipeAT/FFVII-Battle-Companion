@@ -163,6 +163,18 @@ class TestRestApi(unittest.TestCase):
         for enemy in compendium.get_all():
             self.assertEqual(self.client.get(f"/api/enemies/{enemy['id']}/partners").status_code, 200, enemy["id"])
 
+    def test_dashboard_fetch_urls_encode_dynamic_segments(self):
+        # CodeQL #1: every interpolated segment in a dashboard fetch(`...`) URL must use encodeURIComponent
+        import re
+        from ffvii_companion.server.main import STATIC_DIR
+        app_js = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+        urls = re.findall(r"fetch\(`([^`]+)`", app_js)
+        self.assertGreaterEqual(len(urls), 4)
+        for url in urls:
+            self.assertTrue(url.startswith("/api/"), url)
+            for expr in re.findall(r"\$\{([^}]+)\}", url):
+                self.assertRegex(expr, r"^encodeURIComponent\(.+\)$", url)
+
     def test_api_search_endpoint(self):
         resp = self.client.get("/api/search?q=soldier")
         self.assertEqual(resp.status_code, 200)
