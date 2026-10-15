@@ -175,6 +175,22 @@ class TestRestApi(unittest.TestCase):
             for expr in re.findall(r"\$\{([^}]+)\}", url):
                 self.assertRegex(expr, r"^encodeURIComponent\(.+\)$", url)
 
+    def test_dashboard_html_templates_escape_enemy_fields(self):
+        # CodeQL #2: enemy, variant, partner and search fields interpolated into HTML templates
+        # must pass through escapeHtml, and escapeHtml(0) must return "0", not ""
+        from ffvii_companion.server.main import STATIC_DIR
+        app_js = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+        self.assertIn('if (str === null || str === undefined) return "";', app_js)
+        for unescaped in (
+            "LVL ${enemy.level}</div>", ">x${enemy.count}<", "${enemy.hp.", "${enemy.mp.",
+            "${(enemy.exp", "${(enemy.ap", "${(enemy.gil",
+            "${v.index + 1}", "${v.count}", "${v.candidates.length}",
+            "${c.level}", "${c.hp.", "${c.exp.", "${c.ap.", "${c.gil.",
+            'data-id="${p.id}"', 'data-id="${e.id}"', "${e.level}", "${e.hp}",
+            "${perf.grab_ms}",
+        ):
+            self.assertNotIn(unescaped, app_js)
+
     def test_api_search_endpoint(self):
         resp = self.client.get("/api/search?q=soldier")
         self.assertEqual(resp.status_code, 200)
