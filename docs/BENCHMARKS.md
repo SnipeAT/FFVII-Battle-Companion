@@ -38,6 +38,19 @@ The summon's bright effects kept waking the old settled phase (125 grabs in 70 s
 
 The same recording also showed the field menus (status, item) read as the battle HUD in 78 of 196 frames, keeping the loop in the hunting phase (1.5 FPS, EcoQoS off) while browsing menus, and `auto_add_scene_partners` adding a Kalm Fang that was not there (Devil Ride can also appear alone). With both fixed: field menus stay idle (hunting share 26% -> 4% of the session, 65 OCR passes, 70 grabs), and the battle is detected as "Devil Ride" at 55.02 s. Average process CPU reads 15.9% instead of 12.8%, because more of the work now runs under EcoQoS: on efficiency cores the same OCR pass takes about 4x the CPU time (status menu frame 193 ms -> 800 ms, battle frame 125 ms -> 464 ms) but does not compete with the game's performance cores. Compare CPU numbers only between runs with the same phase mix.
 
+## Recognition width: measured, not adopted (2026-10-16)
+
+The recognition model gets every text box padded to at least 320 px wide (at a height of 48 px, as RapidOCR does), and most boxes are much shorter, so recognizing each box at its own width looked like an easy saving. `tools/ocr_diff.py` recorded all 2392 frames of four 300-second recordings (battles, field menus, 7507 recognized boxes) with each variant, against the current engine run at the same time under the same load:
+
+| Variant | Recognition time | Frames whose detection outcome changed |
+| :--- | ---: | ---: |
+| Every box at its own width (multiple of 8) | -51% | 30 |
+| Own width, at least 256 / 192 / 160 / 128 px | -18% / -32% / -38% / -44% | 1 / 2 / 11 / 31 |
+| Own width plus an 8 or 16 px right margin | -49% / -47% | 33 / 40 |
+| Boxes narrower than 64 / 96 / 128 px keep 320, longer ones their own width | -43% / -20% / -12% | 30 / 1 / 0 |
+
+No variant changed an enemy read. Every changed outcome is the battle HUD: the two-letter "HP" label is read as "H" or not at all once its box loses the padding (and once "Magic" as "Magi"), so the HUD check fails on that frame. The short labels that need the padding are most of the boxes, so the only variant without a changed outcome saves 12% of recognition time, which bounds the saving in process CPU below that. Not worth a change to what the engine reads; the 320 px padding stays.
+
 ## Measuring it yourself
 
 Record the capture region while you play, then replay it (pass `--fps-recorded` to match the recording's `--interval`: 2 for `--interval 0.5`):
