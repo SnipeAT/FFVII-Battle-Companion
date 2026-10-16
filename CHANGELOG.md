@@ -2,6 +2,13 @@
 
 What changed in each release, newest first. The downloads and the full release notes are on the [Releases page](https://github.com/SnipeAT/FFVII-Battle-Companion/releases). Versions follow `MAJOR.MINOR.PATCH`: a minor version adds features, a patch fixes things or corrects data.
 
+## 2.2.3 - 2026-10-15
+
+### Security
+- A request with a very long enemy name, sent from a device on the network in LAN mode, could keep the companion busy for seconds. Names are now limited to 100 characters, and matching a name takes the same short time whatever it contains.
+- When the companion's server fails to read or save a file, its reply no longer includes the error text, which could name folders on your PC; the details go to `logs\companion.log`.
+- The dashboard escapes every value it puts on the page or into its requests.
+
 ## 2.2.2 - 2026-10-14
 
 ### LAN mode
