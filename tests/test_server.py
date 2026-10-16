@@ -269,6 +269,16 @@ class TestRestApi(unittest.TestCase):
             if enemy["has_ai"]:
                 self.assertEqual(self.client.get(f"/api/enemies/{enemy['id']}/ai").status_code, 200, enemy["id"])
 
+    def test_ai_window_keeps_fixed_viewport_width_when_script_collapsed(self):
+        import re
+        from ffvii_companion.server.main import STATIC_DIR
+        css = (STATIC_DIR / "style.css").read_text(encoding="utf-8")
+        match = re.search(r"\.modal-window\.ai-window\s*\{([^}]*)\}", css)
+        self.assertIsNotNone(match)
+        block = match.group(1)
+        self.assertRegex(block, r"width:\s*90vw\s*;")
+        self.assertRegex(block, r"max-width:\s*720px\s*;")
+
     def test_partners_endpoint(self):
         resp = self.client.get("/api/enemies/prowler/partners")
         self.assertEqual(resp.status_code, 200)

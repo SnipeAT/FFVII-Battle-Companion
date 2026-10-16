@@ -1208,6 +1208,7 @@ button {
 }
 
 .modal-window.ai-window {
+  width: 90vw;
   max-width: 720px;
   border-color: var(--accent-cyan);
 }
