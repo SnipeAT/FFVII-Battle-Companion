@@ -20,9 +20,8 @@ dependencies = [
     "opencv-python>=4.8.0",
     "pillow>=10.2.0",
     "onnxruntime>=1.17.0",
-    # ppocr/postprocess.py (text boxes from the detection map); RapidOCR excludes Shapely 2.0.4
+    # ppocr/postprocess.py (text boxes from the detection map)
     "pyclipper>=1.2.0",
-    "shapely>=2.0,!=2.0.4",
 ]
 
 [project.optional-dependencies]

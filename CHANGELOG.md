@@ -4,6 +4,9 @@ What changed in each release, newest first. The downloads and the full release n
 
 ## Unreleased
 
+### Performance
+- The unpacked app is about 4 MB smaller: it no longer needs the Shapely library.
+
 ### Dashboard
 - Closing "Full script" in an enemy's AI box no longer shrinks the box and squeezes its Attacks table into a narrow scrolling strip.
 - The other boxes (calibration, steal calculator, Enemy Skills, misdetection report) open at their full width and centered; they were 10% narrower and sat slightly left of center.
