@@ -66,6 +66,7 @@ Individual suites:
 .\.venv\Scripts\python.exe -m unittest tests.test_detector -v
 .\.venv\Scripts\python.exe -m unittest tests.test_platform -v          # screen capture, window finder, QoS, build and packaging helpers
 .\.venv\Scripts\python.exe -m unittest tests.test_ai_script -v         # tools/ai_script.py disassembler, decompiler and name matching
+.\.venv\Scripts\python.exe -m unittest tests.test_ocr_diff -v          # tools/ocr_diff.py record and compare
 ```
 
 The test package redirects all writable files (settings, player profile, reports, logs) to a temporary folder, so running the tests never changes your settings. GitHub Actions runs the whole suite on Windows for every push and pull request, and CodeQL scans every pull request to `main`. Dependabot opens a pull request each week when the workflow's actions or the Python dependencies have updates (`.github/dependabot.yml`).
@@ -85,6 +86,12 @@ A misdetection report (**REPORT** in the dashboard) is saved in the same format:
   .\.venv\Scripts\python.exe -m tools.benchmark_loop recordings\session1
   ```
   Results so far are in [Benchmarks](BENCHMARKS.md).
+- `tools/ocr_diff.py` checks a change to the OCR pipeline on recordings, beyond the test fixtures. `record` runs every frame through the capture loop's OCR path (every box recognized, no cache) and writes each frame's OCR lines, the lines the detector keeps, the enemies matched and the HUD state; `compare` lists the frames whose detection outcome changed, then those whose text changed, and exits with 1 when an outcome changed. Record before and after the change (`--tree` points at another copy of the project, as for the benchmark):
+  ```powershell
+  .\.venv\Scripts\python.exe -m tools.ocr_diff record before.json recordings\session1 recordings\session2
+  .\.venv\Scripts\python.exe -m tools.ocr_diff record after.json recordings\session1 recordings\session2 --tree <changed copy>
+  .\.venv\Scripts\python.exe -m tools.ocr_diff compare before.json after.json
+  ```
 - `tools/ff7_synthetic.py` makes synthetic battle / field frames in the FFNx layout, used by the tests.
 
 ### Game data tools
