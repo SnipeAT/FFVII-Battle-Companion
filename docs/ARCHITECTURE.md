@@ -51,7 +51,7 @@ FFVII-Battle-Companion/
 │       ├── simulator.py          # Preset encounters + CLI for exercising the dashboard
 │       └── static/               # Dashboard (index.html, app.js, style.css)
 ├── tests/                        # unittest suite + recorded real-frame fixtures
-├── tools/                        # Frame recorder, loop benchmark, synthetic frames, game-data tools
+├── tools/                        # Frame recorder, loop benchmark, OCR diff, synthetic frames, game-data tools
 ├── build_tools/                  # build_exe.py, package_release.py (release zip), ffvii_companion.spec (PyInstaller), licenses/
 ├── docs/                         # These documents and the README's screenshots
 ├── .github/workflows/tests.yml   # CI: the test suite on every push and pull request
