@@ -245,6 +245,7 @@ class TestRestApi(unittest.TestCase):
         resp_clear = self.client.post("/api/simulate/clear")
         self.assertEqual(resp_clear.status_code, 200)
         self.assertFalse(resp_clear.json()["battle"]["in_battle"])
+        self.assertEqual(self.client.post("/api/simulate/encounter", json={"enemy_names": ["x" * 101]}).status_code, 422)
 
     def test_simulator_presets_resolve(self):
         presets = self.client.get("/api/simulate/presets").json()

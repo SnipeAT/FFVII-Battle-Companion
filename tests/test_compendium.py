@@ -120,6 +120,21 @@ class TestMatchGuards(unittest.TestCase):
             small = EnemyCompendium(path, Path(tmp) / "formations.json")
         self.assertEqual(small.match_enemy("Nabed C")["name"], "Nabedo D")
 
+    def test_whitespace_flood_is_linear_time(self):
+        # CodeQL #4-#8: unanchored \s* / \s+ quantifiers and ^(.*?) with optional trailing count
+        # backtracked quadratically on strings with many spaces
+        import time
+        from ffvii_companion.engine.detector import BattleDetector
+        from ffvii_companion.engine.detection_report import parse_expected
+        spaces = " " * 50_000
+        t0 = time.perf_counter()
+        self.assertIsNone(compendium.match_enemy(f"NotAnEnemy{spaces}Z"))
+        self.assertEqual(compendium.match_enemy(f"Sweeper{spaces}(Back row) A")["name"], "Sweeper")
+        self.assertEqual(BattleDetector.parse_enemy_line(f"Devil Ride{spaces}(Back row) B"), ("Devil Ride", "B", 2))
+        self.assertEqual(parse_expected(f"NotAnEnemy{spaces[:400]}x!"), ({}, ["NotAnEnemy x!"]))
+        self.assertEqual(parse_expected("Devil Ride   x2, Kalm Fang"), ({"Devil Ride": 2, "Kalm Fang": 1}, []))
+        self.assertLess(time.perf_counter() - t0, 0.5)
+
 
 class TestAiScripts(unittest.TestCase):
     def test_entries_know_whether_they_have_scripts(self):
