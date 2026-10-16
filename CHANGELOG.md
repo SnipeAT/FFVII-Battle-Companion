@@ -2,6 +2,12 @@
 
 What changed in each release, newest first. The downloads and the full release notes are on the [Releases page](https://github.com/SnipeAT/FFVII-Battle-Companion/releases). Versions follow `MAJOR.MINOR.PATCH`: a minor version adds features, a patch fixes things or corrects data.
 
+## Unreleased
+
+### Dashboard
+- Closing "Full script" in an enemy's AI box no longer shrinks the box and squeezes its Attacks table into a narrow scrolling strip.
+- The other boxes (calibration, steal calculator, Enemy Skills, misdetection report) open at their full width and centered; they were 10% narrower and sat slightly left of center.
+
 ## 2.2.3 - 2026-10-15
 
 ### Security
