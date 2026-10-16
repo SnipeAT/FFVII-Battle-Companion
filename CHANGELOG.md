@@ -2,7 +2,7 @@
 
 What changed in each release, newest first. The downloads and the full release notes are on the [Releases page](https://github.com/SnipeAT/FFVII-Battle-Companion/releases). Versions follow `MAJOR.MINOR.PATCH`: a minor version adds features, a patch fixes things or corrects data.
 
-## Unreleased
+## 2.2.4 - 2026-10-16
 
 ### Performance
 - The unpacked app is about 4 MB smaller: it no longer needs the Shapely library.
