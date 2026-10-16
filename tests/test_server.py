@@ -135,9 +135,13 @@ class TestRestApi(unittest.TestCase):
         idle_fps = calibration_manager.get_config()["idle_fps"]
         failing = mock.patch("os.replace", side_effect=PermissionError("held by another program"))
         with failing:
-            self.assertEqual(self.client.post("/api/profile", json={"party_level": level % 98 + 1}).status_code, 503)
-            self.assertEqual(self.client.post("/api/calibration/config", json={"idle_fps": 4.0}).status_code, 503)
-            self.assertEqual(self.client.post("/api/calibration/preset/full_game_window").status_code, 503)
+            for resp in (
+                self.client.post("/api/profile", json={"party_level": level % 98 + 1}),
+                self.client.post("/api/calibration/config", json={"idle_fps": 4.0}),
+                self.client.post("/api/calibration/preset/full_game_window"),
+            ):
+                self.assertEqual(resp.status_code, 503)
+                self.assertNotIn("held by another program", resp.text)
         self.assertEqual(self.client.get("/api/profile").json()["party_level"], level)
         self.assertEqual(calibration_manager.get_config()["idle_fps"], idle_fps)
 
@@ -374,6 +378,28 @@ class TestCaptureAndCalibrationApi(unittest.TestCase):
         self.assertIn("performance", data)
         logs = self.client.get("/api/performance/logs?lines=10").json()
         self.assertIsInstance(logs["logs"], list)
+
+    def test_error_responses_do_not_expose_internal_exception_details(self):
+        # CodeQL #3: exception strings from reading performance.log or capturing a snapshot
+        # must stay in server logs, never in HTTP responses
+        from unittest import mock
+        from ffvii_companion.engine.capture_service import capture_service
+        from ffvii_companion.engine.profiler import perf_tracker
+        perf_tracker.log_file_path.parent.mkdir(parents=True, exist_ok=True)
+        perf_tracker.log_file_path.write_text("sample log\n", encoding="utf-8")
+        with mock.patch("ffvii_companion.engine.profiler.open",
+                        side_effect=PermissionError("secret/path/performance.log denied")):
+            logs_resp = self.client.get("/api/performance/logs?lines=10")
+        self.assertEqual(logs_resp.status_code, 200)
+        self.assertEqual(logs_resp.json()["logs"], ["Error reading performance log."])
+        self.assertNotIn("secret/path", logs_resp.text)
+
+        with mock.patch.object(capture_service, "capture_snapshot",
+                               side_effect=RuntimeError("internal stack detail C:\\secret")):
+            snap_resp = self.client.post("/api/calibration/snapshot")
+        self.assertEqual(snap_resp.status_code, 500)
+        self.assertEqual(snap_resp.json()["detail"], "Error capturing diagnostic snapshot")
+        self.assertNotIn("internal stack detail", snap_resp.text)
 
     def test_desktop_status_without_window(self):
         self.assertEqual(self.client.get("/api/desktop/status").json(), {"is_desktop": False, "on_top": False})
