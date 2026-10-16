@@ -134,6 +134,9 @@ class TestMatchGuards(unittest.TestCase):
         self.assertEqual(parse_expected(f"NotAnEnemy{spaces[:400]}x!"), ({}, ["NotAnEnemy x!"]))
         self.assertEqual(parse_expected("Devil Ride   x2, Kalm Fang"), ({"Devil Ride": 2, "Kalm Fang": 1}, []))
         self.assertLess(time.perf_counter() - t0, 0.5)
+        # The linear-time patterns match single spaces, so parse_enemy_line collapses the line
+        # first: without that, OCR's "(Back   row)" stayed in the name as "Devil Ride row)"
+        self.assertEqual(BattleDetector.parse_enemy_line("Devil Ride (Back   row) B"), ("Devil Ride", "B", 2))
 
 
 class TestAiScripts(unittest.TestCase):
