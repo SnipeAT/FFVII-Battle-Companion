@@ -12,14 +12,16 @@ of battle and in battle.
 
 `compare` lists the frames whose detection outcome changed (enemies or HUD), then those whose
 kept lines, raw text, or only scores and boxes changed. It exits with 1 when an outcome
-changed or the two files hold different frames, else 0.
+changed, the two files hold different frames or no frame was compared, else 0.
 
     .\\.venv\\Scripts\\python.exe -m tools.ocr_diff record before.json recordings\\session1 recordings\\session2
     .\\.venv\\Scripts\\python.exe -m tools.ocr_diff record after.json recordings\\session1 recordings\\session2 --tree <source tree>
     .\\.venv\\Scripts\\python.exe -m tools.ocr_diff compare before.json after.json
 
 --tree points at another copy of the project (for example a commit exported with git archive),
-as in tools/benchmark_loop.py.
+as in tools/benchmark_loop.py. That copy runs with this environment's packages: a commit that
+needs a dependency this one dropped needs it installed first (Shapely, for commits from before
+ppocr/postprocess.py stopped importing it).
 """
 import argparse
 import json
@@ -39,8 +41,28 @@ def frame_files(folder: str) -> List[str]:
     return [os.path.join(folder, n) for n in (recorded or names)]
 
 
+def folder_key(folder: str) -> str:
+    """The name a folder's frames are keyed under: its own name, so records of the same
+    recordings made from different places compare."""
+    return os.path.basename(os.path.normpath(folder))
+
+
+def check_folders(folders: Sequence[str]) -> None:
+    """Refuses folders that would make a record incomplete: two with the same name (their frames
+    would share keys) or one without frames (a record of nothing compares as unchanged)."""
+    seen: Dict[str, str] = {}
+    for folder in folders:
+        key = folder_key(folder)
+        if key in seen:
+            raise ValueError(f"Two folders are named {key!r} ({seen[key]}, {folder}): their frames would share keys")
+        seen[key] = folder
+        if not frame_files(folder):
+            raise ValueError(f"No PNG frames in {folder}")
+
+
 def record(folders: Sequence[str], progress=None) -> Dict[str, Any]:
     """OCR output and detection outcome of every frame in folders, keyed "<folder name>/<file>"."""
+    check_folders(folders)
     import cv2
     from ffvii_companion.engine.calibration import calibration_manager
     from ffvii_companion.engine.capture_service import CaptureService
@@ -69,7 +91,7 @@ def record(folders: Sequence[str], progress=None) -> Dict[str, Any]:
         frame = svc._prepare_ocr_frame(cv2.cvtColor(bgr, cv2.COLOR_BGR2BGRA))
         kept = detector.detect_text_lines(frame, use_cache=False)
         enemies = detector.identify_enemies_from_lines(kept)
-        key = f"{os.path.basename(os.path.normpath(os.path.dirname(path)))}/{os.path.basename(path)}"
+        key = f"{folder_key(os.path.dirname(path))}/{os.path.basename(path)}"
         frames[key] = {
             "lines": [[l.text, round(l.score, 4), list(l.box)] for l in last["result"].lines],
             "kept": kept,
@@ -110,6 +132,12 @@ def compare(before: Dict[str, Any], after: Dict[str, Any]) -> Dict[str, Any]:
         elif fa["lines"] != fb["lines"]:
             result["scores_or_boxes"].append(k)
     return result
+
+
+def failed(diff: Dict[str, Any]) -> bool:
+    """Whether a comparison shows a regression or proves nothing: an outcome changed, the records
+    hold different frames, or no frame was compared."""
+    return bool(diff["outcome"] or diff["only_before"] or diff["only_after"] or not diff["frames"])
 
 
 def report(diff: Dict[str, Any], show: int) -> str:
@@ -154,7 +182,7 @@ def main() -> None:
             after = json.load(f)
         diff = compare(before, after)
         print(report(diff, args.show))
-        sys.exit(1 if diff["outcome"] or diff["only_before"] or diff["only_after"] else 0)
+        sys.exit(1 if failed(diff) else 0)
 
     # Paths given relative to the working directory, resolved before the tree goes on sys.path
     out = os.path.abspath(args.out)

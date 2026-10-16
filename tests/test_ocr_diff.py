@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 from tests.helpers import FIXTURES_DIR, load_manifest
-from tools.ocr_diff import compare, frame_files, record
+from tools.ocr_diff import check_folders, compare, failed, frame_files, record
 
 FIXTURE_FRAMES = ("prowler.png", "devil_ride_b.png", "victory_screen.png")
 
@@ -67,6 +67,42 @@ class TestCompare(unittest.TestCase):
         diff = compare(self.before, after)
         self.assertEqual(diff["only_before"], ["s/roi_0001.png"])
         self.assertEqual(diff["frames"], 1)
+        self.assertTrue(failed(diff))
+
+    def test_only_outcome_changes_fail_a_comparison(self):
+        after = copy.deepcopy(self.before)
+        after["frames"]["s/roi_0001.png"] = _frame(["ltem"], hud=(False, False))
+        self.assertFalse(failed(compare(self.before, after)))
+        after["frames"]["s/roi_0001.png"]["hud"] = [True, True]
+        self.assertTrue(failed(compare(self.before, after)))
+
+    def test_comparing_no_frames_fails(self):
+        # Two records of empty folders must not pass as "nothing changed"
+        self.assertTrue(failed(compare(_record({}), _record({}))))
+
+
+class TestCheckFolders(unittest.TestCase):
+    def _folder(self, parent, *parts, frames=("roi_0000.png",)):
+        path = os.path.join(parent, *parts)
+        os.makedirs(path)
+        for name in frames:
+            open(os.path.join(path, name), "wb").close()
+        return path
+
+    def test_folders_with_the_same_name_are_refused(self):
+        # Their frames would share keys and one recording would silently replace the other
+        with tempfile.TemporaryDirectory() as tmp:
+            a = self._folder(tmp, "day1", "session")
+            b = self._folder(tmp, "day2", "session")
+            with self.assertRaisesRegex(ValueError, "same|named"):
+                check_folders([a, b])
+            check_folders([a])
+
+    def test_folder_without_frames_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            empty = self._folder(tmp, "session1", frames=())
+            with self.assertRaisesRegex(ValueError, "No PNG frames"):
+                check_folders([empty])
 
 
 class TestRecord(unittest.TestCase):

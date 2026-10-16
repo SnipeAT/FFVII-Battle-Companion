@@ -86,7 +86,7 @@ A misdetection report (**REPORT** in the dashboard) is saved in the same format:
   .\.venv\Scripts\python.exe -m tools.benchmark_loop recordings\session1
   ```
   Results so far are in [Benchmarks](BENCHMARKS.md).
-- `tools/ocr_diff.py` checks a change to the OCR pipeline on recordings, beyond the test fixtures. `record` runs every frame through the capture loop's OCR path (every box recognized, no cache) and writes each frame's OCR lines, the lines the detector keeps, the enemies matched and the HUD state; `compare` lists the frames whose detection outcome changed, then those whose text changed, and exits with 1 when an outcome changed. Record before and after the change (`--tree` points at another copy of the project, as for the benchmark):
+- `tools/ocr_diff.py` checks a change to the OCR pipeline on recordings, beyond the test fixtures. `record` runs every frame through the capture loop's OCR path (every box recognized, no cache) and writes each frame's OCR lines, the lines the detector keeps, the enemies matched and the HUD state; `compare` lists the frames whose detection outcome changed, then those whose text changed, and exits with 1 when an outcome changed. Record before and after the change (`--tree` points at another copy of the project, as for the benchmark; that copy runs with this environment's packages, so an older commit that still imports Shapely needs `pip install shapely` first):
   ```powershell
   .\.venv\Scripts\python.exe -m tools.ocr_diff record before.json recordings\session1 recordings\session2
   .\.venv\Scripts\python.exe -m tools.ocr_diff record after.json recordings\session1 recordings\session2 --tree <changed copy>
