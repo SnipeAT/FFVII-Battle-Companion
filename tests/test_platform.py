@@ -326,6 +326,21 @@ class TestPortProbe(unittest.TestCase):
                 self.assertTrue(is_port_in_use(port, "::1"))
                 self.assertTrue(is_port_in_use(port, "::"))
 
+    def test_second_launch_exits_when_a_companion_answers(self):
+        # GEMINI-20261007-06: a second launch took the next free port and ran a second capture
+        # loop on the same game window (failing at the next port also keeps a broken main() from
+        # starting a server and a window here)
+        from ffvii_companion import desktop
+        with mock.patch.object(sys, "argv", ["FFVII_Companion", "--no-capture", "--normal-priority"]), \
+                mock.patch.object(desktop, "setup_file_logging"), \
+                mock.patch.object(desktop, "is_port_in_use", return_value=True), \
+                mock.patch.object(desktop, "wait_for_server", return_value=True) as health, \
+                mock.patch.object(desktop, "find_available_port", side_effect=AssertionError("took another port")):
+            with self.assertRaises(SystemExit) as stop:
+                desktop.main()
+        self.assertEqual(stop.exception.code, 0)
+        health.assert_called_once_with("http://127.0.0.1:59314/api/health", timeout=0.5)
+
 @unittest.skipUnless(os.name == "nt", "Windows batch file")
 class TestLanLauncher(unittest.TestCase):
     def run_launcher(self, *args):

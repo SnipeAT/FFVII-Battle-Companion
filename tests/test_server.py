@@ -179,6 +179,17 @@ class TestRestApi(unittest.TestCase):
             for expr in re.findall(r"\$\{([^}]+)\}", url):
                 self.assertRegex(expr, r"^encodeURIComponent\(.+\)$", url)
 
+    def test_card_rebuilds_when_a_partner_narrows_the_variant_candidates(self):
+        # GEMINI-20261008-05: a card is rebuilt only when variantKey changes, and a partner can
+        # narrow the candidates without changing the variant shown, so the key names them
+        import re
+        from ffvii_companion.server.main import STATIC_DIR
+        app_js = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+        key = re.search(r"\nfunction variantKey\(enemy\) \{\n(.*?)\n\}", app_js, re.S)
+        self.assertIsNotNone(key)
+        self.assertIn("(v.candidates || []).map(c => c.index)", key.group(1))
+        self.assertIn("existing.variant !== variantKey(enemy)", app_js)
+
     def test_dashboard_html_templates_escape_enemy_fields(self):
         # CodeQL #2: enemy, variant, partner and search fields interpolated into HTML templates
         # must pass through escapeHtml, and escapeHtml(0) must return "0", not ""
