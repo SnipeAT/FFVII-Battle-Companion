@@ -135,9 +135,13 @@ class TestRestApi(unittest.TestCase):
         idle_fps = calibration_manager.get_config()["idle_fps"]
         failing = mock.patch("os.replace", side_effect=PermissionError("held by another program"))
         with failing:
-            self.assertEqual(self.client.post("/api/profile", json={"party_level": level % 98 + 1}).status_code, 503)
-            self.assertEqual(self.client.post("/api/calibration/config", json={"idle_fps": 4.0}).status_code, 503)
-            self.assertEqual(self.client.post("/api/calibration/preset/full_game_window").status_code, 503)
+            for resp in (
+                self.client.post("/api/profile", json={"party_level": level % 98 + 1}),
+                self.client.post("/api/calibration/config", json={"idle_fps": 4.0}),
+                self.client.post("/api/calibration/preset/full_game_window"),
+            ):
+                self.assertEqual(resp.status_code, 503)
+                self.assertNotIn("held by another program", resp.text)
         self.assertEqual(self.client.get("/api/profile").json()["party_level"], level)
         self.assertEqual(calibration_manager.get_config()["idle_fps"], idle_fps)
 
@@ -162,6 +166,34 @@ class TestRestApi(unittest.TestCase):
         from ffvii_companion.compendium import compendium
         for enemy in compendium.get_all():
             self.assertEqual(self.client.get(f"/api/enemies/{enemy['id']}/partners").status_code, 200, enemy["id"])
+
+    def test_dashboard_fetch_urls_encode_dynamic_segments(self):
+        # CodeQL #1: every interpolated segment in a dashboard fetch(`...`) URL must use encodeURIComponent
+        import re
+        from ffvii_companion.server.main import STATIC_DIR
+        app_js = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+        urls = re.findall(r"fetch\(`([^`]+)`", app_js)
+        self.assertGreaterEqual(len(urls), 4)
+        for url in urls:
+            self.assertTrue(url.startswith("/api/"), url)
+            for expr in re.findall(r"\$\{([^}]+)\}", url):
+                self.assertRegex(expr, r"^encodeURIComponent\(.+\)$", url)
+
+    def test_dashboard_html_templates_escape_enemy_fields(self):
+        # CodeQL #2: enemy, variant, partner and search fields interpolated into HTML templates
+        # must pass through escapeHtml, and escapeHtml(0) must return "0", not ""
+        from ffvii_companion.server.main import STATIC_DIR
+        app_js = (STATIC_DIR / "app.js").read_text(encoding="utf-8")
+        self.assertIn('if (str === null || str === undefined) return "";', app_js)
+        for unescaped in (
+            "LVL ${enemy.level}</div>", ">x${enemy.count}<", "${enemy.hp.", "${enemy.mp.",
+            "${(enemy.exp", "${(enemy.ap", "${(enemy.gil",
+            "${v.index + 1}", "${v.count}", "${v.candidates.length}",
+            "${c.level}", "${c.hp.", "${c.exp.", "${c.ap.", "${c.gil.",
+            'data-id="${p.id}"', 'data-id="${e.id}"', "${e.level}", "${e.hp}",
+            "${perf.grab_ms}",
+        ):
+            self.assertNotIn(unescaped, app_js)
 
     def test_api_search_endpoint(self):
         resp = self.client.get("/api/search?q=soldier")
@@ -213,6 +245,7 @@ class TestRestApi(unittest.TestCase):
         resp_clear = self.client.post("/api/simulate/clear")
         self.assertEqual(resp_clear.status_code, 200)
         self.assertFalse(resp_clear.json()["battle"]["in_battle"])
+        self.assertEqual(self.client.post("/api/simulate/encounter", json={"enemy_names": ["x" * 101]}).status_code, 422)
 
     def test_simulator_presets_resolve(self):
         presets = self.client.get("/api/simulate/presets").json()
@@ -346,6 +379,28 @@ class TestCaptureAndCalibrationApi(unittest.TestCase):
         self.assertIn("performance", data)
         logs = self.client.get("/api/performance/logs?lines=10").json()
         self.assertIsInstance(logs["logs"], list)
+
+    def test_error_responses_do_not_expose_internal_exception_details(self):
+        # CodeQL #3: exception strings from reading performance.log or capturing a snapshot
+        # must stay in server logs, never in HTTP responses
+        from unittest import mock
+        from ffvii_companion.engine.capture_service import capture_service
+        from ffvii_companion.engine.profiler import perf_tracker
+        perf_tracker.log_file_path.parent.mkdir(parents=True, exist_ok=True)
+        perf_tracker.log_file_path.write_text("sample log\n", encoding="utf-8")
+        with mock.patch("ffvii_companion.engine.profiler.open",
+                        side_effect=PermissionError("secret/path/performance.log denied")):
+            logs_resp = self.client.get("/api/performance/logs?lines=10")
+        self.assertEqual(logs_resp.status_code, 200)
+        self.assertEqual(logs_resp.json()["logs"], ["Error reading performance log."])
+        self.assertNotIn("secret/path", logs_resp.text)
+
+        with mock.patch.object(capture_service, "capture_snapshot",
+                               side_effect=RuntimeError("internal stack detail C:\\secret")):
+            snap_resp = self.client.post("/api/calibration/snapshot")
+        self.assertEqual(snap_resp.status_code, 500)
+        self.assertEqual(snap_resp.json()["detail"], "Error capturing diagnostic snapshot")
+        self.assertNotIn("internal stack detail", snap_resp.text)
 
     def test_desktop_status_without_window(self):
         self.assertEqual(self.client.get("/api/desktop/status").json(), {"is_desktop": False, "on_top": False})

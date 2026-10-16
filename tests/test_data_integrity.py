@@ -34,10 +34,10 @@ class TestEnemyData(unittest.TestCase):
         self.assertFalse([k for k, v in names.items() if v > 1])
 
     def test_ids_are_url_path_safe(self):
-        # GEMINI-20261007-08: ids go into /api/enemies/{id}; "/" would never route
+        # GEMINI-20261007-08, CodeQL #1: ids go into /api/enemies/{id}; "/" or ".." would alter the path
         for e in self.enemies:
             self.assertTrue(e["id"])
-            self.assertNotRegex(e["id"], r"[/?#%\\\s]", e["name"])
+            self.assertNotRegex(e["id"], r"[/?#%\\\s]|\.\.", e["name"])
 
     def test_display_names(self):
         # The game's spelling joins to the same entry as the matching name

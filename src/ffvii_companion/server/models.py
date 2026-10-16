@@ -141,5 +141,5 @@ class MisdetectionReportRequest(BaseModel):
     note: Optional[str] = Field(None, max_length=1000)
 
 class DetectSimulateRequest(BaseModel):
-    enemy_names: List[str] = Field(..., max_length=16)
+    enemy_names: List[Annotated[str, Field(max_length=100)]] = Field(..., max_length=16)
     battle_title: Optional[str] = Field("Simulated Encounter", max_length=200)

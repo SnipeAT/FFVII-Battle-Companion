@@ -336,8 +336,8 @@ function renderPartnersChips(partners, currentEnemies) {
 
   partnersBar.classList.remove("hidden");
   partnersChips.innerHTML = unadded.map(p => `
-    <button class="btn-partner-chip" data-id="${p.id}" title="Click to show ${escapeHtml(enemyLabel(p))} in this battle">
-      + ${escapeHtml(enemyLabel(p))} (LVL ${p.level})
+    <button class="btn-partner-chip" data-id="${escapeHtml(p.id)}" title="Click to show ${escapeHtml(enemyLabel(p))} in this battle">
+      + ${escapeHtml(enemyLabel(p))} (LVL ${escapeHtml(p.level)})
     </button>
   `).join("");
 }
@@ -362,7 +362,7 @@ function updatePartnersBar(currentEnemies) {
   }
   partnersAbortController = new AbortController();
 
-  fetch(`/api/enemies/${primaryEnemy.id}/partners`, { signal: partnersAbortController.signal })
+  fetch(`/api/enemies/${encodeURIComponent(primaryEnemy.id)}/partners`, { signal: partnersAbortController.signal })
     .then(res => res.json())
     .then(partners => {
       partnersCache.set(cacheKey, partners);
@@ -413,13 +413,13 @@ function variantHtml(enemy) {
   if (!v || v.count < 2) return "";
   const scenes = (list) => `scene ${list.join(", ")}`;
   if (v.resolved) {
-    return `<div class="card-variant">Variant ${v.index + 1} of ${v.count} (${escapeHtml(scenes(v.scenes))})</div>`;
+    return `<div class="card-variant">Variant ${escapeHtml(Number(v.index) + 1)} of ${escapeHtml(v.count)} (${escapeHtml(scenes(v.scenes))})</div>`;
   }
   const rows = v.candidates.map(c =>
-    `<li${c.index === v.index ? ' class="shown"' : ""}>LVL ${c.level} &middot; ${c.hp.toLocaleString()} HP &middot; ` +
-    `EXP ${c.exp.toLocaleString()} &middot; AP ${c.ap.toLocaleString()} &middot; GIL ${c.gil.toLocaleString()} ` +
+    `<li${c.index === v.index ? ' class="shown"' : ""}>LVL ${escapeHtml(c.level)} &middot; ${escapeHtml(Number(c.hp).toLocaleString())} HP &middot; ` +
+    `EXP ${escapeHtml(Number(c.exp).toLocaleString())} &middot; AP ${escapeHtml(Number(c.ap).toLocaleString())} &middot; GIL ${escapeHtml(Number(c.gil).toLocaleString())} ` +
     `<span class="summary-dim">(${escapeHtml(scenes(c.scenes))})</span></li>`).join("");
-  return `<div class="card-variant card-variant-open">${v.candidates.length} variants possible in this battle; ` +
+  return `<div class="card-variant card-variant-open">${escapeHtml(v.candidates.length)} variants possible in this battle; ` +
     `showing the one closest to your party level<ul class="variant-list">${rows}</ul></div>`;
 }
 
@@ -587,7 +587,7 @@ function createEnemyCard(enemy, party) {
       <div class="section-block">
         <div class="section-label">Combat Stats</div>
         <div class="combat-stats">${cells.map(([label, value]) =>
-          `<div class="combat-stat"><span>${label}</span><strong>${Number(value) || 0}</strong></div>`).join("")}</div>
+          `<div class="combat-stat"><span>${label}</span><strong>${escapeHtml(Number(value) || 0)}</strong></div>`).join("")}</div>
       </div>
     `;
   }
@@ -606,36 +606,36 @@ function createEnemyCard(enemy, party) {
   card.innerHTML = `
     <div class="card-header">
       <div class="card-title-group">
-        <h2>${escapeHtml(enemyLabel(enemy))}${enemy.count && enemy.count > 1 ? ` <span class="enemy-count-badge">x${enemy.count}</span>` : ''}</h2>
+        <h2>${escapeHtml(enemyLabel(enemy))}${enemy.count && enemy.count > 1 ? ` <span class="enemy-count-badge">x${escapeHtml(enemy.count)}</span>` : ''}</h2>
         <div class="card-zones">${escapeHtml(zonesText)}</div>
         ${variantHtml(enemy)}
       </div>
       <div class="card-header-actions">
         ${enemy.has_ai ? `<button class="btn-ai" aria-label="AI of ${escapeHtml(enemyLabel(enemy))}">AI</button>` : ""}
-        <div class="level-badge">LVL ${enemy.level}</div>
+        <div class="level-badge">LVL ${escapeHtml(enemy.level)}</div>
       </div>
     </div>
 
     <div class="stats-strip">
       <div class="stat-item">
         <span class="stat-label">HP</span>
-        <span class="stat-val hp">${enemy.hp.toLocaleString()}</span>
+        <span class="stat-val hp">${escapeHtml(Number(enemy.hp).toLocaleString())}</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">MP</span>
-        <span class="stat-val mp">${enemy.mp.toLocaleString()}</span>
+        <span class="stat-val mp">${escapeHtml(Number(enemy.mp).toLocaleString())}</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">EXP</span>
-        <span class="stat-val">${(enemy.exp || 0).toLocaleString()}</span>
+        <span class="stat-val">${escapeHtml(Number(enemy.exp || 0).toLocaleString())}</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">AP</span>
-        <span class="stat-val">${(enemy.ap || 0).toLocaleString()}</span>
+        <span class="stat-val">${escapeHtml(Number(enemy.ap || 0).toLocaleString())}</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">GIL</span>
-        <span class="stat-val">${(enemy.gil || 0).toLocaleString()}</span>
+        <span class="stat-val">${escapeHtml(Number(enemy.gil || 0).toLocaleString())}</span>
       </div>
     </div>
 
@@ -739,8 +739,8 @@ function aiAttacksHtml(attacks) {
     const skill = a.enemy_skill
       ? ` <span class="badge badge-eskill ${learned ? "learned" : ""}"><span class="eskill-state">E.SKILL ${learned ? "LEARNED" : "NEW"}</span></span>`
       : "";
-    return `<tr><td>${escapeHtml(a.name)}${skill}</td><td>${AI_TARGETS[a.target] || "-"}</td>` +
-      `<td class="num">${Number(a.power) || "-"}</td><td class="num">${Number(a.mp) || "-"}</td>` +
+    return `<tr><td>${escapeHtml(a.name)}${skill}</td><td>${escapeHtml(AI_TARGETS[a.target] || "-")}</td>` +
+      `<td class="num">${escapeHtml(Number(a.power) || "-")}</td><td class="num">${escapeHtml(Number(a.mp) || "-")}</td>` +
       `<td>${escapeHtml((a.elements || []).join(", ") || "-")}</td><td>${escapeHtml(aiStatusText(a))}</td></tr>`;
   }).join("");
   return `<div class="ai-table-wrap"><table class="ai-attacks"><thead><tr><th>Attack</th><th>Target</th>` +
@@ -845,10 +845,10 @@ function renderBattleSummary(summary) {
   const t = summary.totals || {};
   const totalsLabel = summary.formation_known ? "FORMATION TOTAL" : "SEEN SO FAR";
   items.push(summaryItem(totalsLabel,
-    `EXP ${(t.exp || 0).toLocaleString()} &middot; AP ${(t.ap || 0).toLocaleString()} &middot; GIL ${(t.gil || 0).toLocaleString()}`));
+    `EXP ${escapeHtml(Number(t.exp || 0).toLocaleString())} &middot; AP ${escapeHtml(Number(t.ap || 0).toLocaleString())} &middot; GIL ${escapeHtml(Number(t.gil || 0).toLocaleString())}`));
   if (summary.formation_known && summary.formation) {
     const members = Object.entries(summary.formation).map(([name, count]) =>
-      `${count > 1 ? `${count}x ` : ""}${escapeHtml(name)}`).join(", ");
+      `${count > 1 ? `${escapeHtml(count)}x ` : ""}${escapeHtml(name)}`).join(", ");
     items.push(summaryItem("FORMATION", members));
   }
   if (summary.cannot_escape === true) {
@@ -1031,7 +1031,7 @@ saveReportBtn.addEventListener("click", () => {
 
 // Utility: HTML Escaping
 function escapeHtml(str) {
-  if (!str) return "";
+  if (str === null || str === undefined) return "";
   return String(str)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -1100,9 +1100,9 @@ function renderSearchResults(enemies) {
   }
 
   searchResultsDropdown.innerHTML = enemies.map((e, idx) => `
-    <div class="search-item" data-id="${e.id}" data-idx="${idx}" role="option" id="search-opt-${e.id}">
+    <div class="search-item" data-id="${escapeHtml(e.id)}" data-idx="${idx}" role="option" id="search-opt-${escapeHtml(e.id)}">
       <span><strong>${escapeHtml(enemyLabel(e))}</strong></span>
-      <span class="search-item-lvl">LVL ${e.level} | ${e.hp} HP</span>
+      <span class="search-item-lvl">LVL ${escapeHtml(e.level)} | ${escapeHtml(e.hp)} HP</span>
     </div>
   `).join("");
   searchResultsDropdown.classList.add("visible");
@@ -1525,7 +1525,7 @@ if (presetSelectGrid) {
     btn.classList.add("active");
     const presetKey = btn.getAttribute("data-preset");
     if (presetKey) {
-      fetch(`/api/calibration/preset/${presetKey}`, { method: "POST" })
+      fetch(`/api/calibration/preset/${encodeURIComponent(presetKey)}`, { method: "POST" })
         .then(res => res.json())
         .catch(err => console.error("Error setting preset:", err));
     }
@@ -1564,12 +1564,12 @@ testSnapshotBtn.addEventListener("click", () => {
       if (data.performance && diagPerf) {
         const perf = data.performance;
         diagPerf.innerHTML = `<strong>Pipeline Latency:</strong> ` +
-          `Grab: <strong>${perf.grab_ms}ms</strong> | ` +
-          `Cvt: <strong>${perf.cvt_color_ms}ms</strong> | ` +
-          `OCR Det: <strong>${perf.ocr_det_ms}ms</strong> | ` +
-          `OCR Rec: <strong>${perf.ocr_rec_ms}ms</strong> (${perf.ocr_boxes ?? 0} boxes) | ` +
-          `Match: <strong>${perf.match_ms}ms</strong> | ` +
-          `Total: <strong>${perf.total_frame_ms}ms</strong> (${perf.effective_fps} FPS)`;
+          `Grab: <strong>${escapeHtml(perf.grab_ms)}ms</strong> | ` +
+          `Cvt: <strong>${escapeHtml(perf.cvt_color_ms)}ms</strong> | ` +
+          `OCR Det: <strong>${escapeHtml(perf.ocr_det_ms)}ms</strong> | ` +
+          `OCR Rec: <strong>${escapeHtml(perf.ocr_rec_ms)}ms</strong> (${escapeHtml(perf.ocr_boxes ?? 0)} boxes) | ` +
+          `Match: <strong>${escapeHtml(perf.match_ms)}ms</strong> | ` +
+          `Total: <strong>${escapeHtml(perf.total_frame_ms)}ms</strong> (${escapeHtml(perf.effective_fps)} FPS)`;
       }
 
       if (data.recognized_lines && data.recognized_lines.length > 0) {

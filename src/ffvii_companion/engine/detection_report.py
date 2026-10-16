@@ -19,7 +19,7 @@ from ffvii_companion.paths import get_user_data_dir
 REPORTS_DIRNAME = "reports"
 MAX_EXPECTED_CHARS = 500
 MAX_NOTE_CHARS = 1000
-RE_EXPECTED_ITEM = re.compile(r"^(.*?)(?:\s*[x×*]\s*(\d+))?$", re.IGNORECASE)
+RE_EXPECTED_ITEM = re.compile(r"[x×*] ?(\d+)$", re.IGNORECASE)
 
 
 class ReportError(ValueError):
@@ -37,12 +37,15 @@ def parse_expected(text: Optional[str]) -> Tuple[Dict[str, int], List[str]]:
     """
     enemies: Dict[str, int] = {}
     unresolved: List[str] = []
-    for item in re.split(r"[,;\n]+", (text or "")[:MAX_EXPECTED_CHARS]):
-        item = item.strip()
+    for raw_item in re.split(r"[,;\n]+", (text or "")[:MAX_EXPECTED_CHARS]):
+        item = " ".join(raw_item.split())
         if not item:
             continue
-        m = RE_EXPECTED_ITEM.match(item)
-        name, count = m.group(1).strip(), int(m.group(2) or 1)
+        m = RE_EXPECTED_ITEM.search(item)
+        if m:
+            name, count = item[:m.start()].strip(), int(m.group(1))
+        else:
+            name, count = item, 1
         enemy = compendium.match_enemy(name) if name else None
         if enemy:
             enemies[enemy["name"]] = max(enemies.get(enemy["name"], 0), min(count, 8))

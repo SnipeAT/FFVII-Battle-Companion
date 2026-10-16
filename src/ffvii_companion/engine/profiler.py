@@ -305,6 +305,6 @@ class PerformanceTracker:
             return list(buffer)
         except Exception as e:
             logger.error(f"Error reading performance log: {e}")
-            return [f"Error reading log: {e}"]
+            return ["Error reading performance log."]
 
 perf_tracker = PerformanceTracker()

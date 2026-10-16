@@ -90,8 +90,8 @@ ITEM_NAMED_ENEMIES = {"Grenade", "Right Arm"}
 
 RE_LEADING_MODIFIERS = re.compile(r"^[+*>\-#\.\s]+")
 RE_DIGITS_AND_SYMBOLS = re.compile(r"^[0-9\s/%\.:\-,+*#]+$")
-RE_ROW_DESIGNATION = re.compile(r"\s*[\(\[]?(?:back|front)(?:\s*row)?[\)\]]?", re.IGNORECASE)
-RE_INSTANCE_LETTER = re.compile(r"(?:\s+|(?<=[a-zA-Z]))([A-Ha-h])$")
+RE_ROW_DESIGNATION = re.compile(r"[\(\[]?(?:back|front)(?: ?row)?[\)\]]?", re.IGNORECASE)
+RE_INSTANCE_LETTER = re.compile(r"(?: |(?<=[a-zA-Z]))([A-Ha-h])$")
 
 # Battle HUD labels and commands. They count only as a whole line or followed by a value ("HP",
 # "HP 9999"): field menus use the same words inside longer text ("Sneak Attack", "HP Absorb").
@@ -168,7 +168,7 @@ class BattleDetector:
         2. Instance letter if present (e.g. 'B')
         3. Minimum enemy count (e.g. 2 for 'B', 3 for 'C', 1 for 'A' or none)
         """
-        text = raw_text.strip()
+        text = " ".join(raw_text.split())
         if not text or len(text) < 2:
             return None, None, 1
 
@@ -182,7 +182,7 @@ class BattleDetector:
             return None, None, 1
 
         # Strip row designations: (Back row), (Front row), [Back row], Back row, etc.
-        cleaned = RE_ROW_DESIGNATION.sub("", cleaned).strip()
+        cleaned = " ".join(RE_ROW_DESIGNATION.sub("", cleaned).split())
 
         # Whole-line commands and HUD labels are rejected before any letter stripping
         # (otherwise "Mime" would be read as "Mim" + instance letter E)
