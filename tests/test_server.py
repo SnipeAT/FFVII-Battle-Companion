@@ -269,6 +269,19 @@ class TestRestApi(unittest.TestCase):
             if enemy["has_ai"]:
                 self.assertEqual(self.client.get(f"/api/enemies/{enemy['id']}/ai").status_code, 200, enemy["id"])
 
+    def test_modal_boxes_are_sized_by_the_viewport(self):
+        # A <dialog> sizes to its content: a percentage width on the box inside resolved against
+        # that, so closing the AI box's Full script shrank it and squeezed the Attacks table
+        import re
+        from ffvii_companion.server.main import STATIC_DIR
+        css = (STATIC_DIR / "style.css").read_text(encoding="utf-8")
+        html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+        self.assertRegex(css, r"\n\.modal-window \{[^}]*\n  width: 90vw;")
+        for selector, block in re.findall(r"\n([^{}\n]*\.modal-window[^{}\n]*)\{([^}]*)\}", css):
+            self.assertNotRegex(block, r"(?<!-)width:\s*[\d.]+%", selector)
+        for style in re.findall(r'class="modal-window[^"]*" style="([^"]*)"', html):
+            self.assertNotRegex(style, r"(?<!-)width:\s*[\d.]+%", style)
+
     def test_partners_endpoint(self):
         resp = self.client.get("/api/enemies/prowler/partners")
         self.assertEqual(resp.status_code, 200)

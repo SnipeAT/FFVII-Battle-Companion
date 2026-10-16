@@ -1413,7 +1413,10 @@ dialog.modal-dialog[open]::backdrop {
   background-color: var(--bg-secondary);
   border: 2px solid var(--accent-gold);
   border-radius: 8px;
-  width: 90%;
+  /* Not a percentage: the <dialog> around it sizes to its content, so 90% would be a share
+     of that, leaving the box off-center and narrower than its max-width, and shrinking it
+     when content collapses (closing the AI box's Full script squeezed the Attacks table). */
+  width: 90vw;
   max-width: 440px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8);
   overflow: hidden;
