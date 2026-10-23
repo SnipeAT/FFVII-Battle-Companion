@@ -2,7 +2,7 @@
 
 What changed in each release, newest first. The downloads and the full release notes are on the [Releases page](https://github.com/SnipeAT/FFVII-Battle-Companion/releases). Versions follow `MAJOR.MINOR.PATCH`: a minor version adds features, a patch fixes things or corrects data.
 
-## Unreleased
+## 2.2.5 - 2026-10-23
 
 ### Dashboard
 - The **PIN** button shows only in the desktop window. Phones, tablets and other PCs on the network showed it too, and tapping it pinned or unpinned the window on the PC.
