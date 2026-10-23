@@ -912,12 +912,8 @@ function applyProfile(profile) {
   });
   if (lastBattleSummary) renderBattleSummary(lastBattleSummary);
   // While a checklist save is on its way the boxes hold what the player ticked; its answer would
-  // untick a box ticked after it was sent
-  if (skillsList && !skillsSaving) {
-    skillsList.querySelectorAll("input[data-skill]").forEach(box => {
-      box.checked = isSkillLearned(box.getAttribute("data-skill"));
-    });
-  }
+  // untick a box ticked after it was sent (saveSkills syncs them once the saves are done)
+  if (!skillsSaving) syncSkillBoxes();
   // Steal calculator inputs (left alone while the user is typing in them)
   if (stealerLevelInput && document.activeElement !== stealerLevelInput) {
     stealerLevelInput.value = playerProfile.party_level;
@@ -996,7 +992,18 @@ function saveSkills() {
     if (skillsChangedWhileSaving) {
       skillsChangedWhileSaving = false;
       saveSkills();
+    } else {
+      // Profile updates that arrived meanwhile (another dashboard's skills, a failed save) skipped
+      // the boxes: without this, the next tick would send a list without them
+      syncSkillBoxes();
     }
+  });
+}
+
+function syncSkillBoxes() {
+  if (!skillsList) return;
+  skillsList.querySelectorAll("input[data-skill]").forEach(box => {
+    box.checked = isSkillLearned(box.getAttribute("data-skill"));
   });
 }
 
