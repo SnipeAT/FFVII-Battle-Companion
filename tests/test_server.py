@@ -544,6 +544,28 @@ class TestProfileSkillsAndReports(unittest.TestCase):
         self.assertEqual(missing.status_code, 409)
         self.assertEqual(self.client.post("/api/report/misdetection", json={"note": "x" * 2000}).status_code, 422)
 
+    def test_report_that_cannot_be_written_answers_503_and_leaves_no_folder(self):
+        # A failed write (a full disk) answered a bare 500 and left a folder without its manifest
+        from unittest import mock
+        from ffvii_companion.engine import detection_report
+        from ffvii_companion.engine.capture_service import capture_service
+        from tests.helpers import load_fixture_bgr
+        reports = detection_report.reports_dir()
+        before = set(reports.iterdir()) if reports.exists() else set()
+        with capture_service._state_lock:
+            saved = capture_service.last_ocr_frame
+            capture_service.last_ocr_frame = load_fixture_bgr("devil_ride_b.png")
+        try:
+            with mock.patch.object(capture_service, "_calculate_capture_bbox", side_effect=RuntimeError("no screen")), \
+                    mock.patch.object(detection_report.Path, "write_text", side_effect=OSError("disk full")):
+                resp = self.client.post("/api/report/misdetection", json={"expected": "Devil Ride"})
+        finally:
+            with capture_service._state_lock:
+                capture_service.last_ocr_frame = saved
+        self.assertEqual(resp.status_code, 503)
+        self.assertNotIn("disk full", resp.text)
+        self.assertEqual(set(reports.iterdir()), before)
+
 
 def receive_connect_messages(ws) -> dict:
     """

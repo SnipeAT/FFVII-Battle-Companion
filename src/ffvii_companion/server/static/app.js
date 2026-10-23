@@ -1314,14 +1314,18 @@ function performStealCalc() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   })
-    .then(res => res.json())
+    .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
     .then(data => {
       calcResultPercent.textContent = `${data.item_success_percentage}%`;
       calcResultFormula.textContent = currentStealSlot > 0
         ? `${data.formula_note}. Tried after ${currentStealSlot} earlier slot(s): ${data.item_success_percentage}% that all of them fail and this one succeeds.`
         : data.formula_note;
     })
-    .catch(err => console.error("Steal calc error:", err));
+    .catch(err => {
+      console.error("Steal calc error:", err);
+      calcResultPercent.textContent = "--";
+      calcResultFormula.textContent = `Could not calculate the odds (${err.message || err}).`;
+    });
 }
 
 // Live Screen Capture & Calibration Handlers
@@ -1579,7 +1583,7 @@ testSnapshotBtn.addEventListener("click", () => {
   diagEnemies.textContent = "";
 
   fetch("/api/calibration/snapshot", { method: "POST" })
-    .then(res => res.json())
+    .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
     .then(data => {
       diagDim.textContent = `Captured region: ${data.bbox.width}x${data.bbox.height} at screen (${data.bbox.left}, ${data.bbox.top}), ` +
         `OCR input ${data.dimensions.width}x${data.dimensions.height}`;
@@ -1610,7 +1614,7 @@ testSnapshotBtn.addEventListener("click", () => {
       loadPerformanceMetrics();
     })
     .catch(err => {
-      diagDim.textContent = "Error capturing diagnostic snapshot: " + err;
+      diagDim.textContent = "Error capturing diagnostic snapshot: " + (err.message || err);
     });
 });
 
