@@ -743,9 +743,12 @@ class CaptureService:
                     window_find_ms = (time.perf_counter() - t_bbox) * 1000.0
 
                     if not win:
-                        if self._note_window_missing(max_empty_frames):
-                            self._sync_current_fps(cfg)
-                            self._fire_cleared()
+                        # Under _capture_lock like every other clear, so it never interleaves
+                        # with a CLEAR from the dashboard (clear_battle)
+                        with self._capture_lock:
+                            if self._note_window_missing(max_empty_frames):
+                                self._sync_current_fps(cfg)
+                                self._fire_cleared()
                         # FFVII is not running: sleep on stop event
                         scan_int = getattr(self.window_finder, "_scan_interval", 1.0)
                         if stop_event.wait(scan_int):

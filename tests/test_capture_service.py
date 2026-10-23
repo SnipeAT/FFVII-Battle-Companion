@@ -539,6 +539,22 @@ class TestCaptureLoopLifecycle(unittest.TestCase):
         self.assertEqual(len(applied), 2)
         self.assertIsNot(applied[0], applied[1])
 
+    def test_game_window_closing_clears_under_the_capture_lock(self):
+        # The loop cleared the battle of a game window that went away without _capture_lock,
+        # unlike every other clear, so it could interleave with a CLEAR from the dashboard
+        service = CaptureService()
+        service.window_finder.find_ffvii_window = lambda: None
+        service.window_finder._scan_interval = 0.01
+        service.combat_phase = "hunting"
+        held = []
+        service.on_battle_cleared = lambda: held.append(service._capture_lock.locked())
+        cfg = make_config(mode="auto_window", idle_timeout_seconds=1.0)
+        with mock.patch.object(calibration_manager, "get_config", return_value=cfg):
+            service.start()
+            self._wait_for(lambda: held)
+            service.stop()
+        self.assertEqual(held, [True])
+
 
 
 class TestDocumentedLoopBehavior(unittest.TestCase):
