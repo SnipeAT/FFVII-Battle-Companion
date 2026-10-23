@@ -12,24 +12,27 @@ of battle and in battle.
 
 `compare` lists the frames whose detection outcome changed (enemies or HUD), then those whose
 kept lines, raw text, or only scores and boxes changed. It exits with 1 when an outcome
-changed, the two files hold different frames or no frame was compared, else 0.
+changed, the two files hold different frames or no frame was compared, else 0 (2 for a usage
+error, such as a file that is not a record of this format).
 
     .\\.venv\\Scripts\\python.exe -m tools.ocr_diff record before.json recordings\\session1 recordings\\session2
     .\\.venv\\Scripts\\python.exe -m tools.ocr_diff record after.json recordings\\session1 recordings\\session2 --tree <source tree>
     .\\.venv\\Scripts\\python.exe -m tools.ocr_diff compare before.json after.json
 
 --tree points at another copy of the project (for example a commit exported with git archive),
-as in tools/benchmark_loop.py. That copy runs with this environment's packages: a commit that
-needs a dependency this one dropped needs it installed first (Shapely, for commits from before
-ppocr/postprocess.py stopped importing it).
+as in tools/benchmark_loop.py, but only one with src/ffvii_companion/ of version 2.0.0 or later
+(record() calls the capture loop's internals). That copy runs with this environment's packages:
+a commit that needs a dependency this one dropped needs it installed first (Shapely, for
+commits from before ppocr/postprocess.py stopped importing it).
 """
 import argparse
 import json
 import os
 import sys
-import tempfile
 import time
 from typing import Any, Dict, List, Sequence
+
+from tools.source_tree import PROJECT_ROOT, use_tree
 
 FORMAT = 1
 
@@ -47,29 +50,34 @@ def folder_key(folder: str) -> str:
     return os.path.basename(os.path.normpath(folder))
 
 
-def check_folders(folders: Sequence[str]) -> None:
-    """Refuses folders that would make a record incomplete: two with the same name (their frames
-    would share keys) or one without frames (a record of nothing compares as unchanged)."""
+def folder_frames(folders: Sequence[str]) -> Dict[str, List[str]]:
+    """The frames of each folder, keyed by folder_key(). Refuses folders that would make a record
+    incomplete: a missing one, two with the same name (their frames would share keys) or one
+    without frames (a record of nothing compares as unchanged)."""
+    frames: Dict[str, List[str]] = {}
     seen: Dict[str, str] = {}
     for folder in folders:
+        if not os.path.isdir(folder):
+            raise ValueError(f"No folder {folder}")
         key = folder_key(folder)
         if key in seen:
             raise ValueError(f"Two folders are named {key!r} ({seen[key]}, {folder}): their frames would share keys")
         seen[key] = folder
-        if not frame_files(folder):
+        frames[key] = frame_files(folder)
+        if not frames[key]:
             raise ValueError(f"No PNG frames in {folder}")
+    return frames
 
 
-def record(folders: Sequence[str], progress=None) -> Dict[str, Any]:
-    """OCR output and detection outcome of every frame in folders, keyed "<folder name>/<file>"."""
-    check_folders(folders)
+def record(frames_by_folder: Dict[str, List[str]], progress=None) -> Dict[str, Any]:
+    """OCR output and detection outcome of every frame of folder_frames(), keyed
+    "<folder name>/<file>"."""
     import cv2
     from ffvii_companion.engine.calibration import calibration_manager
     from ffvii_companion.engine.capture_service import CaptureService
 
+    # Built from the current settings, as the capture loop's detector is
     svc = CaptureService()
-    cfg = calibration_manager.get_config()
-    svc._sync_detector_settings(cfg)
     detector = svc.detector
 
     # The raw lines of the pass detect_text_lines() runs, before it filters them
@@ -82,29 +90,40 @@ def record(folders: Sequence[str], progress=None) -> Dict[str, Any]:
 
     detector._ocr.run = recording_run
 
-    paths = [p for folder in folders for p in frame_files(folder)]
+    total = sum(len(paths) for paths in frames_by_folder.values())
     frames: Dict[str, Any] = {}
-    for i, path in enumerate(paths):
-        bgr = cv2.imread(path, cv2.IMREAD_COLOR)
-        if bgr is None:
-            raise ValueError(f"Cannot read {path}")
-        frame = svc._prepare_ocr_frame(cv2.cvtColor(bgr, cv2.COLOR_BGR2BGRA))
-        kept = detector.detect_text_lines(frame, use_cache=False)
-        enemies = detector.identify_enemies_from_lines(kept)
-        key = f"{folder_key(os.path.dirname(path))}/{os.path.basename(path)}"
-        frames[key] = {
-            "lines": [[l.text, round(l.score, 4), list(l.box)] for l in last["result"].lines],
-            "kept": kept,
-            "enemies": [[e["name"], e.get("count", 1), e.get("instance_letter")] for e in enemies],
-            "hud": [detector.is_combat_hud_active(kept, False), detector.is_combat_hud_active(kept, True)],
-        }
-        if progress:
-            progress(i + 1, len(paths))
+    for key, paths in frames_by_folder.items():
+        for path in paths:
+            bgr = cv2.imread(path, cv2.IMREAD_COLOR)
+            if bgr is None:
+                raise ValueError(f"Cannot read {path}")
+            frame = svc._prepare_ocr_frame(cv2.cvtColor(bgr, cv2.COLOR_BGR2BGRA))
+            kept = detector.detect_text_lines(frame, use_cache=False)
+            enemies = detector.identify_enemies_from_lines(kept)
+            frames[f"{key}/{os.path.basename(path)}"] = {
+                "lines": [[l.text, round(l.score, 4), list(l.box)] for l in last["result"].lines],
+                "kept": kept,
+                "enemies": [[e["name"], e["count"], e["instance_letter"]] for e in enemies],
+                "hud": [detector.is_combat_hud_active(kept, False), detector.is_combat_hud_active(kept, True)],
+            }
+            if progress:
+                progress(len(frames), total)
+    cfg = calibration_manager.get_config()
     return {
         "format": FORMAT,
         "settings": {k: cfg[k] for k in ("det_limit_side_len", "confidence_threshold")},
         "frames": frames,
     }
+
+
+def load(path: str) -> Dict[str, Any]:
+    """A record written by `record`. Refuses a file of another format, whose frames compare()
+    would misread."""
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, dict) or data.get("format") != FORMAT or not isinstance(data.get("frames"), dict):
+        raise ValueError(f"{path} is not an ocr_diff record of format {FORMAT}")
+    return data
 
 
 def compare(before: Dict[str, Any], after: Dict[str, Any]) -> Dict[str, Any]:
@@ -162,35 +181,45 @@ def report(diff: Dict[str, Any], show: int) -> str:
     return "\n".join(out)
 
 
+def frame_count(value: str) -> int:
+    """argparse type of --show: a whole number, 0 or more."""
+    count = int(value)
+    if count < 0:
+        raise argparse.ArgumentTypeError(f"{value} is below 0")
+    return count
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Record OCR output of frame folders, or compare two records")
     sub = parser.add_subparsers(dest="command", required=True)
     rec = sub.add_parser("record", help="OCR every frame and write the result")
     rec.add_argument("out")
     rec.add_argument("folders", nargs="+")
-    rec.add_argument("--tree", default=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    rec.add_argument("--tree", default=PROJECT_ROOT)
     cmp_ = sub.add_parser("compare", help="Differences between two records")
     cmp_.add_argument("before")
     cmp_.add_argument("after")
-    cmp_.add_argument("--show", type=int, default=20, help="Frames listed per kind of change (default 20)")
+    cmp_.add_argument("--show", type=frame_count, default=20, help="Frames listed per kind of change (default 20)")
     args = parser.parse_args()
 
     if args.command == "compare":
-        with open(args.before, encoding="utf-8") as f:
-            before = json.load(f)
-        with open(args.after, encoding="utf-8") as f:
-            after = json.load(f)
+        try:
+            before, after = load(args.before), load(args.after)
+        except (OSError, ValueError) as e:  # json.JSONDecodeError is a ValueError
+            parser.error(str(e))
         diff = compare(before, after)
         print(report(diff, args.show))
         sys.exit(1 if failed(diff) else 0)
 
     # Paths given relative to the working directory, resolved before the tree goes on sys.path
     out = os.path.abspath(args.out)
-    folders = [os.path.abspath(f) for f in args.folders]
     tree = os.path.abspath(args.tree)
-    # First on sys.path, so the tree's code wins over the project's editable install
-    sys.path.insert(0, os.path.join(tree, "src"))
-    os.environ["FFVII_COMPANION_HOME"] = tempfile.mkdtemp(prefix="ffvii_ocr_diff_")
+    # Checked before the OCR starts; errors raised during it are the tree's and keep their traceback
+    try:
+        frames_by_folder = folder_frames([os.path.abspath(f) for f in args.folders])
+        use_tree(tree, "ffvii_ocr_diff_")
+    except ValueError as e:
+        parser.error(str(e))
 
     t0 = time.monotonic()
 
@@ -198,7 +227,7 @@ def main() -> None:
         if done % 100 == 0 or done == total:
             print(f"{done}/{total} frames, {time.monotonic() - t0:.0f} s", file=sys.stderr)
 
-    result = record(folders, progress)
+    result = record(frames_by_folder, progress)
     result["tree"] = tree
     with open(out, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=1)

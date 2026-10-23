@@ -66,7 +66,7 @@ Individual suites:
 .\.venv\Scripts\python.exe -m unittest tests.test_detector -v
 .\.venv\Scripts\python.exe -m unittest tests.test_platform -v          # screen capture, window finder, QoS, build and packaging helpers
 .\.venv\Scripts\python.exe -m unittest tests.test_ai_script -v         # tools/ai_script.py disassembler, decompiler and name matching
-.\.venv\Scripts\python.exe -m unittest tests.test_ocr_diff -v          # tools/ocr_diff.py record and compare
+.\.venv\Scripts\python.exe -m unittest tests.test_ocr_diff -v          # tools/ocr_diff.py record and compare, the tools' --tree option
 ```
 
 The test package redirects all writable files (settings, player profile, reports, logs) to a temporary folder, so running the tests never changes your settings. GitHub Actions runs the whole suite on Windows for every push and pull request, and CodeQL scans every pull request to `main`. Dependabot opens a pull request each week when the workflow's actions or the Python dependencies have updates (`.github/dependabot.yml`).
@@ -81,12 +81,12 @@ A misdetection report (**REPORT** in the dashboard) is saved in the same format:
   ```powershell
   .\.venv\Scripts\python.exe -m tools.record_frames recordings\session1 --seconds 120
   ```
-- `tools/benchmark_loop.py` replays a recording through the real capture loop and reports CPU time, OCR passes, the phase timeline and detection times. No recording ships with the project (they are large; `recordings/` is git-ignored): record one first, and pass `--fps-recorded` to match its `--interval` (2 for `--interval 0.5`). `--tree` benchmarks another copy of the project (for example an older commit exported with `git archive`) against the same recording, and `--json` writes the summary to a file:
+- `tools/benchmark_loop.py` replays a recording through the real capture loop and reports CPU time, OCR passes, the phase timeline and detection times. No recording ships with the project (they are large; `recordings/` is git-ignored): record one first, and pass `--fps-recorded` to match its `--interval` (2 for `--interval 0.5`). `--tree` benchmarks another copy of the project (for example an older commit exported with `git archive`) against the same recording and stops when the folder holds no copy of the project, and `--json` writes the summary to a file:
   ```powershell
   .\.venv\Scripts\python.exe -m tools.benchmark_loop recordings\session1
   ```
   Results so far are in [Benchmarks](BENCHMARKS.md).
-- `tools/ocr_diff.py` checks a change to the OCR pipeline on recordings, beyond the test fixtures. `record` runs every frame through the capture loop's OCR path (every box recognized, no cache) and writes each frame's OCR lines, the lines the detector keeps, the enemies matched and the HUD state; `compare` lists the frames whose detection outcome changed, then those whose text changed, and exits with 1 when an outcome changed. Record before and after the change (`--tree` points at another copy of the project, as for the benchmark; that copy runs with this environment's packages, so an older commit that still imports Shapely needs `pip install shapely` first):
+- `tools/ocr_diff.py` checks a change to the OCR pipeline on recordings, beyond the test fixtures. `record` runs every frame through the capture loop's OCR path (every box recognized, no cache) and writes each frame's OCR lines, the lines the detector keeps, the enemies matched and the HUD state; `compare` lists the frames whose detection outcome changed, then those whose text changed, and exits with 1 when an outcome changed, the two files hold different frames or no frame was compared. Record before and after the change (`--tree` points at another copy of the project, as for the benchmark, but only one with `src/ffvii_companion/` of version 2.0.0 or later; that copy runs with this environment's packages, so an older commit that still imports Shapely needs `pip install shapely` first):
   ```powershell
   .\.venv\Scripts\python.exe -m tools.ocr_diff record before.json recordings\session1 recordings\session2
   .\.venv\Scripts\python.exe -m tools.ocr_diff record after.json recordings\session1 recordings\session2 --tree <changed copy>
