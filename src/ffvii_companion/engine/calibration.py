@@ -169,7 +169,8 @@ def validate_settings(settings: Dict[str, Any], clamp: bool = False) -> Dict[str
                     raise ConfigValidationError(f"{key} must be true or false")
                 clean[key] = value
             elif key == "mode":
-                if value not in VALID_MODES:
+                # A list or object would raise TypeError in the set lookup, not a validation error
+                if not isinstance(value, str) or value not in VALID_MODES:
                     raise ConfigValidationError(f"mode must be one of {sorted(VALID_MODES)}")
                 clean[key] = value
             elif key == "roi":

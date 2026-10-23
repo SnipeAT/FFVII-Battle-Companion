@@ -2,6 +2,11 @@
 
 What changed in each release, newest first. The downloads and the full release notes are on the [Releases page](https://github.com/SnipeAT/FFVII-Battle-Companion/releases). Versions follow `MAJOR.MINOR.PATCH`: a minor version adds features, a patch fixes things or corrects data.
 
+## Unreleased
+
+### Settings and startup
+- A settings file edited by hand with an invalid capture mode (a list instead of a name) no longer makes the companion ignore every other saved setting; only the mode falls back to its default.
+
 ## 2.2.4 - 2026-10-16
 
 ### Performance

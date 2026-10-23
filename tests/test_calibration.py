@@ -51,6 +51,19 @@ class TestCalibrationManager(unittest.TestCase):
         self.assertEqual(cfg["target_menu_preset"], DEFAULT_CONFIG["target_menu_preset"])
         self.assertNotIn("unknown", cfg)
 
+    def test_unhashable_mode_is_dropped_alone(self):
+        # A list or object as mode raised TypeError: the file's other values were all discarded
+        # (and the next save lost them), and the API answered 500 instead of 422
+        self.path.parent.mkdir(parents=True)
+        with open(self.path, "w", encoding="utf-8") as f:
+            json.dump({"mode": ["auto_window"], "idle_fps": 1.0}, f)
+        mgr = CalibrationManager(self.path)
+        self.assertEqual(mgr.get_config()["idle_fps"], 1.0)
+        self.assertEqual(mgr.get_config()["mode"], DEFAULT_CONFIG["mode"])
+        for bad in ([], {}):
+            with self.assertRaises(ConfigValidationError, msg=bad):
+                mgr.update_config({"mode": bad})
+
     def test_presets(self):
         mgr = CalibrationManager(self.path)
         for key, preset in PRESETS.items():
