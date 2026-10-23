@@ -35,6 +35,11 @@ def main() -> None:
     parser.add_argument("--interval", type=float, default=1.0, help="Seconds between frames (default 1.0)")
     args = parser.parse_args()
 
+    # A second recording into the same folder would overwrite the first one's frames from roi_0000
+    # on and add to its index: the folder would hold a mix of both
+    existing = os.listdir(args.out_dir) if os.path.isdir(args.out_dir) else []
+    if any(n == "frames.jsonl" or n.startswith("roi_") for n in existing):
+        parser.error(f"{args.out_dir} already holds a recording: record into a new folder")
     win_qos.apply_process_efficiency_mode()
     os.makedirs(args.out_dir, exist_ok=True)
     roi = calibration_manager.get_config()["roi"]
@@ -57,7 +62,12 @@ def main() -> None:
                 shot = sct.grab(bbox)
                 frame = np.frombuffer(shot.raw, dtype=np.uint8).reshape(shot.height, shot.width, 4)
                 name = f"roi_{count:04d}.png"
-                cv2.imwrite(os.path.join(args.out_dir, name), frame[..., :3], [cv2.IMWRITE_PNG_COMPRESSION, 3])
+                # imencode + write instead of imwrite, which fails silently on non-ASCII Windows paths
+                ok, png = cv2.imencode(".png", frame[..., :3], [cv2.IMWRITE_PNG_COMPRESSION, 3])
+                if not ok:
+                    sys.exit(f"Could not encode {name}")
+                with open(os.path.join(args.out_dir, name), "wb") as f:
+                    f.write(png.tobytes())
                 index.write(json.dumps({"file": name, "t": round(t0, 3), "bbox": bbox}) + "\n")
                 index.flush()
                 count += 1
