@@ -351,15 +351,17 @@ function updatePartnersBar(currentEnemies) {
   const primaryEnemy = currentEnemies[0];
   const cacheKey = currentEnemies.map(e => `${e.id}:${e.count || 1}`).sort().join("|");
 
+  // A request for an earlier battle state would render its chips over these when it answers
+  if (partnersAbortController) {
+    partnersAbortController.abort();
+    partnersAbortController = null;
+  }
+
   if (partnersCache.has(cacheKey)) {
     renderPartnersChips(partnersCache.get(cacheKey), currentEnemies);
     return;
   }
 
-  if (partnersAbortController) {
-    partnersAbortController.abort();
-    partnersAbortController = null;
-  }
   partnersAbortController = new AbortController();
 
   fetch(`/api/enemies/${encodeURIComponent(primaryEnemy.id)}/partners`, { signal: partnersAbortController.signal })
@@ -909,11 +911,9 @@ function applyProfile(profile) {
     if (stateEl) stateEl.textContent = learned ? "LEARNED" : "NEW";
   });
   if (lastBattleSummary) renderBattleSummary(lastBattleSummary);
-  if (skillsList) {
-    skillsList.querySelectorAll("input[data-skill]").forEach(box => {
-      box.checked = isSkillLearned(box.getAttribute("data-skill"));
-    });
-  }
+  // While a checklist save is on its way the boxes hold what the player ticked; its answer would
+  // untick a box ticked after it was sent (saveSkills syncs them once the saves are done)
+  if (!skillsSaving) syncSkillBoxes();
   // Steal calculator inputs (left alone while the user is typing in them)
   if (stealerLevelInput && document.activeElement !== stealerLevelInput) {
     stealerLevelInput.value = playerProfile.party_level;
@@ -972,13 +972,43 @@ openSkillsBtn.addEventListener("click", () => {
     });
 });
 
+// Checklist saves go one at a time, each with every box ticked when it is sent; ticks made while one
+// is on its way are sent when it is answered. A quick second tick was lost while the list came from
+// the profile (which changes only with an answer), and saves sent side by side can reach the server
+// in either order.
+let skillsSaving = false;
+let skillsChangedWhileSaving = false;
+
+function saveSkills() {
+  if (skillsSaving) {
+    skillsChangedWhileSaving = true;
+    return;
+  }
+  skillsSaving = true;
+  const learned = Array.from(skillsList.querySelectorAll("input[data-skill]:checked"),
+    box => box.getAttribute("data-skill"));
+  saveProfile({ learned_enemy_skills: learned }).finally(() => {
+    skillsSaving = false;
+    if (skillsChangedWhileSaving) {
+      skillsChangedWhileSaving = false;
+      saveSkills();
+    } else {
+      // Profile updates that arrived meanwhile (another dashboard's skills, a failed save) skipped
+      // the boxes: without this, the next tick would send a list without them
+      syncSkillBoxes();
+    }
+  });
+}
+
+function syncSkillBoxes() {
+  if (!skillsList) return;
+  skillsList.querySelectorAll("input[data-skill]").forEach(box => {
+    box.checked = isSkillLearned(box.getAttribute("data-skill"));
+  });
+}
+
 skillsList.addEventListener("change", (e) => {
-  const box = e.target.closest("input[data-skill]");
-  if (!box) return;
-  const learned = new Set(playerProfile.learned_enemy_skills);
-  const name = box.getAttribute("data-skill");
-  if (box.checked) learned.add(name); else learned.delete(name);
-  saveProfile({ learned_enemy_skills: Array.from(learned) });
+  if (e.target.closest("input[data-skill]")) saveSkills();
 });
 
 closeSkillsModalBtn.addEventListener("click", () => skillsModal.close());
@@ -1291,14 +1321,18 @@ function performStealCalc() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   })
-    .then(res => res.json())
+    .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
     .then(data => {
       calcResultPercent.textContent = `${data.item_success_percentage}%`;
       calcResultFormula.textContent = currentStealSlot > 0
         ? `${data.formula_note}. Tried after ${currentStealSlot} earlier slot(s): ${data.item_success_percentage}% that all of them fail and this one succeeds.`
         : data.formula_note;
     })
-    .catch(err => console.error("Steal calc error:", err));
+    .catch(err => {
+      console.error("Steal calc error:", err);
+      calcResultPercent.textContent = "--";
+      calcResultFormula.textContent = `Could not calculate the odds (${err.message || err}).`;
+    });
 }
 
 // Live Screen Capture & Calibration Handlers
@@ -1556,7 +1590,7 @@ testSnapshotBtn.addEventListener("click", () => {
   diagEnemies.textContent = "";
 
   fetch("/api/calibration/snapshot", { method: "POST" })
-    .then(res => res.json())
+    .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
     .then(data => {
       diagDim.textContent = `Captured region: ${data.bbox.width}x${data.bbox.height} at screen (${data.bbox.left}, ${data.bbox.top}), ` +
         `OCR input ${data.dimensions.width}x${data.dimensions.height}`;
@@ -1587,7 +1621,7 @@ testSnapshotBtn.addEventListener("click", () => {
       loadPerformanceMetrics();
     })
     .catch(err => {
-      diagDim.textContent = "Error capturing diagnostic snapshot: " + err;
+      diagDim.textContent = "Error capturing diagnostic snapshot: " + (err.message || err);
     });
 });
 
@@ -1607,8 +1641,10 @@ function updatePinButton(isOnTop) {
   }
 }
 
+// The desktop window opens the dashboard with ?desktop=1 (desktop.py): PIN pins that window on the
+// PC, so browsers on the LAN, phones and tablets, do not show it
 function initDesktopBridge() {
-  if (!pinWindowBtn) return;
+  if (!pinWindowBtn || !new URLSearchParams(window.location.search).has("desktop")) return;
   fetch("/api/desktop/status")
     .then(res => res.json())
     .then(data => {

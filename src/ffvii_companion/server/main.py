@@ -504,6 +504,7 @@ def get_profile():
 async def update_profile(changes: Dict[str, Any]):
     """Partial update. Every dashboard receives the new profile and the battle with re-computed steal odds."""
     try:
+        # On the event loop, not in a worker thread: saves then apply in the order they arrive
         profile = player_profile.update(changes)
     except ProfileValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
@@ -530,6 +531,9 @@ def report_misdetection(req: MisdetectionReportRequest):
         result = capture_service.save_detection_report(req.expected, req.note)
     except ReportError as exc:
         raise HTTPException(status_code=409, detail=str(exc))
+    except OSError as exc:
+        logger.error("Could not save the misdetection report: %s", exc)
+        raise HTTPException(status_code=503, detail="The report could not be saved.")
     # The folder name only: LAN clients do not need the PC's directory layout
     return {"status": "saved", "folder": f"reports/{result['folder']}", "files": result["files"],
             "expected": result["expected"], "unresolved": result["unresolved"],

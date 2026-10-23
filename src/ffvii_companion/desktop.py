@@ -49,6 +49,7 @@ import argparse
 import threading
 import multiprocessing
 import urllib.request
+from typing import Optional
 
 import uvicorn
 import webview
@@ -127,13 +128,23 @@ def is_port_in_use(port: int, host: str = "127.0.0.1") -> bool:
         s.settimeout(0.3)
         return s.connect_ex(sockaddr) == 0
 
-def find_available_port(start_port: int = 59314, host: str = "127.0.0.1") -> int:
-    port = start_port
-    for _ in range(50):
+PORT_SEARCH_RANGE = 50
+MAX_PORT = 65535
+
+
+def last_port_searched(start_port: int) -> int:
+    """The last port find_available_port() tries."""
+    return min(start_port + PORT_SEARCH_RANGE - 1, MAX_PORT)
+
+
+def find_available_port(start_port: int = 59314, host: str = "127.0.0.1") -> Optional[int]:
+    """The first free port of start_port and the PORT_SEARCH_RANGE - 1 after it, up to MAX_PORT;
+    None when every one is taken. (Windows wraps a port past MAX_PORT around, so is_port_in_use
+    would call it free and the server would fail to bind it.)"""
+    for port in range(start_port, last_port_searched(start_port) + 1):
         if not is_port_in_use(port, host):
             return port
-        port += 1
-    return start_port
+    return None
 
 def wait_for_server(url: str, timeout: float = 6.0) -> bool:
     """Polls url until it answers HTTP 200 or the timeout expires."""
@@ -290,6 +301,9 @@ def main():
             logger.info("Windows Efficiency mode enabled (below-normal priority, EcoQoS).")
 
     port = args.port
+    if not 1 <= port <= MAX_PORT:
+        show_startup_error(f"--port {port} is not a port number: use one from 1 to {MAX_PORT}.")
+        sys.exit(2)
     if is_port_in_use(port, args.host):
         if wait_for_server(http_url(args.host, port, "/api/health"), timeout=0.5):
             # A second instance would run a second capture loop on the same game window
@@ -297,6 +311,10 @@ def main():
             sys.exit(0)
         logger.warning(f"Port {port} is occupied. Selecting next available port...")
         port = find_available_port(start_port=port, host=args.host)
+        if port is None:
+            show_startup_error(f"Ports {args.port} to {last_port_searched(args.port)} are all in use. "
+                               "Start the companion with --port and a free port number.")
+            sys.exit(1)
         logger.info(f"Selected port: {port}")
 
     # Start in-process Uvicorn server on daemon thread
@@ -338,8 +356,9 @@ def main():
         except Exception as e:
             logger.error(f"Failed to auto-start capture engine: {e}")
 
-    # Create native window WITHOUT js_api (eliminates pywebview COM deadlock)
-    window_url = http_url(args.host, port)
+    # Create native window WITHOUT js_api (eliminates pywebview COM deadlock). ?desktop=1 marks
+    # this window: the dashboard shows its PIN button only here, not in browsers on the LAN.
+    window_url = http_url(args.host, port, "/?desktop=1")
     # The port other devices need when the requested one was taken (the LAN launcher prints that one)
     title = "FFVII Tactical Battle Companion"
     if port != args.port:

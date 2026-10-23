@@ -77,7 +77,7 @@ A misdetection report (**REPORT** in the dashboard) is saved in the same format:
 
 ## Tools
 
-- `tools/record_frames.py` records the capture region of the running game (about one frame per second, `--interval` to change it), for tuning and benchmarks:
+- `tools/record_frames.py` records the capture region of the running game (about one frame per second, `--interval` to change it) into a new folder (it refuses one that already holds a recording), for tuning and benchmarks:
   ```powershell
   .\.venv\Scripts\python.exe -m tools.record_frames recordings\session1 --seconds 120
   ```

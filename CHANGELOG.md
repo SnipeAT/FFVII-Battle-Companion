@@ -2,6 +2,18 @@
 
 What changed in each release, newest first. The downloads and the full release notes are on the [Releases page](https://github.com/SnipeAT/FFVII-Battle-Companion/releases). Versions follow `MAJOR.MINOR.PATCH`: a minor version adds features, a patch fixes things or corrects data.
 
+## Unreleased
+
+### Dashboard
+- The **PIN** button shows only in the desktop window. Phones, tablets and other PCs on the network showed it too, and tapping it pinned or unpinned the window on the PC.
+- Ticking two Enemy Skills in quick succession in the checklist saves both; on a slow network the first tick could be lost.
+- The partners bar no longer briefly offers an enemy that is already on screen, left over from the battle's previous state.
+- The test snapshot, the steal calculator and the misdetection report say what went wrong when the companion cannot answer, instead of showing an unrelated script error, "undefined%" or the old result. A report that cannot be saved (for example on a full disk) leaves no half-written folder behind.
+
+### Settings and startup
+- A settings file edited by hand with an invalid capture mode (a list instead of a name) no longer makes the companion ignore every other saved setting; only the mode falls back to its default.
+- When the port and the 49 after it are all in use, or `--port` is not a port number (1 to 65535), the companion says so instead of failing after 6 seconds with "did not start".
+
 ## 2.2.4 - 2026-10-16
 
 ### Performance

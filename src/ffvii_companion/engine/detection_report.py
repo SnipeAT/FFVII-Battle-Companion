@@ -7,6 +7,7 @@ misdetection can be turned into a regression test by copying the frames and mani
 import datetime
 import json
 import re
+import shutil
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -80,19 +81,18 @@ def write_report(frames: Dict[str, Dict[str, Any]], expected_text: Optional[str]
     Writes a report folder. frames maps a file name to {"image": BGR array, "lines": [...],
     "detected": {name: count}, "hud": bool}. Each manifest frame entry uses the expected enemies
     when the user gave them, otherwise what was detected (marked needs_review).
-    Returns {"folder", "path", "files", "expected", "unresolved", "needs_review"}.
+    Returns {"folder", "path", "files", "expected", "unresolved", "needs_review"}. A folder that
+    cannot be written completely (a full disk, a file that cannot be encoded) is removed again.
     """
     if not frames:
         raise ReportError("no capture frame available: start capture or open the game first")
     expected, unresolved = parse_expected(expected_text)
     needs_review = not expected
     now = datetime.datetime.now()
-    folder = _new_report_dir(base_dir or reports_dir(), now)
 
     manifest_frames = {}
     report_frames = {}
     for file_name, info in frames.items():
-        _write_png(folder / file_name, info["image"])
         manifest_frames[file_name] = {"enemies": expected if expected else dict(info["detected"]),
                                       "hud": bool(info["hud"])}
         report_frames[file_name] = {"recognized_lines": list(info["lines"]),
@@ -113,6 +113,13 @@ def write_report(frames: Dict[str, Dict[str, Any]], expected_text: Optional[str]
             **context,
         },
     }
-    (folder / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    folder = _new_report_dir(base_dir or reports_dir(), now)
+    try:
+        for file_name, info in frames.items():
+            _write_png(folder / file_name, info["image"])
+        (folder / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    except BaseException:
+        shutil.rmtree(folder, ignore_errors=True)
+        raise
     return {"folder": folder.name, "path": str(folder), "files": sorted(frames) + ["manifest.json"],
             "expected": expected, "unresolved": unresolved, "needs_review": needs_review}
