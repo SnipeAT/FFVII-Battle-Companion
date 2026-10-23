@@ -909,7 +909,9 @@ function applyProfile(profile) {
     if (stateEl) stateEl.textContent = learned ? "LEARNED" : "NEW";
   });
   if (lastBattleSummary) renderBattleSummary(lastBattleSummary);
-  if (skillsList) {
+  // While a checklist save is on its way the boxes hold what the player ticked; its answer would
+  // untick a box ticked after it was sent
+  if (skillsList && !skillsSaving) {
     skillsList.querySelectorAll("input[data-skill]").forEach(box => {
       box.checked = isSkillLearned(box.getAttribute("data-skill"));
     });
@@ -972,13 +974,32 @@ openSkillsBtn.addEventListener("click", () => {
     });
 });
 
+// Checklist saves go one at a time, each with every box ticked when it is sent; ticks made while one
+// is on its way are sent when it is answered. A quick second tick was lost while the list came from
+// the profile (which changes only with an answer), and saves sent side by side can reach the server
+// in either order.
+let skillsSaving = false;
+let skillsChangedWhileSaving = false;
+
+function saveSkills() {
+  if (skillsSaving) {
+    skillsChangedWhileSaving = true;
+    return;
+  }
+  skillsSaving = true;
+  const learned = Array.from(skillsList.querySelectorAll("input[data-skill]:checked"),
+    box => box.getAttribute("data-skill"));
+  saveProfile({ learned_enemy_skills: learned }).finally(() => {
+    skillsSaving = false;
+    if (skillsChangedWhileSaving) {
+      skillsChangedWhileSaving = false;
+      saveSkills();
+    }
+  });
+}
+
 skillsList.addEventListener("change", (e) => {
-  const box = e.target.closest("input[data-skill]");
-  if (!box) return;
-  const learned = new Set(playerProfile.learned_enemy_skills);
-  const name = box.getAttribute("data-skill");
-  if (box.checked) learned.add(name); else learned.delete(name);
-  saveProfile({ learned_enemy_skills: Array.from(learned) });
+  if (e.target.closest("input[data-skill]")) saveSkills();
 });
 
 closeSkillsModalBtn.addEventListener("click", () => skillsModal.close());

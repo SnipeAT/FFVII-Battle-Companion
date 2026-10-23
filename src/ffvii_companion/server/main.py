@@ -504,6 +504,7 @@ def get_profile():
 async def update_profile(changes: Dict[str, Any]):
     """Partial update. Every dashboard receives the new profile and the battle with re-computed steal odds."""
     try:
+        # On the event loop, not in a worker thread: saves then apply in the order they arrive
         profile = player_profile.update(changes)
     except ProfileValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
