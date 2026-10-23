@@ -351,15 +351,17 @@ function updatePartnersBar(currentEnemies) {
   const primaryEnemy = currentEnemies[0];
   const cacheKey = currentEnemies.map(e => `${e.id}:${e.count || 1}`).sort().join("|");
 
+  // A request for an earlier battle state would render its chips over these when it answers
+  if (partnersAbortController) {
+    partnersAbortController.abort();
+    partnersAbortController = null;
+  }
+
   if (partnersCache.has(cacheKey)) {
     renderPartnersChips(partnersCache.get(cacheKey), currentEnemies);
     return;
   }
 
-  if (partnersAbortController) {
-    partnersAbortController.abort();
-    partnersAbortController = null;
-  }
   partnersAbortController = new AbortController();
 
   fetch(`/api/enemies/${encodeURIComponent(primaryEnemy.id)}/partners`, { signal: partnersAbortController.signal })
