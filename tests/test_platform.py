@@ -358,6 +358,20 @@ class TestPortProbe(unittest.TestCase):
         self.assertEqual(stop.exception.code, 1)
         self.assertIn("Ports 59314 to 59363 are all in use", error.call_args[0][0])
 
+    def test_desktop_window_opens_the_dashboard_marked_as_desktop(self):
+        # PIN pins the window on the PC: the dashboard shows it only when opened with ?desktop=1,
+        # which only the desktop window does (phones and tablets on the LAN showed it too)
+        from ffvii_companion import desktop
+        with mock.patch.object(sys, "argv", ["FFVII_Companion", "--no-capture", "--normal-priority"]), \
+                mock.patch.object(desktop, "setup_file_logging"), \
+                mock.patch.object(desktop, "is_port_in_use", return_value=False), \
+                mock.patch.object(desktop, "wait_for_server", return_value=True), \
+                mock.patch.object(desktop.uvicorn, "Server"), \
+                mock.patch.object(desktop.webview, "create_window", side_effect=AssertionError("window")) as window:
+            with self.assertRaises(AssertionError):
+                desktop.main()
+        self.assertEqual(window.call_args.kwargs["url"], "http://127.0.0.1:59314/?desktop=1")
+
 @unittest.skipUnless(os.name == "nt", "Windows batch file")
 class TestLanLauncher(unittest.TestCase):
     def run_launcher(self, *args):

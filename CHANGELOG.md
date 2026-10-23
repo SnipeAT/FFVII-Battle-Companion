@@ -4,6 +4,9 @@ What changed in each release, newest first. The downloads and the full release n
 
 ## Unreleased
 
+### Dashboard
+- The **PIN** button shows only in the desktop window. Phones, tablets and other PCs on the network showed it too, and tapping it pinned or unpinned the window on the PC.
+
 ### Settings and startup
 - A settings file edited by hand with an invalid capture mode (a list instead of a name) no longer makes the companion ignore every other saved setting; only the mode falls back to its default.
 - When the port and the 49 after it are all in use, the companion says so and names the `--port` flag, instead of failing after 6 seconds with "did not start".

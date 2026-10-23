@@ -347,8 +347,9 @@ def main():
         except Exception as e:
             logger.error(f"Failed to auto-start capture engine: {e}")
 
-    # Create native window WITHOUT js_api (eliminates pywebview COM deadlock)
-    window_url = http_url(args.host, port)
+    # Create native window WITHOUT js_api (eliminates pywebview COM deadlock). ?desktop=1 marks
+    # this window: the dashboard shows its PIN button only here, not in browsers on the LAN.
+    window_url = http_url(args.host, port, "/?desktop=1")
     # The port other devices need when the requested one was taken (the LAN launcher prints that one)
     title = "FFVII Tactical Battle Companion"
     if port != args.port:

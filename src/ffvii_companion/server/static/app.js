@@ -1607,8 +1607,10 @@ function updatePinButton(isOnTop) {
   }
 }
 
+// The desktop window opens the dashboard with ?desktop=1 (desktop.py): PIN pins that window on the
+// PC, so browsers on the LAN, phones and tablets, do not show it
 function initDesktopBridge() {
-  if (!pinWindowBtn) return;
+  if (!pinWindowBtn || !new URLSearchParams(window.location.search).has("desktop")) return;
   fetch("/api/desktop/status")
     .then(res => res.json())
     .then(data => {
