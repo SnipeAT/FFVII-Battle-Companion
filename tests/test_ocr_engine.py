@@ -8,6 +8,7 @@ import numpy as np
 from ffvii_companion.engine.calibration import DEFAULT_CONFIG
 from ffvii_companion.engine.detector import BattleDetector
 from ffvii_companion.engine.ocr_engine import OCREngine, create_session, DET_MODEL_PATH
+from ffvii_companion.ppocr.postprocess import DBPostProcess
 from tests.helpers import FIXTURES_DIR, load_fixture_bgr, load_manifest
 
 # What the engine reads in every fixture frame, at the default detection size and at RapidOCR's
@@ -169,6 +170,26 @@ class TestOCREngine(unittest.TestCase):
                     for (text, score, box), (_, exp_score, exp_box) in zip(got, lines):
                         self.assertAlmostEqual(score, exp_score, delta=0.01, msg=text)
                         self.assertTrue(all(abs(a - b) <= 2 for a, b in zip(box, exp_box)), (text, box, exp_box))
+
+
+class TestPostProcess(unittest.TestCase):
+    def test_area_and_length_match_shapely(self):
+        # unclip() replaced Shapely's Polygon area and length; these boxes (cv2.boxPoints, float32)
+        # are ones where the plain shoelace formula missed Shapely's area in the last bit. Expected
+        # values from Shapely 2.1, which area_and_length() matched on 1,000,000 random boxes.
+        cases = [
+            ([[4.5038533210754395, -0.8662948608398438], [83.62586975097656, -7.421756744384766],
+              [94.60237121582031, 125.06063842773438], [15.480354309082031, 131.6160888671875]],
+             10554.229798923987, 424.65889473114703),
+            ([[26.011825561523438, 316.4729309082031], [-1.759061574935913, 311.4219055175781],
+              [0.2135980725288391, 300.5761413574219], [27.984485626220703, 305.6271667480469]],
+             311.1604496830896, 78.50039306708169),
+            ([[413.5007629394531, 118.98301696777344], [417.2511291503906, 13.467774391174316],
+              [1226.11279296875, 42.21710968017578], [1222.3624267578125, 147.7323455810547]],
+             85455.05249197526, 1829.9085782901075),
+        ]
+        for box, area, length in cases:
+            self.assertEqual(DBPostProcess.area_and_length(np.array(box, dtype=np.float32)), (area, length))
 
 
 if __name__ == "__main__":

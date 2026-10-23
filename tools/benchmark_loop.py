@@ -20,15 +20,16 @@ import glob
 import json
 import os
 import sys
-import tempfile
 import threading
 import time
+
+from tools.source_tree import PROJECT_ROOT, use_tree
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Replay recorded frames through the capture loop")
     parser.add_argument("frames_dir")
-    parser.add_argument("--tree", default=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    parser.add_argument("--tree", default=PROJECT_ROOT)
     parser.add_argument("--fps-recorded", type=float, default=1.0, help="Rate the frames were recorded at")
     parser.add_argument("--json", default=None, help="Write the summary to this JSON file")
     parser.add_argument("--window", type=int, default=10, help="Seconds per timeline entry (default 10)")
@@ -38,11 +39,11 @@ def main() -> None:
     # Paths given relative to the working directory, resolved before the chdir into the tree
     frames_dir = os.path.abspath(args.frames_dir)
     json_path = os.path.abspath(args.json) if args.json else None
-    src_layout = os.path.isdir(os.path.join(tree, "src", "ffvii_companion"))
-    # First on sys.path, so the tree's code wins over the project's editable install
-    sys.path.insert(0, os.path.join(tree, "src") if src_layout else tree)
+    try:
+        src_layout = use_tree(tree, "ffvii_bench_", flat_layout=True)
+    except ValueError as e:
+        parser.error(str(e))
     os.chdir(tree)
-    os.environ["FFVII_COMPANION_HOME"] = tempfile.mkdtemp(prefix="ffvii_bench_")
 
     import cv2
     import numpy as np
