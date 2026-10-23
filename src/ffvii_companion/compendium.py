@@ -26,6 +26,7 @@ import json
 import re
 import functools
 import logging
+import threading
 from collections import OrderedDict
 from pathlib import Path
 from typing import List, Optional, Dict, Any, Tuple
@@ -184,6 +185,9 @@ class EnemyCompendium:
 
         self._normalized_names_list: List[str] = list(self._normalized_name_map.keys())
         self._match_cache: OrderedDict[Tuple[str, float], Optional[Dict[str, Any]]] = OrderedDict()
+        # The capture thread and request threads (search, simulations, reports) share the cache:
+        # between a lookup and its read, another thread's insert could evict the key
+        self._match_lock = threading.Lock()
 
         # scene.bin enemy id -> (entry id, variant index) for entries with several variants
         self._variant_by_enemy_id: Dict[int, Tuple[str, int]] = {}
@@ -413,10 +417,10 @@ class EnemyCompendium:
         """
         collapsed = " ".join(query.split())
         cache_key = (collapsed, score_cutoff)
-        if cache_key in self._match_cache:
-            res = self._match_cache[cache_key]
-            self._match_cache.move_to_end(cache_key)
-            return res
+        with self._match_lock:
+            if cache_key in self._match_cache:
+                self._match_cache.move_to_end(cache_key)
+                return self._match_cache[cache_key]
 
         norm_query = self._normalize_text(collapsed)
         # The unstripped form first: it is the exact name of enemies such as "Unknown 3"
@@ -452,9 +456,10 @@ class EnemyCompendium:
             else:
                 res = None
 
-        if len(self._match_cache) >= 1024:
-            self._match_cache.popitem(last=False)
-        self._match_cache[cache_key] = res
+        with self._match_lock:
+            if len(self._match_cache) >= 1024:
+                self._match_cache.popitem(last=False)
+            self._match_cache[cache_key] = res
 
         return res
 
