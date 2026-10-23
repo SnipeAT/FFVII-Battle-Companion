@@ -358,6 +358,23 @@ class TestPortProbe(unittest.TestCase):
         self.assertEqual(stop.exception.code, 1)
         self.assertIn("Ports 59314 to 59363 are all in use", error.call_args[0][0])
 
+    def test_ports_past_65535_are_never_used(self):
+        # Windows wraps a port past 65535 around (65536 connects to port 0), so is_port_in_use
+        # called it free: the search, or a --port that high, ended in a server that cannot bind
+        from ffvii_companion import desktop
+        taken_up_to_the_last = mock.patch.object(desktop, "is_port_in_use", side_effect=lambda port, host: port <= 65535)
+        with taken_up_to_the_last:
+            self.assertIsNone(desktop.find_available_port(65530))
+        with mock.patch.object(sys, "argv", ["FFVII_Companion", "--port", "70000", "--no-capture", "--normal-priority"]), \
+                mock.patch.object(desktop, "setup_file_logging"), \
+                mock.patch.object(desktop, "is_port_in_use", side_effect=AssertionError("probed the port")), \
+                mock.patch.object(desktop, "show_startup_error") as error, \
+                mock.patch.object(desktop.uvicorn, "Server", side_effect=AssertionError("started a server")):
+            with self.assertRaises(SystemExit) as stop:
+                desktop.main()
+        self.assertEqual(stop.exception.code, 2)
+        self.assertIn("--port 70000 is not a port number", error.call_args[0][0])
+
     def test_desktop_window_opens_the_dashboard_marked_as_desktop(self):
         # PIN pins the window on the PC: the dashboard shows it only when opened with ?desktop=1,
         # which only the desktop window does (phones and tablets on the LAN showed it too)
