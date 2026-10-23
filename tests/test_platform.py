@@ -341,6 +341,23 @@ class TestPortProbe(unittest.TestCase):
         self.assertEqual(stop.exception.code, 0)
         health.assert_called_once_with("http://127.0.0.1:59314/api/health", timeout=0.5)
 
+    def test_no_free_port_is_reported(self):
+        # With every port of the range taken, find_available_port returned the first one, taken
+        # too, and the start failed after 6 s with a message about the server not starting
+        from ffvii_companion import desktop
+        with mock.patch.object(desktop, "is_port_in_use", return_value=True):
+            self.assertIsNone(desktop.find_available_port(59314))
+        with mock.patch.object(sys, "argv", ["FFVII_Companion", "--no-capture", "--normal-priority"]), \
+                mock.patch.object(desktop, "setup_file_logging"), \
+                mock.patch.object(desktop, "is_port_in_use", return_value=True), \
+                mock.patch.object(desktop, "wait_for_server", return_value=False), \
+                mock.patch.object(desktop, "show_startup_error") as error, \
+                mock.patch.object(desktop.uvicorn, "Server", side_effect=AssertionError("started a server")):
+            with self.assertRaises(SystemExit) as stop:
+                desktop.main()
+        self.assertEqual(stop.exception.code, 1)
+        self.assertIn("Ports 59314 to 59363 are all in use", error.call_args[0][0])
+
 @unittest.skipUnless(os.name == "nt", "Windows batch file")
 class TestLanLauncher(unittest.TestCase):
     def run_launcher(self, *args):

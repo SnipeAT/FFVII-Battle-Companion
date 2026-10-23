@@ -49,6 +49,7 @@ import argparse
 import threading
 import multiprocessing
 import urllib.request
+from typing import Optional
 
 import uvicorn
 import webview
@@ -127,13 +128,16 @@ def is_port_in_use(port: int, host: str = "127.0.0.1") -> bool:
         s.settimeout(0.3)
         return s.connect_ex(sockaddr) == 0
 
-def find_available_port(start_port: int = 59314, host: str = "127.0.0.1") -> int:
-    port = start_port
-    for _ in range(50):
+PORT_SEARCH_RANGE = 50
+
+
+def find_available_port(start_port: int = 59314, host: str = "127.0.0.1") -> Optional[int]:
+    """The first free port of start_port and the PORT_SEARCH_RANGE - 1 after it; None when every
+    one is taken."""
+    for port in range(start_port, start_port + PORT_SEARCH_RANGE):
         if not is_port_in_use(port, host):
             return port
-        port += 1
-    return start_port
+    return None
 
 def wait_for_server(url: str, timeout: float = 6.0) -> bool:
     """Polls url until it answers HTTP 200 or the timeout expires."""
@@ -297,6 +301,11 @@ def main():
             sys.exit(0)
         logger.warning(f"Port {port} is occupied. Selecting next available port...")
         port = find_available_port(start_port=port, host=args.host)
+        if port is None:
+            last = args.port + PORT_SEARCH_RANGE - 1
+            show_startup_error(f"Ports {args.port} to {last} are all in use. Start the companion with "
+                               f"--port and a free port number.")
+            sys.exit(1)
         logger.info(f"Selected port: {port}")
 
     # Start in-process Uvicorn server on daemon thread
