@@ -121,7 +121,8 @@ class TestCompare(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(load(_write(tmp, "ok.json", self.before)), self.before)
             for name, data in (("v2.json", dict(self.before, format=2)), ("list.json", []),
-                               ("no_frames.json", {"format": 1}), ("text.json", "not json")):
+                               ("no_frames.json", {"format": 1}), ("text.json", "not json"),
+                               ("empty_frame.json", _record({"s/roi_0000.png": {}}))):
                 with self.assertRaisesRegex(ValueError, "not an ocr_diff record|Expecting value"):
                     load(_write(tmp, name, data))
 
@@ -212,7 +213,9 @@ class TestUseTree(unittest.TestCase):
             self.assertEqual(os.listdir(home), [])
 
     def test_a_package_already_imported_from_elsewhere_is_refused(self):
-        # This process imported ffvii_companion from the project: the tree's copy would never load
+        # Once imported from the project, the tree's copy would never load (imported here, so the
+        # test does not depend on an earlier test having imported it)
+        import ffvii_companion  # noqa: F401
         os.makedirs(os.path.join(self.tmp, "src", "ffvii_companion"))
         with _isolated_tree_setup(), self.assertRaisesRegex(ValueError, "already imported"):
             use_tree(self.tmp, "ocr_diff_test_")

@@ -35,6 +35,7 @@ from typing import Any, Dict, List, Sequence
 from tools.source_tree import PROJECT_ROOT, use_tree
 
 FORMAT = 1
+FRAME_FIELDS = {"lines", "kept", "enemies", "hud"}  # what compare() reads of every frame
 
 
 def frame_files(folder: str) -> List[str]:
@@ -117,11 +118,13 @@ def record(frames_by_folder: Dict[str, List[str]], progress=None) -> Dict[str, A
 
 
 def load(path: str) -> Dict[str, Any]:
-    """A record written by `record`. Refuses a file of another format, whose frames compare()
-    would misread."""
+    """A record written by `record`. Refuses a file of another format, or with a frame that lacks
+    a field: compare() would misread it or stop with a KeyError."""
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
-    if not isinstance(data, dict) or data.get("format") != FORMAT or not isinstance(data.get("frames"), dict):
+    frames = data.get("frames") if isinstance(data, dict) else None
+    if (not isinstance(frames, dict) or data.get("format") != FORMAT
+            or not all(isinstance(frame, dict) and FRAME_FIELDS <= frame.keys() for frame in frames.values())):
         raise ValueError(f"{path} is not an ocr_diff record of format {FORMAT}")
     return data
 
