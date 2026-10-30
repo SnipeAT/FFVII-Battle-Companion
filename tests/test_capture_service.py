@@ -647,6 +647,39 @@ class TestDocumentedLoopBehavior(unittest.TestCase):
         self.assertEqual(read("Devil Ride B"), [(2, "B")])
         self.assertEqual(read("Devil Ride A"), [(2, "B")])
 
+    def test_certain_partners_get_the_count_of_their_formations(self):
+        # Auto-added partners had no count: Grangalan's only formation holds three Grangalan
+        # Jr.Jr., and the title and card showed one (code review 2026-10-30)
+        cfg = make_config(auto_add_scene_partners=True)
+        grangalan = dict(compendium.get_by_name("Grangalan"), count=1)
+        self.service._update_battle_state([grangalan], True, True, cfg, 3)
+        counts = {e["name"]: e.get("count", 1) for e in self.service.current_enemies}
+        self.assertEqual(counts, {"Grangalan": 1, "Grangalan Jr.": 1, "Grangalan Jr.Jr.": 3})
+        self.assertEqual(self.service.current_battle_title, "Battle: Grangalan, Grangalan Jr., 3x Grangalan Jr.Jr.")
+        self.assertIsNone(compendium.get_by_name("Grangalan Jr.Jr.").get("count"), "compendium entries stay untouched")
+
+    def test_added_partner_stays_in_the_encounter(self):
+        # A partner added from the dashboard lived only in the server's battle: the next encounter
+        # update of the capture loop replaced it without the partner (code review 2026-10-30)
+        detected = []
+        self.service.on_battle_detected = lambda enemies, title: detected.append((enemies, title))
+        self.assertFalse(self.service.add_enemy(compendium.get_by_name("Kalm Fang")), "no encounter yet")
+        prowler = dict(compendium.get_by_name("Prowler"), count=1)
+        self.service._update_battle_state([prowler], True, True, self.cfg, 3)
+        self.assertTrue(self.service.add_enemy(compendium.get_by_name("Kalm Fang")))
+        self.assertEqual(detected[-1][1], "Battle: Prowler, Kalm Fang")
+        self.assertEqual([e["name"] for e in detected[-1][0]], ["Prowler", "Kalm Fang"])
+        # "Prowler B" read next: the update keeps the partner
+        snapshot, title, _ = self.service._update_battle_state(
+            [dict(compendium.get_by_name("Prowler"), count=2, instance_letter="B")], True, True, self.cfg, 3)
+        self.assertEqual(title, "Battle: 2x Prowler, Kalm Fang")
+        self.assertEqual([e["name"] for e in snapshot], ["Prowler", "Kalm Fang"])
+        # A partner added from the bar gets the formation's count once it is certain
+        service = CaptureService()
+        service._update_battle_state([dict(compendium.get_by_name("Grangalan"), count=1)], True, True, self.cfg, 3)
+        service.add_enemy(compendium.get_by_name("Grangalan Jr.Jr."))
+        self.assertEqual(service.current_enemies[-1]["count"], 3)
+
     def test_new_enemy_restarts_the_hunting_burst(self):
         from ffvii_companion.engine.capture_service import HUNTING_BURST_FRAMES
         prowler = dict(compendium.get_by_name("Prowler"))

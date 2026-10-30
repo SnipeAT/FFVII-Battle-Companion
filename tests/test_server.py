@@ -664,6 +664,38 @@ class TestWebSocket(unittest.TestCase):
             ws.send_json({"action": "CLEAR_BATTLE"})
             self.assertFalse(ws.receive_json()["data"]["in_battle"])
 
+    def test_partner_added_to_a_live_battle_survives_its_next_update(self):
+        # ADD_ENEMY added the partner to the server's battle only, so the capture loop's next
+        # encounter update replaced the battle without it (code review 2026-10-30)
+        from ffvii_companion.compendium import compendium
+        from ffvii_companion.engine.capture_service import capture_service
+        from ffvii_companion.server import main
+        from tests.helpers import make_config
+        cfg = make_config()
+        names = lambda msg: [e["name"] for e in msg["data"]["enemies"]]
+
+        def read(count):
+            prowler = dict(compendium.get_by_name("Prowler"), count=count)
+            snapshot, title, _ = capture_service._update_battle_state([prowler], True, True, cfg, 3)
+            main.handle_live_battle_detected(snapshot, title)
+
+        with TestClient(app, base_url=BASE_URL) as client, client.websocket_connect(WS_URL) as ws:
+            receive_connect_messages(ws)
+            try:
+                read(1)
+                self.assertEqual(names(ws.receive_json()), ["Prowler"])
+                ws.send_json({"action": "ADD_ENEMY", "enemy_id": "kalm-fang"})
+                msg = ws.receive_json()
+                self.assertEqual(names(msg), ["Prowler", "Kalm Fang"])
+                self.assertEqual(msg["data"]["source"], "ocr")
+                read(2)  # "Prowler B"
+                msg = ws.receive_json()
+                self.assertEqual(names(msg), ["Prowler", "Kalm Fang"])
+                self.assertEqual(msg["data"]["battle_title"], "Battle: 2x Prowler, Kalm Fang")
+            finally:
+                capture_service.clear_battle()
+                ws.receive_json()  # the clear's broadcast
+
     def test_clear_battle_resets_the_capture_loop(self):
         # Regression: CLEAR reset only the server's battle; the capture loop kept its collected
         # enemies and brought them back with the next new name it read

@@ -119,7 +119,7 @@ The `/ws` WebSocket, server to client:
 | `PROFILE_UPDATE` | On connect, then after `POST /api/profile` (followed by a `BATTLE_UPDATE` with the new odds) |
 | `CAPTURE_STATUS` | On connect, then when capture starts or stops and on a phase change without an encounter change |
 
-Client to server, as `{"action": ...}`: `MANUAL_SELECT` and `ADD_ENEMY` (with `enemy_id`), and `CLEAR_BATTLE`, which clears the capture loop's encounter too, so the next name read starts a new one.
+Client to server, as `{"action": ...}`: `MANUAL_SELECT` and `ADD_ENEMY` (with `enemy_id`), and `CLEAR_BATTLE`, which clears the capture loop's encounter too, so the next name read starts a new one. `ADD_ENEMY` on the capture loop's battle adds the enemy to the loop's encounter (`CaptureService.add_enemy()`), so its later updates keep it; on any other battle it adds the enemy to the dashboards' battle only.
 
 The REST API, by prefix: `/api/search`, `/api/enemies/{id}/partners` and `/api/enemies/{id}/ai` (the AI box, fetched when it opens), `/api/steal-calc`, `/api/profile`, `/api/enemy-skills`, `/api/report/misdetection`, `/api/simulate/*`, `/api/capture/*`, `/api/calibration/*`, `/api/performance*`, `/api/desktop/*` and `/api/health`. A running companion lists them all at `/openapi.json`.
 
