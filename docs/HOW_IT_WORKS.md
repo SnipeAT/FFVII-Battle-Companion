@@ -34,7 +34,7 @@ Everything runs on your PC: the OCR models are part of the program, and nothing 
 
 **Detection-time goal.** A new name is picked up within one sampling interval of the current phase plus one OCR pass: about 2 s for the first sample of a new battle (idle), about 0.7 s while hunting, and about 3 s for a newly targeted enemy once the battle is settled (default rates). Low CPU use comes first, so the slower idle and settled phases are the intended trade-off, not a latency gap; there is no single target for every phase.
 
-The battle ends (back to **idle**) when neither enemies nor the battle HUD have been seen for `idle_timeout_seconds` (default 6 s); a game window that is closed or minimized counts the same. The text-change gate applies in every phase, with a safety net that forces OCR after 2 skipped frames while hunting and after 4 skipped frames otherwise.
+The battle ends (back to **idle**) at the first sample taken `idle_timeout_seconds` (default 6 s) or more after a sample last showed enemies or the battle HUD, and never on a single sample without them; a game window that is closed or minimized counts the same. The time is measured, so a PC that reads slower than the sampling rate does not stretch it. The text-change gate applies in every phase, with a safety net that forces OCR after 2 skipped frames while hunting and after 4 skipped frames otherwise.
 
 The rates and the timeout are settings: see [Configuration](CONFIGURATION.md#settings-file-datacalibrationjson).
 

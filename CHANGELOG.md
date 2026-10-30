@@ -6,6 +6,7 @@ What changed in each release, newest first. The downloads and the full release n
 
 ### Detection
 - Switching away from the game during a battle (Alt+Tab out of fullscreen minimizes it) no longer clears the battle from the dashboard after about a second. The battle now stays for `idle_timeout_seconds` (6 s by default), as it does after a victory; it took up to 17 s while the companion was still identifying enemies.
+- After a victory, the battle leaves the dashboard once `idle_timeout_seconds` have passed since the companion last read it, at the first sample after that time. Once enemies were registered it cleared one sample early (after 5.7 s of the default 6 s; also after 5.7 s with 8 s set), and on a PC that reads slower than the sampling rate it took longer than set.
 
 ### Dashboard
 - An enemy added from the **Formation Partners** bar during a detected battle stays on the dashboard. The next change the companion read (a second enemy of the same kind, for example) removed its card again.

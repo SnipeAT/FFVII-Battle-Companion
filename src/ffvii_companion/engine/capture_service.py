@@ -11,8 +11,9 @@ rate of the phase the step ended in. Nothing is grabbed between samples.
 
 Phases: idle (idle_fps); hunting (active_fps) while the battle HUD shows without a registered
 enemy, and for HUNTING_BURST_FRAMES after a new enemy; settled (settled_fps) once enemies are
-registered. The battle clears after idle_timeout_seconds without enemies or HUD, or without the
-game window (closed or minimized: the loop then waits at the phase's rate too). MAX_GATED_SKIPS
+registered. The battle clears once idle_timeout_seconds have passed since a sample last showed
+enemies or HUD (at least MIN_EMPTY_SAMPLES samples later), also while the game window is gone
+(closed or minimized: the loop then waits at the phase's rate too). MAX_GATED_SKIPS
 forces OCR after that many skipped frames. The thread runs at below-normal priority, with EcoQoS
 (eco_mode) except while hunting.
 
@@ -55,6 +56,9 @@ MAX_GATED_SKIPS = {"hunting": 2, "settled": 4, "idle": 4}
 # Frames to stay in the hunting phase after a new enemy appears. While the battle HUD shows
 # without a registered enemy, hunting lasts as long as the HUD does.
 HUNTING_BURST_FRAMES = 3
+# Samples without enemies or HUD needed to clear a battle, however long they took: a single
+# misread sample never ends one.
+MIN_EMPTY_SAMPLES = 2
 # Minimum seconds between repeated identical error log lines from the capture loop.
 ERROR_LOG_INTERVAL = 30.0
 
@@ -92,6 +96,8 @@ class CaptureService:
         self.current_battle_title: Optional[str] = None
         self.observed_counts: Dict[str, int] = {}
         self.empty_frames_count = 0
+        # time.monotonic() of the last sample that showed enemies or the battle HUD
+        self.battle_seen_at = 0.0
         self.last_detection_time = 0.0
         self.last_game_window: Optional[Dict[str, Any]] = None
         self.last_recognized_lines: List[str] = []
@@ -182,11 +188,14 @@ class CaptureService:
             return max(0.2, cfg["settled_fps"])
         return max(0.2, cfg["idle_fps"])
 
-    @classmethod
-    def _max_empty_frames(cls, cfg: Dict[str, Any], phase: str) -> int:
-        """Samples without enemies or HUD after which the battle clears: idle_timeout_seconds at
-        the phase's sampling rate (at least 2)."""
-        return max(2, int(cls._phase_fps(cfg, phase) * cfg["idle_timeout_seconds"]))
+    def _count_empty_sample_locked(self, cfg: Dict[str, Any], now: float) -> bool:
+        """Counts a sample without enemies or HUD during a battle; True when the battle is over:
+        idle_timeout_seconds since a sample last showed enemies or HUD, and at least
+        MIN_EMPTY_SAMPLES such samples. Elapsed time, not a number of samples at the phase's rate,
+        so slow steps or a changed rate do not stretch or shorten it (caller holds _state_lock)."""
+        self.empty_frames_count += 1
+        return (self.empty_frames_count >= MIN_EMPTY_SAMPLES
+                and now - self.battle_seen_at >= cfg["idle_timeout_seconds"])
 
     def _sync_detector_settings(self, cfg: Dict[str, Any]):
         det_limit = cfg["det_limit_side_len"]
@@ -296,15 +305,14 @@ class CaptureService:
             self.current_fps = self._phase_fps(cfg, phase)
         return phase
 
-    def _note_window_missing(self, max_empty_frames: int) -> bool:
+    def _note_window_missing(self, cfg: Dict[str, Any], now: float) -> bool:
         """FFVII is not running: counts toward clearing any battle state, including a hunting
         phase that never registered an enemy. Returns True when the state was cleared."""
         cleared = False
         with self._state_lock:
             self.last_game_window = None
             if self.current_enemies or self.combat_phase != "idle":
-                self.empty_frames_count += 1
-                cleared = self.empty_frames_count >= max_empty_frames
+                cleared = self._count_empty_sample_locked(cfg, now)
         if cleared:
             self._clear_battle_state()
         return cleared
@@ -490,14 +498,15 @@ class CaptureService:
             self.combat_phase = "settled"
 
     def _update_battle_state(self, detected_enemies: List[Dict[str, Any]], is_combat_hud: bool,
-                             ocr_ran: bool, cfg: Dict[str, Any], max_empty_frames: int
+                             ocr_ran: bool, cfg: Dict[str, Any], now: Optional[float] = None
                              ) -> Tuple[Optional[List[Dict[str, Any]]], Optional[str], bool]:
         """
         Applies one frame's detection result to the accumulated battle state and the
-        adaptive sampling phase. Returns (enemies_snapshot, battle_title, cleared):
-        a snapshot/title when the encounter changed and should be broadcast, and
-        cleared=True when the battle just ended.
+        adaptive sampling phase. now is the sample's time.monotonic() (default: the current
+        time). Returns (enemies_snapshot, battle_title, cleared): a snapshot/title when the
+        encounter changed and should be broadcast, and cleared=True when the battle just ended.
         """
+        now = time.monotonic() if now is None else now
         auto_add_partners = cfg["auto_add_scene_partners"]
         active_fps = self._phase_fps(cfg, "hunting")
         settled_fps = self._phase_fps(cfg, "settled")
@@ -507,6 +516,7 @@ class CaptureService:
         if detected_enemies:
             with self._state_lock:
                 self.empty_frames_count = 0
+                self.battle_seen_at = now
                 self.last_detection_time = time.time()
 
                 if not ocr_ran and self.current_enemies and self.current_battle_title:
@@ -628,6 +638,7 @@ class CaptureService:
             # Retain combat memory during attack animations, limit breaks, and spell casts
             with self._state_lock:
                 self.empty_frames_count = 0
+                self.battle_seen_at = now
                 if len(self.current_enemies) == 0:
                     # In battle, but no enemy registered yet: hunt for enemies at increased sample rate
                     if self.combat_phase != "hunting":
@@ -642,8 +653,7 @@ class CaptureService:
         cleared = False
         with self._state_lock:
             if self.current_enemies or self.combat_phase != "idle":
-                self.empty_frames_count += 1
-                if self.empty_frames_count >= max_empty_frames:
+                if self._count_empty_sample_locked(cfg, now):
                     logger.info("Combat concluded (no combat HUD). Clearing encounter state and returning to idle sample rate.")
                     cleared = True
         if cleared:
@@ -651,18 +661,18 @@ class CaptureService:
         return None, None, cleared
 
     def process_frame(self, frame_bgra: np.ndarray, cfg: Optional[Dict[str, Any]] = None,
-                      max_empty_frames: Optional[int] = None) -> Dict[str, Any]:
+                      now: Optional[float] = None) -> Dict[str, Any]:
         """
         Runs one sampling step on a captured region (BGRA): text-change gate, OCR when
         the text may have changed, enemy matching, battle state and phase transitions,
-        and the battle callbacks. Returns timings and the outcome of the step.
+        and the battle callbacks. now is the time.monotonic() of the grab (default: the current
+        time; the tests pass their own clock). Returns timings and the outcome of the step.
         """
         cfg = cfg if cfg is not None else calibration_manager.get_config()
+        now = time.monotonic() if now is None else now
         with self._state_lock:
             phase = self.combat_phase
             in_battle = bool(self.current_enemies) or phase != "idle"
-        if max_empty_frames is None:
-            max_empty_frames = self._max_empty_frames(cfg, phase)
 
         # 1. Text-change gate (sub-millisecond): skip OCR when the text-like pixels are unchanged
         t_gate = time.perf_counter()
@@ -704,7 +714,7 @@ class CaptureService:
         # 3. Matching, deduction and adaptive phase transitions
         t_match = time.perf_counter()
         detected_enemies, is_combat_hud = self._deduce_with_cache(lines, in_battle)
-        snapshot, title, cleared = self._update_battle_state(detected_enemies, is_combat_hud, run_ocr, cfg, max_empty_frames)
+        snapshot, title, cleared = self._update_battle_state(detected_enemies, is_combat_hud, run_ocr, cfg, now)
         phase_after = self._sync_current_fps(cfg)
         match_ms = (time.perf_counter() - t_match) * 1000.0
 
@@ -754,7 +764,6 @@ class CaptureService:
             current_phase = self._sync_current_fps(cfg)
             self._apply_thread_qos(efficient=bool(cfg["eco_mode"]) and current_phase != "hunting")
 
-            max_empty_frames = self._max_empty_frames(cfg, current_phase)
 
             try:
                 t_loop0 = time.perf_counter()
@@ -768,7 +777,7 @@ class CaptureService:
                     win = self.window_finder.find_ffvii_window() if mode == "auto_window" else None
                     window_missing = mode == "auto_window" and not win
                     if window_missing:
-                        if self._note_window_missing(max_empty_frames):
+                        if self._note_window_missing(cfg, time.monotonic()):
                             self._sync_current_fps(cfg)
                             self._fire_cleared()
                     else:
@@ -777,14 +786,14 @@ class CaptureService:
                         t_grab = time.perf_counter()
                         frame_bgra = self._grab(bbox)
                         grab_ms = (time.perf_counter() - t_grab) * 1000.0
-                        outcome = self.process_frame(frame_bgra, cfg, max_empty_frames)
+                        outcome = self.process_frame(frame_bgra, cfg, time.monotonic())
 
                 if window_missing:
                     # No game window (closed, or minimized by an alt-tab out of fullscreen).
-                    # During a battle, wait like a sampling step, so its max_empty_frames
-                    # samples span idle_timeout_seconds here too (waiting for the finder's
-                    # backed-off scan interval cleared a settled battle after about 1.3 s and
-                    # a hunting one after 17 s); otherwise until the finder's next scan.
+                    # During a battle, wait like a sampling step, so the battle clears close to
+                    # idle_timeout_seconds after the game was last seen (the finder's backed-off
+                    # scan interval, up to 2.5 s, overshot it); otherwise until the finder's
+                    # next scan.
                     with self._state_lock:
                         in_battle = bool(self.current_enemies) or self.combat_phase != "idle"
                         fps = self._phase_fps(cfg, self.combat_phase)

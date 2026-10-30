@@ -27,14 +27,17 @@ class TestCaptureStateMachine(unittest.TestCase):
     def setUp(self):
         self.service = CaptureService()
         self.recorder = _Recorder(self.service)
-        self.cfg = make_config()
+        # One second between steps: a battle clears on the third step without enemies or HUD
+        self.cfg = make_config(idle_timeout_seconds=3.0)
+        self.now = time.monotonic()
 
     def tearDown(self):
         if self.service.is_running():
             self.service.stop()
 
-    def step(self, fixture: str, max_empty_frames: int = 3):
-        return self.service.process_frame(load_fixture_bgra(fixture), self.cfg, max_empty_frames)
+    def step(self, fixture: str):
+        self.now += 1.0
+        return self.service.process_frame(load_fixture_bgra(fixture), self.cfg, self.now)
 
     def test_initial_state(self):
         status = self.service.get_status()
@@ -63,7 +66,7 @@ class TestCaptureStateMachine(unittest.TestCase):
         self.assertEqual(self.service.combat_phase, "settled")
         self.assertEqual(len(self.recorder.events), 2, "No broadcast while the encounter is unchanged")
 
-        # Victory screen and field: no HUD -> battle clears after max_empty_frames
+        # Victory screen and field: no HUD -> battle clears idle_timeout_seconds after the last sighting
         self.step("victory_screen.png")
         self.step("field_no_text.png")
         self.step("field_no_text.png")
@@ -73,7 +76,7 @@ class TestCaptureStateMachine(unittest.TestCase):
 
     def test_limit_menu_left_open_keeps_the_battle(self):
         # A limit menu shows no enemy name, only its "Lv 3" header under the HUD's HP / MP headers;
-        # it used to read as a field menu and clear the battle after max_empty_frames
+        # it used to read as a field menu and clear the battle after idle_timeout_seconds
         self.step("hud_only.png")
         self.step("prowler.png")
         for _ in range(8):
@@ -158,7 +161,7 @@ class TestCaptureStateMachine(unittest.TestCase):
         # the letter must still be taken; a later unlettered read keeps it
         def read(line):
             enemies = self.service.detector.identify_enemies_from_lines([line])
-            self.service._update_battle_state(enemies, True, True, self.cfg, 3)
+            self.service._update_battle_state(enemies, True, True, self.cfg)
             return [(e["count"], e["instance_letter"]) for e in self.service.current_enemies]
 
         self.assertEqual(read("Devil Ride"), [(1, None)])
@@ -170,11 +173,15 @@ class TestCaptureStateMachine(unittest.TestCase):
         self.step("hud_only.png")
         self.assertEqual(self.service.combat_phase, "hunting")
         self.assertEqual(self.service.current_enemies, [])
-        self.assertEqual([self.service._note_window_missing(3) for _ in range(3)], [False, False, True])
+        missing = []
+        for _ in range(3):
+            self.now += 1.0
+            missing.append(self.service._note_window_missing(self.cfg, self.now))
+        self.assertEqual(missing, [False, False, True])
         self.assertEqual(self.service.combat_phase, "idle")
         self.assertIsNone(self.service.last_game_window)
         # Nothing to clear while idle: the counter must not run away
-        self.assertFalse(self.service._note_window_missing(3))
+        self.assertFalse(self.service._note_window_missing(self.cfg, self.now + 10.0))
         self.assertEqual(self.service.empty_frames_count, 0)
 
     def test_gate_forces_periodic_ocr(self):
@@ -199,10 +206,10 @@ class TestCaptureStateMachine(unittest.TestCase):
     def test_battle_square_round_transition(self):
         sea_worm = dict(compendium.get_by_id("sea-worm"))
         dragon = dict(compendium.get_by_id("dragon"))
-        self.service._update_battle_state([sea_worm], True, True, self.cfg, 3)
+        self.service._update_battle_state([sea_worm], True, True, self.cfg)
         self.assertEqual([e["name"] for e in self.service.current_enemies], ["Sea Worm"])
         # Sea Worm and Dragon never share a formation: the next round replaces the encounter
-        self.service._update_battle_state([dragon], True, True, self.cfg, 3)
+        self.service._update_battle_state([dragon], True, True, self.cfg)
         self.assertEqual([e["name"] for e in self.service.current_enemies], ["Dragon"])
         self.assertEqual(self.service.observed_counts, {"Dragon": 1})
         self.assertEqual(self.service.combat_phase, "hunting")
@@ -213,7 +220,7 @@ class TestCaptureStateMachine(unittest.TestCase):
         # Battle Square round (no formation has seven Bigs) and reset the encounter
         for line in ("Grosspanzer-Big", "Grosspanzer.Mobile"):
             enemies = self.service.detector.identify_enemies_from_lines([line, "Attack", "HP", "MP"])
-            self.service._update_battle_state(enemies, True, True, self.cfg, 3)
+            self.service._update_battle_state(enemies, True, True, self.cfg)
         counts = {e["name"]: e["count"] for e in self.service.current_enemies}
         self.assertEqual(counts, {"Grosspanzerbig": 1, "Grosspanzermobile": 1})
 
@@ -225,33 +232,33 @@ class TestCaptureStateMachine(unittest.TestCase):
         titles = []
         for lines in frames:
             enemies = self.service.detector.identify_enemies_from_lines(lines)
-            _, title, _ = self.service._update_battle_state(enemies, True, True, self.cfg, 3)
+            _, title, _ = self.service._update_battle_state(enemies, True, True, self.cfg)
             titles.append(title)
         self.assertEqual({e["name"]: e["count"] for e in self.service.current_enemies}, {"Devil Ride": 2})
         self.assertEqual([t for t in titles if t], ["Battle: 2x Devil Ride"])
         # A battle against Grenades still registers them
         self.service._clear_battle_state()
         enemies = self.service.detector.identify_enemies_from_lines(["Grenade", "Attack", "HP", "MP"])
-        self.service._update_battle_state(enemies, True, True, self.cfg, 3)
+        self.service._update_battle_state(enemies, True, True, self.cfg)
         self.assertEqual([e["name"] for e in self.service.current_enemies], ["Grenade"])
 
     def test_compatible_partner_is_not_a_round_transition(self):
         prowler = dict(compendium.get_by_name("Prowler"))
         fang = dict(compendium.get_by_name("Kalm Fang"))
-        self.service._update_battle_state([prowler], True, True, self.cfg, 3)
-        self.service._update_battle_state([fang], True, True, self.cfg, 3)
+        self.service._update_battle_state([prowler], True, True, self.cfg)
+        self.service._update_battle_state([fang], True, True, self.cfg)
         self.assertEqual(sorted(e["name"] for e in self.service.current_enemies), ["Kalm Fang", "Prowler"])
 
     def test_auto_add_partners_only_adds_certain_partners(self):
         self.cfg["auto_add_scene_partners"] = True
         devil_ride = dict(compendium.get_by_name("Devil Ride"))
-        self.service._update_battle_state([devil_ride], True, True, self.cfg, 3)
+        self.service._update_battle_state([devil_ride], True, True, self.cfg)
         # Devil Ride also appears alone: Kalm Fang must not be added (recorded battle had none)
         self.assertEqual([e["name"] for e in self.service.current_enemies], ["Devil Ride"])
 
         self.service._clear_battle_state()
         prowler = dict(compendium.get_by_name("Prowler"))
-        self.service._update_battle_state([prowler], True, True, self.cfg, 3)
+        self.service._update_battle_state([prowler], True, True, self.cfg)
         # Every Prowler formation has Kalm Fangs
         self.assertEqual(sorted(e["name"] for e in self.service.current_enemies), ["Kalm Fang", "Prowler"])
 
@@ -410,16 +417,16 @@ class TestMisdetectionReport(unittest.TestCase):
 
     def test_last_ocr_frame_is_kept_only_from_ocr_passes(self):
         self.assertIsNone(self.service.last_ocr_frame)
-        self.service.process_frame(load_fixture_bgra("prowler.png"), self.cfg, 3)
+        self.service.process_frame(load_fixture_bgra("prowler.png"), self.cfg)
         first = self.service.last_ocr_frame
         self.assertEqual(first.ndim, 3)
         self.assertEqual(first.shape[2], 3, "BGR, the OCR input")
-        gated = self.service.process_frame(load_fixture_bgra("prowler.png"), self.cfg, 3)
+        gated = self.service.process_frame(load_fixture_bgra("prowler.png"), self.cfg)
         self.assertFalse(gated["ocr_ran"])
         self.assertIs(self.service.last_ocr_frame, first)
 
     def test_report_has_fixture_format(self):
-        self.service.process_frame(load_fixture_bgra("devil_ride_b.png"), self.cfg, 3)
+        self.service.process_frame(load_fixture_bgra("devil_ride_b.png"), self.cfg)
         current = load_fixture_bgra("kalm_fang_b.png")
         self.service._calculate_capture_bbox = lambda win=None: {"top": 0, "left": 0, "width": 1, "height": 1}
         self.service._grab = lambda bbox: current
@@ -619,19 +626,21 @@ class TestCaptureLoopLifecycle(unittest.TestCase):
 
     def test_battle_without_game_window_clears_after_idle_timeout(self):
         # The loop waited for the finder's scan interval (1.0 s, backing off to 2.5 s) between
-        # samples that count toward max_empty_frames at the phase's rate: a settled battle cleared
+        # samples that counted toward the timeout at the phase's rate: a settled battle cleared
         # about 1.3 s after an alt-tab minimized the game, a hunting one after 17 s (code review
-        # 2026-10-30)
+        # 2026-10-30). The loop's clock is faked: each wait advances it by its timeout.
         from ffvii_companion.engine import capture_service as module
 
         for phase, fps in (("settled", 0.35), ("hunting", 1.5)):
             with self.subTest(phase=phase):
+                clock = [100.0]
                 service = CaptureService()
                 service.window_finder.find_ffvii_window = lambda: None
                 service.current_enemies = [dict(compendium.get_by_name("Prowler"))]
                 service.combat_phase = phase
+                service.battle_seen_at = clock[0]
                 cleared = []
-                service.on_battle_cleared = lambda: cleared.append(True)
+                service.on_battle_cleared = lambda: cleared.append(clock[0])
 
                 class Waits(threading.Event):
                     timeouts = []
@@ -641,19 +650,22 @@ class TestCaptureLoopLifecycle(unittest.TestCase):
                             self.set()
                             return True
                         self.timeouts.append(timeout)
+                        clock[0] += timeout
                         return False
 
                 stop = Waits()
                 stop.timeouts = []
                 cfg = make_config(mode="auto_window", idle_timeout_seconds=6.0)
                 with mock.patch.object(calibration_manager, "get_config", return_value=cfg), \
-                        mock.patch.object(module.win_qos, "set_current_thread_qos"):
+                        mock.patch.object(module.win_qos, "set_current_thread_qos"), \
+                        mock.patch.object(module.time, "monotonic", lambda: clock[0]):
                     service._loop(stop)
-                self.assertEqual(cleared, [True])
+                self.assertEqual(len(cleared), 1)
                 for timeout in stop.timeouts:
                     self.assertAlmostEqual(timeout, 1.0 / fps, places=3)
-                # The waits between the missing samples, plus the interval since the last sighting
-                self.assertAlmostEqual(len(stop.timeouts) * (1.0 / fps) + 1.0 / fps, 6.0, delta=1.0 / fps)
+                # Cleared by the first sample at least idle_timeout_seconds after the last sighting
+                self.assertGreaterEqual(cleared[0] - 100.0, 6.0)
+                self.assertLess(cleared[0] - 100.0, 6.0 + 1.0 / fps)
 
 
 class TestDocumentedLoopBehavior(unittest.TestCase):
@@ -670,36 +682,46 @@ class TestDocumentedLoopBehavior(unittest.TestCase):
         self.assertEqual(HUNTING_BURST_FRAMES, 3)
 
     def test_battle_clears_after_idle_timeout(self):
-        self.cfg["idle_timeout_seconds"] = 6.0
-        self.assertEqual(CaptureService._max_empty_frames(self.cfg, "hunting"), 9)   # 1.5 FPS
-        self.assertEqual(CaptureService._max_empty_frames(self.cfg, "idle"), 3)      # 0.5 FPS
-        self.assertEqual(CaptureService._max_empty_frames(self.cfg, "settled"), 2)   # 0.35 FPS
-        # process_frame without an explicit limit uses the same one: 2 s at 1.5 FPS = 3 samples
-        self.cfg["idle_timeout_seconds"] = 2.0
-        prowler = dict(compendium.get_by_name("Prowler"))
-        self.service._update_battle_state([prowler], True, True, self.cfg, 3)
-        self.assertEqual(self.service.combat_phase, "hunting")
-        cleared_at = None
-        for step in range(1, 8):
-            if self.service.process_frame(load_fixture_bgra("field_no_text.png"), self.cfg)["cleared"]:
-                cleared_at = step
-                break
-        self.assertEqual(cleared_at, 3)
+        # The timeout was a number of samples at the phase's rate, int(fps * idle_timeout_seconds):
+        # a settled battle cleared 5.7 s after the last sighting (2 samples at 0.35 FPS), and steps
+        # slower than the phase's interval stretched it, 9 hunting samples 1 s apart taking 9 s
+        # (code review 2026-10-30). It is the time since the last sighting now.
+        def seconds_to_clear(timeout, spacing):
+            service = CaptureService()
+            cfg = make_config(idle_timeout_seconds=timeout)
+            service._update_battle_state([dict(compendium.get_by_name("Prowler"))], True, True, cfg, 0.0)
+            for step in range(1, 30):
+                if service.process_frame(load_fixture_bgra("field_no_text.png"), cfg, step * spacing)["cleared"]:
+                    return step * spacing
+            return None
+
+        self.assertAlmostEqual(seconds_to_clear(6.0, 1 / 0.35), 3 / 0.35)  # settled rate
+        self.assertAlmostEqual(seconds_to_clear(6.0, 1 / 1.5), 6.0)        # hunting rate
+        self.assertAlmostEqual(seconds_to_clear(6.0, 1.0), 6.0)            # slow hunting steps
+        # A single sample without enemies never ends a battle, however long it took
+        self.assertAlmostEqual(seconds_to_clear(1.0, 1 / 0.35), 2 / 0.35)
+        # process_frame without a time uses the current one
+        service = CaptureService()
+        service._update_battle_state([dict(compendium.get_by_name("Prowler"))], True, True, self.cfg,
+                                     time.monotonic() - self.cfg["idle_timeout_seconds"])
+        outcomes = [service.process_frame(load_fixture_bgra("field_no_text.png"), self.cfg)["cleared"]
+                    for _ in range(2)]
+        self.assertEqual(outcomes, [False, True])
 
     def test_overlapping_names_are_not_a_new_round(self):
         devil_rides = {**compendium.get_by_name("Devil Ride"), "count": 2}
         devil_ride = {**compendium.get_by_name("Devil Ride"), "count": 1}
         dragon = dict(compendium.get_by_id("dragon"))
-        self.service._update_battle_state([devil_rides], True, True, self.cfg, 3)
+        self.service._update_battle_state([devil_rides], True, True, self.cfg)
         # Dragon shares no formation with Devil Ride, but a Devil Ride is still on screen: no new
         # round, so the two Devil Rides seen before are kept
-        self.service._update_battle_state([devil_ride, dragon], True, True, self.cfg, 3)
+        self.service._update_battle_state([devil_ride, dragon], True, True, self.cfg)
         self.assertEqual(self.service.observed_counts.get("Devil Ride"), 2)
 
     def test_instance_letter_follows_the_count(self):
         def read(line):
             enemies = self.service.detector.identify_enemies_from_lines([line, "Attack", "HP", "MP"])
-            self.service._update_battle_state(enemies, True, True, self.cfg, 3)
+            self.service._update_battle_state(enemies, True, True, self.cfg)
             return [(e["count"], e["instance_letter"]) for e in self.service.current_enemies]
 
         # a misread letter ("H": no formation has 8 Devil Rides) raises the count to 2 without
@@ -714,14 +736,14 @@ class TestDocumentedLoopBehavior(unittest.TestCase):
         # Jr.Jr., and the title and card showed one (code review 2026-10-30)
         cfg = make_config(auto_add_scene_partners=True)
         grangalan = dict(compendium.get_by_name("Grangalan"), count=1)
-        self.service._update_battle_state([grangalan], True, True, cfg, 3)
+        self.service._update_battle_state([grangalan], True, True, cfg)
         counts = {e["name"]: e.get("count", 1) for e in self.service.current_enemies}
         self.assertEqual(counts, {"Grangalan": 1, "Grangalan Jr.": 1, "Grangalan Jr.Jr.": 3})
         self.assertEqual(self.service.current_battle_title, "Battle: Grangalan, Grangalan Jr., 3x Grangalan Jr.Jr.")
         self.assertIsNone(compendium.get_by_name("Grangalan Jr.Jr.").get("count"), "compendium entries stay untouched")
         # Reading one of them ("Grangalan Jr.Jr. A") keeps the three (Gemini review of the fix)
         enemies = self.service.detector.identify_enemies_from_lines(["Grangalan Jr.Jr. A", "Attack", "HP", "MP"])
-        self.service._update_battle_state(enemies, True, True, cfg, 3)
+        self.service._update_battle_state(enemies, True, True, cfg)
         jr_jr = next(e for e in self.service.current_enemies if e["name"] == "Grangalan Jr.Jr.")
         self.assertEqual((jr_jr["count"], jr_jr["instance_letter"]), (3, "A"))
         self.assertEqual(self.service.observed_counts["Grangalan Jr.Jr."], 1, "the deduction still uses what was read")
@@ -734,18 +756,18 @@ class TestDocumentedLoopBehavior(unittest.TestCase):
         self.service.on_battle_detected = lambda enemies, title: detected.append((enemies, title))
         self.assertFalse(self.service.add_enemy(compendium.get_by_name("Kalm Fang")), "no encounter yet")
         prowler = dict(compendium.get_by_name("Prowler"), count=1)
-        self.service._update_battle_state([prowler], True, True, self.cfg, 3)
+        self.service._update_battle_state([prowler], True, True, self.cfg)
         self.assertTrue(self.service.add_enemy(compendium.get_by_name("Kalm Fang")))
         self.assertEqual(detected[-1][1], "Battle: Prowler, Kalm Fang")
         self.assertEqual([e["name"] for e in detected[-1][0]], ["Prowler", "Kalm Fang"])
         # "Prowler B" read next: the update keeps the partner
         snapshot, title, _ = self.service._update_battle_state(
-            [dict(compendium.get_by_name("Prowler"), count=2, instance_letter="B")], True, True, self.cfg, 3)
+            [dict(compendium.get_by_name("Prowler"), count=2, instance_letter="B")], True, True, self.cfg)
         self.assertEqual(title, "Battle: 2x Prowler, Kalm Fang")
         self.assertEqual([e["name"] for e in snapshot], ["Prowler", "Kalm Fang"])
         # A partner added from the bar gets the formation's count once it is certain
         service = CaptureService()
-        service._update_battle_state([dict(compendium.get_by_name("Grangalan"), count=1)], True, True, self.cfg, 3)
+        service._update_battle_state([dict(compendium.get_by_name("Grangalan"), count=1)], True, True, self.cfg)
         service.add_enemy(compendium.get_by_name("Grangalan Jr.Jr."))
         self.assertEqual(service.current_enemies[-1]["count"], 3)
 
@@ -753,10 +775,10 @@ class TestDocumentedLoopBehavior(unittest.TestCase):
         from ffvii_companion.engine.capture_service import HUNTING_BURST_FRAMES
         prowler = dict(compendium.get_by_name("Prowler"))
         fang = dict(compendium.get_by_name("Kalm Fang"))
-        self.service._update_battle_state([prowler], True, True, self.cfg, 3)
-        self.service._update_battle_state([prowler], True, True, self.cfg, 3)
+        self.service._update_battle_state([prowler], True, True, self.cfg)
+        self.service._update_battle_state([prowler], True, True, self.cfg)
         self.assertEqual(self.service.hunting_frames_remaining, HUNTING_BURST_FRAMES - 1)
-        self.service._update_battle_state([prowler, fang], True, True, self.cfg, 3)
+        self.service._update_battle_state([prowler, fang], True, True, self.cfg)
         self.assertEqual(self.service.hunting_frames_remaining, HUNTING_BURST_FRAMES)
 
     def test_clear_runs_ocr_on_the_next_sample(self):
@@ -780,7 +802,7 @@ class TestDocumentedLoopBehavior(unittest.TestCase):
                 self.set()
                 return True
 
-        def step(frame, cfg, max_empty_frames):
+        def step(frame, cfg, now):
             with self.service._state_lock:
                 self.service.combat_phase = phase_after_step
             return {"ocr_timing": {}, "cvt_color_ms": 0.0, "ocr_total_ms": 0.0, "match_ms": 0.0,
