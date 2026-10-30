@@ -11,17 +11,20 @@ rate of the phase the step ended in. Nothing is grabbed between samples.
 
 Phases: idle (idle_fps); hunting (active_fps) while the battle HUD shows without a registered
 enemy, and for HUNTING_BURST_FRAMES after a new enemy; settled (settled_fps) once enemies are
-registered. The battle clears after idle_timeout_seconds without enemies or HUD. MAX_GATED_SKIPS
+registered. The battle clears after idle_timeout_seconds without enemies or HUD, or without the
+game window (closed or minimized: the loop then waits at the phase's rate too). MAX_GATED_SKIPS
 forces OCR after that many skipped frames. The thread runs at below-normal priority, with EcoQoS
 (eco_mode) except while hunting.
 
-Callbacks, set by server/main.py: on_battle_detected(enemies, title) when the encounter changed,
-on_battle_cleared() when it ended or was cleared, on_phase_changed() for a phase change without
-an encounter change. They fire outside _state_lock but inside _capture_lock, which a sampling
-step and clear_battle() both hold, so a CLEAR never interleaves with a step's broadcast.
+Callbacks, set by server/main.py: on_battle_detected(enemies, title) when the encounter changed
+(also when add_enemy() adds a partner from the dashboard), on_battle_cleared() when it ended or
+was cleared, on_phase_changed() for a phase change without an encounter change. They fire outside
+_state_lock but inside _capture_lock, which a sampling step, clear_battle() and add_enemy() hold,
+so a CLEAR or an added partner never interleaves with a step's broadcast.
 
 Locks: _capture_lock serializes the grabber, the OCR session and the text gate, which are not
-thread-safe (a sampling step, capture_snapshot(), save_detection_report(), clear_battle());
+thread-safe (a sampling step, capture_snapshot(), save_detection_report(), clear_battle(),
+add_enemy());
 _state_lock guards the battle state fields the server reads; _lock guards start() and stop().
 
 After changing the loop, compare CPU and detection times with tools/benchmark_loop.py on a real
@@ -306,6 +309,38 @@ class CaptureService:
             self._clear_battle_state()
         return cleared
 
+    def add_enemy(self, enemy: Dict[str, Any]) -> bool:
+        """
+        Adds an enemy (a compendium entry, copied) to the encounter collected so far, for the
+        dashboard's partners bar, and fires on_battle_detected: later updates of the encounter keep
+        it, with the count every matching formation holds once it is a certain partner. Returns
+        False when there is no encounter. Waits for a sampling step in progress (_capture_lock),
+        like clear_battle().
+        """
+        with self._capture_lock:
+            with self._state_lock:
+                if not self.current_enemies:
+                    return False
+                if all(e["name"] != enemy["name"] for e in self.current_enemies):
+                    added = dict(enemy)
+                    count = compendium.deduce_formation(self.observed_counts)["partner_counts"].get(enemy["name"])
+                    if count is not None:
+                        added["count"] = count
+                    self.current_enemies.append(added)
+                    self.current_battle_title = self._battle_title_locked()
+                    logger.info(f"Combat state updated (partner added): {self.current_battle_title}")
+                snapshot = [dict(e) for e in self.current_enemies]
+                title = self.current_battle_title
+            self._fire_detected(snapshot, title)
+        return True
+
+    def _fire_detected(self, enemies: List[Dict[str, Any]], title: Optional[str]):
+        if self.on_battle_detected:
+            try:
+                self.on_battle_detected(enemies, title)
+            except Exception as ex:
+                logger.error(f"Error in on_battle_detected callback: {ex}")
+
     def _fire_cleared(self):
         if self.on_battle_cleared:
             try:
@@ -363,27 +398,8 @@ class CaptureService:
             "total_frame_ms": round(total_frame_ms, 2),
             "effective_fps": round(1000.0 / total_frame_ms, 2) if total_frame_ms > 0 else 0.0
         }
-
-        cfg = calibration_manager.get_config()
-        preset_name = cfg["target_menu_preset"]
-        perf_tracker.record_frame(
-            window_find_ms=window_find_ms,
-            grab_ms=grab_ms,
-            cvt_color_ms=cvt_color_ms,
-            ocr_det_ms=ocr_timing.get("det_ms", 0.0),
-            ocr_rec_ms=ocr_timing.get("rec_ms", 0.0),
-            ocr_total_ms=ocr_total_ms,
-            match_ms=match_ms,
-            total_frame_ms=total_frame_ms,
-            width=frame.shape[1],
-            height=frame.shape[0],
-            lines_count=len(lines),
-            enemies_count=len(enemies),
-            in_combat=len(enemies) > 0,
-            preset_name=preset_name,
-            ocr_ran=True,
-            phase="snapshot",
-        )
+        # Not recorded in perf_tracker: its statistics describe the capture loop's samples (a
+        # snapshot raised their sampling rate and OCR share); the dialog shows these timings
 
         return {
             "bbox": bbox,
@@ -456,6 +472,15 @@ class CaptureService:
         return detected_enemies, is_combat_hud
 
     # --------------------------------------------------------- state machine
+    def _battle_title_locked(self) -> str:
+        """The encounter's title with counts, names as the game writes them (caller holds _state_lock)."""
+        parts = []
+        for e in self.current_enemies:
+            c = e.get("count", 1)
+            label = e.get("display_name") or e["name"]
+            parts.append(f"{c}x {label}" if c > 1 else label)
+        return f"Battle: {', '.join(parts)}"
+
     def _decay_hunting_locked(self, settled_fps: float):
         """Counts down the hunting burst; settles once enemies are registered (caller holds _state_lock)."""
         if self.combat_phase != "hunting":
@@ -522,6 +547,7 @@ class CaptureService:
                             current_names = set()
 
                     # Update observed enemy instance counts
+                    previous_counts = dict(self.observed_counts)
                     for e in detected_enemies:
                         name = e["name"]
                         detected_count = e.get("count", 1)
@@ -534,7 +560,8 @@ class CaptureService:
                     # incompatible new enemy starts a new encounter above). test_compendium checks
                     # this on every formation (GEMINI-20261013-03).
                     deduction = compendium.deduce_formation(self.observed_counts)
-                    certain_partners = deduction.get("certain_partners", [])
+                    certain_partners = deduction["certain_partners"]
+                    partner_counts = deduction["partner_counts"]
 
                     existing_names = {e["name"] for e in self.current_enemies}
                     added = False
@@ -562,20 +589,21 @@ class CaptureService:
                     for e in self.current_enemies:
                         count = self.observed_counts.get(e["name"])
                         if count is None:
+                            # A partner not read yet (added automatically or from the partners
+                            # bar): as many as every matching formation holds, once it is certain
+                            if e["name"] in partner_counts:
+                                e["count"] = partner_counts[e["name"]]
                             continue
                         seen = detected_by_name.get(e["name"])
                         if (seen is not None and seen.get("count", 1) == count
-                                and (count != e.get("count") or e.get("instance_letter") is None)):
+                                and (count != previous_counts.get(e["name"]) or e.get("instance_letter") is None)):
                             e["instance_letter"] = seen.get("instance_letter")
-                        e["count"] = count
+                        # A partner shown with its formations' count keeps it once one of them is
+                        # read ("Grangalan Jr.Jr. A" is one of three); counts never fall within
+                        # an encounter, as observation only narrows the matching formations
+                        e["count"] = max(count, e.get("count", 1))
 
-                    # Build formation title with counts, names as the game writes them
-                    title_parts = []
-                    for e in self.current_enemies:
-                        c = e.get("count", 1)
-                        label = e.get("display_name") or e["name"]
-                        title_parts.append(f"{c}x {label}" if c > 1 else label)
-                    title = f"Battle: {', '.join(title_parts)}"
+                    title = self._battle_title_locked()
 
                     should_broadcast = added or self.current_battle_title != title
                     if should_broadcast:
@@ -685,11 +713,8 @@ class CaptureService:
         # 4. Callbacks, outside _state_lock (_loop still holds _capture_lock). Encounter broadcasts
         # carry the phase themselves; a phase change on its own (hunting -> settled) needs a
         # dedicated notification.
-        if snapshot and self.on_battle_detected:
-            try:
-                self.on_battle_detected(snapshot, title)
-            except Exception as ex:
-                logger.error(f"Error in on_battle_detected callback: {ex}")
+        if snapshot:
+            self._fire_detected(snapshot, title)
         if cleared:
             self._fire_cleared()
         elif phase_after != phase and not snapshot:
@@ -749,9 +774,15 @@ class CaptureService:
                             if self._note_window_missing(max_empty_frames):
                                 self._sync_current_fps(cfg)
                                 self._fire_cleared()
-                        # FFVII is not running: sleep on stop event
-                        scan_int = getattr(self.window_finder, "_scan_interval", 1.0)
-                        if stop_event.wait(scan_int):
+                        # No game window (closed, or minimized by an alt-tab out of fullscreen).
+                        # During a battle, wait like a sampling step, so its max_empty_frames
+                        # samples span idle_timeout_seconds here too (waiting for the finder's
+                        # backed-off scan interval cleared a settled battle after about 1.3 s and
+                        # a hunting one after 17 s); otherwise until the finder's next scan.
+                        with self._state_lock:
+                            in_battle = bool(self.current_enemies) or self.combat_phase != "idle"
+                            fps = self._phase_fps(cfg, self.combat_phase)
+                        if stop_event.wait(1.0 / fps if in_battle else self.window_finder.scan_interval):
                             break
                         continue
 

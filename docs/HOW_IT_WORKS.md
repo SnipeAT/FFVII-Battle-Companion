@@ -34,7 +34,7 @@ Everything runs on your PC: the OCR models are part of the program, and nothing 
 
 **Detection-time goal.** A new name is picked up within one sampling interval of the current phase plus one OCR pass: about 2 s for the first sample of a new battle (idle), about 0.7 s while hunting, and about 3 s for a newly targeted enemy once the battle is settled (default rates). Low CPU use comes first, so the slower idle and settled phases are the intended trade-off, not a latency gap; there is no single target for every phase.
 
-The battle ends (back to **idle**) when neither enemies nor the battle HUD have been seen for `idle_timeout_seconds` (default 6 s). The text-change gate applies in every phase, with a safety net that forces OCR after 2 skipped frames while hunting and after 4 skipped frames otherwise.
+The battle ends (back to **idle**) when neither enemies nor the battle HUD have been seen for `idle_timeout_seconds` (default 6 s); a game window that is closed or minimized counts the same. The text-change gate applies in every phase, with a safety net that forces OCR after 2 skipped frames while hunting and after 4 skipped frames otherwise.
 
 The rates and the timeout are settings: see [Configuration](CONFIGURATION.md#settings-file-datacalibrationjson).
 
@@ -42,7 +42,7 @@ The rates and the timeout are settings: see [Configuration](CONFIGURATION.md#set
 
 The companion is designed to run next to the game without competing with it:
 
-- **Windows Efficiency mode** for the whole companion process: below-normal priority plus EcoQoS, so its threads run on efficiency cores and the WebView2 UI inherits the lower priority. The capture thread opts out of EcoQoS only while *hunting*, so new enemies are still identified at full speed. Disable with `--normal-priority`.
+- **Windows Efficiency mode** for the whole companion process: below-normal priority plus EcoQoS, so its threads run on efficiency cores and the WebView2 UI inherits the lower priority. The capture thread opts out of EcoQoS only while *hunting*, so new enemies are still identified at full speed. Disable with `--normal-priority`; the capture thread then keeps its own below-normal priority, and EcoQoS outside *hunting* as long as `eco_mode` is on.
 - **OCR only when the text changes** (text-change gate) and **only for the boxes that changed** (recognition cache).
 - **Single-threaded OCR without spin-waiting.** RapidOCR's default sessions kept idle worker threads busy-waiting after every frame, which cost more CPU than the OCR itself.
 - **Detection at the configured size.** `det_limit_side_len` (640) is honored; the previous RapidOCR call path silently detected at up to 1500 px.

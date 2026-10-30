@@ -664,6 +664,56 @@ class TestWebSocket(unittest.TestCase):
             ws.send_json({"action": "CLEAR_BATTLE"})
             self.assertFalse(ws.receive_json()["data"]["in_battle"])
 
+    def test_partner_added_to_a_live_battle_survives_its_next_update(self):
+        # ADD_ENEMY added the partner to the server's battle only, so the capture loop's next
+        # encounter update replaced the battle without it (code review 2026-10-30)
+        from ffvii_companion.compendium import compendium
+        from ffvii_companion.engine.capture_service import capture_service
+        from ffvii_companion.server import main
+        from tests.helpers import make_config
+        cfg = make_config()
+        names = lambda msg: [e["name"] for e in msg["data"]["enemies"]]
+
+        def read(count):
+            prowler = dict(compendium.get_by_name("Prowler"), count=count)
+            snapshot, title, _ = capture_service._update_battle_state([prowler], True, True, cfg, 3)
+            main.handle_live_battle_detected(snapshot, title)
+
+        with TestClient(app, base_url=BASE_URL) as client, client.websocket_connect(WS_URL) as ws:
+            receive_connect_messages(ws)
+            try:
+                read(1)
+                self.assertEqual(names(ws.receive_json()), ["Prowler"])
+                ws.send_json({"action": "ADD_ENEMY", "enemy_id": "kalm-fang"})
+                msg = ws.receive_json()
+                self.assertEqual(names(msg), ["Prowler", "Kalm Fang"])
+                self.assertEqual(msg["data"]["source"], "ocr")
+                read(2)  # "Prowler B"
+                msg = ws.receive_json()
+                self.assertEqual(names(msg), ["Prowler", "Kalm Fang"])
+                self.assertEqual(msg["data"]["battle_title"], "Battle: 2x Prowler, Kalm Fang")
+            finally:
+                capture_service.clear_battle()
+                ws.receive_json()  # the clear's broadcast
+
+    def test_partner_click_after_the_live_battle_ended_is_dropped(self):
+        # Review of the fix (Gemini and the local model): when the capture loop's battle ended
+        # between the server's check and add_enemy, the old path revived it with the partner alone
+        from ffvii_companion.compendium import compendium
+        from ffvii_companion.engine.capture_service import capture_service
+        from ffvii_companion.server import main
+        self.assertEqual(capture_service.current_enemies, [])
+        with TestClient(app, base_url=BASE_URL) as client, client.websocket_connect(WS_URL) as ws:
+            receive_connect_messages(ws)
+            # The dashboards still show the loop's battle; the loop itself has cleared it
+            main.handle_live_battle_detected([dict(compendium.get_by_name("Prowler"), count=1)], "Battle: Prowler")
+            ws.receive_json()
+            ws.send_json({"action": "ADD_ENEMY", "enemy_id": "kalm-fang"})
+            ws.send_json({"action": "CLEAR_BATTLE"})
+            msg = ws.receive_json()
+            self.assertEqual((msg["type"], msg["data"]["in_battle"]), ("BATTLE_UPDATE", False))
+        self.assertEqual(main.current_battle_snapshot()["enemies"], [])
+
     def test_clear_battle_resets_the_capture_loop(self):
         # Regression: CLEAR reset only the server's battle; the capture loop kept its collected
         # enemies and brought them back with the next new name it read

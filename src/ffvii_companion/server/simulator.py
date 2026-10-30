@@ -14,13 +14,16 @@ import urllib.request
 from typing import List, Dict, Any, Optional
 
 DEFAULT_SERVER_URL = "http://127.0.0.1:59314"
+# The companion runs on this PC or the LAN: no proxy (the Windows proxy settings would otherwise
+# send requests for 127.0.0.1 to the proxy)
+_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
 def _post_json(url: str, payload: Optional[Dict[str, Any]] = None, timeout: float = 5.0) -> Dict[str, Any]:
     """POSTs JSON with the standard library (no third-party HTTP client needed)."""
     data = json.dumps(payload or {}).encode("utf-8")
     req = urllib.request.Request(url, data=data, method="POST", headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
+    with _OPENER.open(req, timeout=timeout) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 PRESET_BATTLES = [

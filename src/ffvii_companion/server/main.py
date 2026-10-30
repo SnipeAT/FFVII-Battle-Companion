@@ -376,6 +376,17 @@ async def websocket_endpoint(websocket: WebSocket):
                     enemy_id = payload.get("enemy_id")
                     enemy_data = compendium.get_by_id(enemy_id) if isinstance(enemy_id, str) else None
                     if enemy_data:
+                        with battle_lock:
+                            live = current_battle.in_battle and current_battle.source == "ocr"
+                        # A partner of the capture loop's battle joins its encounter, so the loop's
+                        # next update keeps it (it replaced current_battle without it); its
+                        # on_battle_detected (handle_live_battle_detected) broadcasts the battle.
+                        # When that battle ended meanwhile, the click is dropped: added here, the
+                        # partner would revive the cleared battle on its own. In a worker thread:
+                        # add_enemy waits for a sampling step in progress.
+                        if live:
+                            await asyncio.to_thread(capture_service.add_enemy, enemy_data)
+                            continue
                         enemy_obj = Enemy(**enemy_data)
                         with battle_lock:
                             if not any(e.id == enemy_obj.id for e in current_battle.enemies):

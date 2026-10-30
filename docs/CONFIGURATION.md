@@ -24,7 +24,7 @@ In the project folder the launchers prefer `dist\FFVII_Companion\FFVII_Companion
 | `--port <PORT>` | `59314` | HTTP and WebSocket port, 1 to 65535. If occupied, the next free port of the 49 after it is used, and the window title shows it. |
 | `--on-top` | off | Start pinned Always on Top (also toggled with the **PIN** button, which only the desktop window shows). |
 | `--no-capture` | off | Do not start the capture loop on launch (start it with **CAPTURE**). |
-| `--normal-priority` | off | Do not run the companion in Windows Efficiency mode. |
+| `--normal-priority` | off | Do not run the companion in Windows Efficiency mode. The capture thread keeps its below-normal priority, and `eco_mode` still decides its EcoQoS. |
 | `--width <PX>` / `--height <PX>` | `1320` / `860` | Initial window size. |
 | `--min-width <PX>` / `--min-height <PX>` | `0` | Minimum window size (0 = unrestricted). |
 | `--debug` | off | Enable WebView2 developer tools (F12). |

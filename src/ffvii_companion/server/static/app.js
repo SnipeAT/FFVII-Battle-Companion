@@ -1304,6 +1304,10 @@ sneakGloveCheckbox.addEventListener("change", () => {
   saveProfile({ sneak_glove: sneakGloveCheckbox.checked });
 });
 
+// Only the latest calculation answers: typing "45" asks for level 4, then 45, and a slower answer
+// for 4 would replace the newer result
+let stealCalcAbortController = null;
+
 function performStealCalc() {
   const steals = currentEnemyForSteal ? (currentEnemyForSteal.steals || []) : [];
   if (!steals[currentStealSlot]) return;
@@ -1316,10 +1320,14 @@ function performStealCalc() {
     earlier_base_chances: steals.slice(0, currentStealSlot).map(s => Number(s.base_chance) || 0)
   };
 
+  if (stealCalcAbortController) stealCalcAbortController.abort();
+  const controller = new AbortController();
+  stealCalcAbortController = controller;
   fetch("/api/steal-calc", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
+    signal: controller.signal
   })
     .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
     .then(data => {
@@ -1329,6 +1337,7 @@ function performStealCalc() {
         : data.formula_note;
     })
     .catch(err => {
+      if (err.name === "AbortError") return;
       console.error("Steal calc error:", err);
       calcResultPercent.textContent = "--";
       calcResultFormula.textContent = `Could not calculate the odds (${err.message || err}).`;
@@ -1453,21 +1462,22 @@ function scanGameWindow() {
   // Also sync config on load
   configRequest
     .then(data => {
-      const rawPreset = data.config.target_menu_preset;
-      // Legacy alias written by older builds
-      const preset = rawPreset === "bottom_left_targets" ? "center_target_box" : rawPreset;
-      presetSelectGrid.querySelectorAll(".btn-preset-calib").forEach(b => {
-        b.classList.remove("active");
-        if (b.getAttribute("data-preset") === preset) {
-          b.classList.add("active");
-        }
-      });
+      showSavedPreset(data.config);
       renderSamplingRates(data.config);
     })
     .catch(err => console.error("Error fetching config:", err));
 
   // Load performance metrics
   loadPerformanceMetrics();
+}
+
+// Highlights the capture region preset the settings hold
+function showSavedPreset(config) {
+  const rawPreset = config.target_menu_preset;
+  // Legacy alias written by older builds
+  const preset = rawPreset === "bottom_left_targets" ? "center_target_box" : rawPreset;
+  presetSelectGrid.querySelectorAll(".btn-preset-calib").forEach(b =>
+    b.classList.toggle("active", b.getAttribute("data-preset") === preset));
 }
 
 // Fill the adaptive sampling description with the configured per-phase rates
@@ -1550,19 +1560,28 @@ if (togglePerfLogsBtn && perfLogsContainer) {
   });
 }
 
-// Preset selection with event delegation
+// Preset selection with event delegation. Only the latest click's answer counts: the answer to an
+// earlier click can arrive after it.
+let presetClickSeq = 0;
+
 if (presetSelectGrid) {
   presetSelectGrid.addEventListener("click", (e) => {
     const btn = e.target.closest(".btn-preset-calib");
-    if (!btn) return;
-    presetSelectGrid.querySelectorAll(".btn-preset-calib").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    const presetKey = btn.getAttribute("data-preset");
-    if (presetKey) {
-      fetch(`/api/calibration/preset/${encodeURIComponent(presetKey)}`, { method: "POST" })
-        .then(res => res.json())
-        .catch(err => console.error("Error setting preset:", err));
-    }
+    const presetKey = btn && btn.getAttribute("data-preset");
+    if (!presetKey) return;
+    presetSelectGrid.querySelectorAll(".btn-preset-calib").forEach(b => b.classList.toggle("active", b === btn));
+    const seq = ++presetClickSeq;
+    fetch(`/api/calibration/preset/${encodeURIComponent(presetKey)}`, { method: "POST" })
+      .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
+      .catch(err => {
+        console.error("Error setting preset:", err);
+        if (seq !== presetClickSeq) return;
+        // Not saved (e.g. the settings file is locked): highlight the preset the capture still uses
+        return fetch("/api/calibration/config")
+          .then(res => res.json())
+          .then(data => showSavedPreset(data.config));
+      })
+      .catch(err => console.error("Error reading the saved preset:", err));
   });
 }
 

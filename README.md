@@ -72,7 +72,7 @@ A boss fought several times (the Turks, Ultimate Weapon) shows the script of the
 
 ### Reporting a wrong detection
 
-If the companion shows the wrong enemy or count, press **REPORT**. It saves what the companion saw (the capture region at its last reading and right now, with the text it read) into the `reports` folder next to the EXE. Optionally type the enemies that are really on screen ("Devil Ride x2, Kalm Fang") and a note. To help fix it, [open an issue](https://github.com/SnipeAT/FFVII-Battle-Companion/issues) and attach that report's folder as a zip.
+If the companion shows the wrong enemy or count, press **REPORT**. It saves what the companion saw (the capture region at its last reading and right now, with the text it read) into the `reports` folder next to the EXE. Optionally type the enemies that are really on screen ("Devil Ride x2, Kalm Fang" or "2x Devil Ride, Kalm Fang") and a note. To help fix it, [open an issue](https://github.com/SnipeAT/FFVII-Battle-Companion/issues) and attach that report's folder as a zip.
 
 ### Settings
 

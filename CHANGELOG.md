@@ -2,6 +2,23 @@
 
 What changed in each release, newest first. The downloads and the full release notes are on the [Releases page](https://github.com/SnipeAT/FFVII-Battle-Companion/releases). Versions follow `MAJOR.MINOR.PATCH`: a minor version adds features, a patch fixes things or corrects data.
 
+## Unreleased
+
+### Detection
+- Switching away from the game during a battle (Alt+Tab out of fullscreen minimizes it) no longer clears the battle from the dashboard after about a second. The battle now stays for `idle_timeout_seconds` (6 s by default), as it does after a victory; it took up to 17 s while the companion was still identifying enemies.
+
+### Dashboard
+- An enemy added from the **Formation Partners** bar during a detected battle stays on the dashboard. The next change the companion read (a second enemy of the same kind, for example) removed its card again.
+- Partners added automatically (`auto_add_scene_partners`) or from the partners bar show how many of them the battle holds when every possible formation agrees: Grangalan's battle shows three Grangalan Jr.Jr., not one, also after you target one of them.
+- The steal calculator always shows the odds for the level in its box. Typing a two-digit level on a slow network could leave the odds of its first digit on screen.
+- When a capture region preset cannot be saved, the calibration box keeps the saved preset highlighted instead of the one that was clicked.
+- **REPORT** understands counts written first, as the dashboard writes them ("2x Devil Ride", also "2 Devil Ride"). The first was not recognized, and the second was saved as one Devil Ride. A count of 0 is no longer saved as an expected enemy.
+- The diagnostic snapshot no longer counts toward the performance panel's sampling rate and OCR share, which describe the capture loop; its own timings stay in the snapshot's result.
+
+### Settings and startup
+- The companion starts on PCs that use a proxy server set in the Windows settings. It checked through that proxy whether its own server had started; a proxy on another machine cannot reach this PC's server, so the companion reported that it "did not start" and closed.
+- `--normal-priority` also applies to the companion's web server, which kept running at below-normal priority on efficiency cores.
+
 ## 2.2.5 - 2026-10-23
 
 ### Dashboard

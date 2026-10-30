@@ -314,8 +314,10 @@ class EnemyCompendium:
         """
         Deduces the exact or candidate formation based on observed enemies and their instance counts.
         Returns whether the formation is disambiguated, the allowed enemies, candidate_partners
-        (unseen enemies of ANY matching formation: possible partners) and certain_partners
-        (unseen enemies that EVERY matching formation contains: present for sure).
+        (unseen enemies of ANY matching formation: possible partners), certain_partners
+        (unseen enemies that EVERY matching formation contains: present for sure) and
+        partner_counts (name -> how many of each certain partner every matching formation holds
+        at least). The partner dicts are compendium entries: copy them before changing them.
         """
         matches = self.find_matching_formations(observed)
         if not matches:
@@ -324,6 +326,7 @@ class EnemyCompendium:
                 "matched_formation": None,
                 "candidate_partners": [],
                 "certain_partners": [],
+                "partner_counts": {},
                 "allowed_enemies": set()
             }
 
@@ -343,6 +346,7 @@ class EnemyCompendium:
                 "matched_formation": matches[0],
                 "candidate_partners": candidate_partners,
                 "certain_partners": list(candidate_partners),
+                "partner_counts": {p["name"]: matches[0]["enemies"][p["name"]] for p in candidate_partners},
                 "allowed_enemies": all_allowed_names
             }
 
@@ -366,6 +370,7 @@ class EnemyCompendium:
             "matched_formation": matches[0] if all_same_enemies else None,
             "candidate_partners": candidate_partners,
             "certain_partners": certain_partners,
+            "partner_counts": {p["name"]: min(m["enemies"][p["name"]] for m in matches) for p in certain_partners},
             "allowed_enemies": all_allowed_names
         }
 

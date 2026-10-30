@@ -356,6 +356,17 @@ class TestDiagnosticSnapshot(unittest.TestCase):
         self.assertEqual(service.detector.confidence_threshold, 0.35)
         self.assertIn("Prowler", [e["name"] for e in snap["matched_enemies"]])
 
+    def test_snapshot_stays_out_of_the_loop_statistics(self):
+        # Snapshots went into the capture loop's history, raising its measured sampling rate and
+        # OCR share in the performance panel (code review 2026-10-30); the dialog shows their timings
+        from ffvii_companion.engine.profiler import perf_tracker
+        service = CaptureService()
+        service._calculate_capture_bbox = lambda win=None: {"top": 0, "left": 0, "width": 1, "height": 1}
+        service._grab = lambda bbox: load_fixture_bgra("prowler.png")
+        with mock.patch.object(perf_tracker, "record_frame", side_effect=AssertionError("recorded")):
+            snap = service.capture_snapshot()
+        self.assertGreater(snap["performance"]["ocr_total_ms"], 0)
+
 
 class TestMisdetectionReport(unittest.TestCase):
     def setUp(self):
@@ -411,6 +422,27 @@ class TestMisdetectionReport(unittest.TestCase):
         self.assertEqual(enemies, {"Devil Ride": 2, "Kalm Fang": 1, "Prowler": 3})
         self.assertEqual(unresolved, ["Zzyzx Qwerty"])
         self.assertEqual(parse_expected(None), ({}, []))
+
+    def test_expected_enemies_with_the_count_first(self):
+        # "2x Devil Ride", the form of the dashboard's title and battle summary, was unresolved,
+        # "2 Devil Ride" became one Devil Ride, and "x0" recorded a count of 0 (code review 2026-10-30)
+        self.assertEqual(parse_expected("2x Devil Ride, 2 x Kalm Fang, 3 Prowler"),
+                         ({"Devil Ride": 2, "Kalm Fang": 2, "Prowler": 3}, []))
+        # A name with a number of its own
+        self.assertEqual(parse_expected("8 Eye; 2x 8 Eye"), ({"8 Eye": 2}, []))
+        self.assertEqual(parse_expected("8 Eye x3, 1st Ray"), ({"8 Eye": 3, "1st Ray": 1}, []))
+        self.assertEqual(parse_expected("Devil Ride x0"), ({}, ["Devil Ride x0"]))
+        # The space after the count is required: "2 Xcannon" is two Xcannons, not a "cannon"
+        self.assertEqual(parse_expected("2 Xcannon"), ({"Xcannon": 2}, []))
+        self.assertEqual(parse_expected("3x Xcannon"), ({"Xcannon": 3}, []))
+
+    def test_count_prefix_pattern_runs_in_linear_time(self):
+        # CodeQL py/polynomial-redos on the first version of the pattern: "\s*[x]?\s+" backtracked
+        # quadratically on "0" followed by many spaces (20000 took seconds)
+        from ffvii_companion.engine.detection_report import RE_EXPECTED_PREFIX
+        t0 = time.perf_counter()
+        self.assertIsNone(RE_EXPECTED_PREFIX.match("0" + " " * 20000))
+        self.assertLess(time.perf_counter() - t0, 0.5)
 
 
 class TestSettledSamplingRate(unittest.TestCase):
@@ -555,6 +587,43 @@ class TestCaptureLoopLifecycle(unittest.TestCase):
             service.stop()
         self.assertEqual(held, [True])
 
+    def test_battle_without_game_window_clears_after_idle_timeout(self):
+        # The loop waited for the finder's scan interval (1.0 s, backing off to 2.5 s) between
+        # samples that count toward max_empty_frames at the phase's rate: a settled battle cleared
+        # about 1.3 s after an alt-tab minimized the game, a hunting one after 17 s (code review
+        # 2026-10-30)
+        from ffvii_companion.engine import capture_service as module
+
+        for phase, fps in (("settled", 0.35), ("hunting", 1.5)):
+            with self.subTest(phase=phase):
+                service = CaptureService()
+                service.window_finder.find_ffvii_window = lambda: None
+                service.current_enemies = [dict(compendium.get_by_name("Prowler"))]
+                service.combat_phase = phase
+                cleared = []
+                service.on_battle_cleared = lambda: cleared.append(True)
+
+                class Waits(threading.Event):
+                    timeouts = []
+
+                    def wait(self, timeout=None):
+                        if cleared or len(self.timeouts) > 50:
+                            self.set()
+                            return True
+                        self.timeouts.append(timeout)
+                        return False
+
+                stop = Waits()
+                stop.timeouts = []
+                cfg = make_config(mode="auto_window", idle_timeout_seconds=6.0)
+                with mock.patch.object(calibration_manager, "get_config", return_value=cfg), \
+                        mock.patch.object(module.win_qos, "set_current_thread_qos"):
+                    service._loop(stop)
+                self.assertEqual(cleared, [True])
+                for timeout in stop.timeouts:
+                    self.assertAlmostEqual(timeout, 1.0 / fps, places=3)
+                # The waits between the missing samples, plus the interval since the last sighting
+                self.assertAlmostEqual(len(stop.timeouts) * (1.0 / fps) + 1.0 / fps, 6.0, delta=1.0 / fps)
 
 
 class TestDocumentedLoopBehavior(unittest.TestCase):
@@ -609,6 +678,46 @@ class TestDocumentedLoopBehavior(unittest.TestCase):
         self.assertEqual(read("Devil Ride A"), [(2, None)])
         self.assertEqual(read("Devil Ride B"), [(2, "B")])
         self.assertEqual(read("Devil Ride A"), [(2, "B")])
+
+    def test_certain_partners_get_the_count_of_their_formations(self):
+        # Auto-added partners had no count: Grangalan's only formation holds three Grangalan
+        # Jr.Jr., and the title and card showed one (code review 2026-10-30)
+        cfg = make_config(auto_add_scene_partners=True)
+        grangalan = dict(compendium.get_by_name("Grangalan"), count=1)
+        self.service._update_battle_state([grangalan], True, True, cfg, 3)
+        counts = {e["name"]: e.get("count", 1) for e in self.service.current_enemies}
+        self.assertEqual(counts, {"Grangalan": 1, "Grangalan Jr.": 1, "Grangalan Jr.Jr.": 3})
+        self.assertEqual(self.service.current_battle_title, "Battle: Grangalan, Grangalan Jr., 3x Grangalan Jr.Jr.")
+        self.assertIsNone(compendium.get_by_name("Grangalan Jr.Jr.").get("count"), "compendium entries stay untouched")
+        # Reading one of them ("Grangalan Jr.Jr. A") keeps the three (Gemini review of the fix)
+        enemies = self.service.detector.identify_enemies_from_lines(["Grangalan Jr.Jr. A", "Attack", "HP", "MP"])
+        self.service._update_battle_state(enemies, True, True, cfg, 3)
+        jr_jr = next(e for e in self.service.current_enemies if e["name"] == "Grangalan Jr.Jr.")
+        self.assertEqual((jr_jr["count"], jr_jr["instance_letter"]), (3, "A"))
+        self.assertEqual(self.service.observed_counts["Grangalan Jr.Jr."], 1, "the deduction still uses what was read")
+        self.assertEqual(self.service.current_battle_title, "Battle: Grangalan, Grangalan Jr., 3x Grangalan Jr.Jr.")
+
+    def test_added_partner_stays_in_the_encounter(self):
+        # A partner added from the dashboard lived only in the server's battle: the next encounter
+        # update of the capture loop replaced it without the partner (code review 2026-10-30)
+        detected = []
+        self.service.on_battle_detected = lambda enemies, title: detected.append((enemies, title))
+        self.assertFalse(self.service.add_enemy(compendium.get_by_name("Kalm Fang")), "no encounter yet")
+        prowler = dict(compendium.get_by_name("Prowler"), count=1)
+        self.service._update_battle_state([prowler], True, True, self.cfg, 3)
+        self.assertTrue(self.service.add_enemy(compendium.get_by_name("Kalm Fang")))
+        self.assertEqual(detected[-1][1], "Battle: Prowler, Kalm Fang")
+        self.assertEqual([e["name"] for e in detected[-1][0]], ["Prowler", "Kalm Fang"])
+        # "Prowler B" read next: the update keeps the partner
+        snapshot, title, _ = self.service._update_battle_state(
+            [dict(compendium.get_by_name("Prowler"), count=2, instance_letter="B")], True, True, self.cfg, 3)
+        self.assertEqual(title, "Battle: 2x Prowler, Kalm Fang")
+        self.assertEqual([e["name"] for e in snapshot], ["Prowler", "Kalm Fang"])
+        # A partner added from the bar gets the formation's count once it is certain
+        service = CaptureService()
+        service._update_battle_state([dict(compendium.get_by_name("Grangalan"), count=1)], True, True, self.cfg, 3)
+        service.add_enemy(compendium.get_by_name("Grangalan Jr.Jr."))
+        self.assertEqual(service.current_enemies[-1]["count"], 3)
 
     def test_new_enemy_restarts_the_hunting_burst(self):
         from ffvii_companion.engine.capture_service import HUNTING_BURST_FRAMES

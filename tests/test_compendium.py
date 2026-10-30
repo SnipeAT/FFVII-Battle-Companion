@@ -198,6 +198,15 @@ class TestFormations(unittest.TestCase):
         deduction = compendium.deduce_formation({"Prowler": 1})
         self.assertEqual([p["name"] for p in deduction["certain_partners"]], ["Kalm Fang"])
 
+    def test_partner_counts_are_the_least_every_match_holds(self):
+        # The capture loop gives certain partners these counts (code review 2026-10-30)
+        self.assertEqual(compendium.deduce_formation({"Devil Ride": 1})["partner_counts"], {})
+        # Prowler x2 with one Kalm Fang, or Prowler with two
+        self.assertEqual(compendium.deduce_formation({"Prowler": 1})["partner_counts"], {"Kalm Fang": 1})
+        self.assertEqual(compendium.deduce_formation({"Grangalan": 1})["partner_counts"],
+                         {"Grangalan Jr.": 1, "Grangalan Jr.Jr.": 3})
+        self.assertEqual(compendium.deduce_formation({"Sea Worm": 1, "Dragon": 1})["partner_counts"], {})
+
     def test_real_encounters_are_compatible(self):
         # Pairs observed in recorded gameplay must exist in at least one formation,
         # otherwise the capture loop would treat the second name as a Battle Square round change.

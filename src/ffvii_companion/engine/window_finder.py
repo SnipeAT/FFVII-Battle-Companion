@@ -1,8 +1,10 @@
 """
 Finds the FFVII window through Win32 (ctypes): a cached window handle first, then the window title,
-then the windows of ff7* / ffvii* processes; full scans are throttled. Returns the window's screen
+then the windows of ff7* / ffvii* processes (other than the companion's own); full scans are
+throttled. Returns the window's screen
 rectangle for the capture region. Without Win32 (other platforms) it finds nothing.
 """
+import os
 import sys
 import time
 import threading
@@ -60,6 +62,12 @@ class FFVIIWindowFinder:
         self._scan_interval: float = 1.0
         self._attached_threads: Set[int] = set()
         self._ensure_desktop_attached()
+
+    @property
+    def scan_interval(self) -> float:
+        """Seconds between full scans while no window is cached: 1.0, backing off by 0.3 per
+        scan that finds nothing, up to 2.5."""
+        return self._scan_interval
 
     @classmethod
     def is_ffvii_process_name(cls, process_name: str) -> bool:
@@ -149,12 +157,14 @@ class FFVIIWindowFinder:
                         "source": "find_window"
                     }
 
-        # 3. Search for FFVII process IDs if direct window title did not match
+        # 3. Search for FFVII process IDs if direct window title did not match. The companion's own
+        # process is never the game: the packaged FFVII_Companion.exe matches the ffvii prefix.
         ffvii_pids = set()
+        own_pid = os.getpid()
         for proc in psutil.process_iter(['pid', 'name']):
             try:
                 pname = (proc.info['name'] or '').lower()
-                if self.is_ffvii_process_name(pname):
+                if proc.info['pid'] != own_pid and self.is_ffvii_process_name(pname):
                     ffvii_pids.add(proc.info['pid'])
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue

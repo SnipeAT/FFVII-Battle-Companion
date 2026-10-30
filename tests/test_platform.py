@@ -291,6 +291,25 @@ class TestWindowFinder(unittest.TestCase):
         for name in ("7th Heaven.exe", "chrome.exe", "python.exe", "steam.exe"):
             self.assertFalse(FFVIIWindowFinder.is_ffvii_process_name(name), name)
 
+    def test_companion_process_is_not_the_game(self):
+        # The packaged FFVII_Companion.exe matches the ffvii prefix: with the game closed, the
+        # finder enumerated the companion's own windows on every scan instead of backing off, and
+        # only the "COMPANION" title exclusion kept it from capturing itself (code review 2026-10-30)
+        import psutil
+        from ffvii_companion.engine import window_finder as module
+
+        class Proc:
+            info = {"pid": os.getpid(), "name": "FFVII_Companion.exe"}
+
+        user32 = mock.Mock()
+        user32.FindWindowW.return_value = 0
+        finder = FFVIIWindowFinder()
+        with mock.patch.object(module, "USER32", user32), \
+                mock.patch.object(psutil, "process_iter", return_value=[Proc()]):
+            self.assertIsNone(finder.find_ffvii_window(force_scan=True))
+        user32.EnumWindows.assert_not_called()
+        self.assertGreater(finder.scan_interval, 1.0, "backs off: no game process")
+
 
 @unittest.skipUnless(sys.platform == "win32", "Windows scheduling APIs")
 class TestPortProbe(unittest.TestCase):
@@ -325,6 +344,36 @@ class TestPortProbe(unittest.TestCase):
                 port = srv.getsockname()[1]
                 self.assertTrue(is_port_in_use(port, "::1"))
                 self.assertTrue(is_port_in_use(port, "::"))
+
+    def test_health_check_bypasses_proxies(self):
+        # urllib sent the health check of 127.0.0.1 to the proxy of the Windows settings (their
+        # "<local>" exception does not cover it), so with a system proxy the start failed after 6 s
+        # (code review 2026-10-30). A proxy from the environment takes the same path.
+        import http.server
+        import socket
+        from ffvii_companion.desktop import wait_for_server
+
+        class Health(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.end_headers()
+
+            def log_message(self, *args):
+                pass
+
+        with socket.socket() as probe:
+            probe.bind(("127.0.0.1", 0))
+            dead_proxy = f"http://127.0.0.1:{probe.getsockname()[1]}"
+        server = http.server.HTTPServer(("127.0.0.1", 0), Health)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            url = f"http://127.0.0.1:{server.server_address[1]}/api/health"
+            with mock.patch.dict(os.environ, {"HTTP_PROXY": dead_proxy, "NO_PROXY": ""}):
+                self.assertTrue(wait_for_server(url, timeout=2.0))
+        finally:
+            server.shutdown()
+            server.server_close()
 
     def test_second_launch_exits_when_a_companion_answers(self):
         # GEMINI-20261007-06: a second launch took the next free port and ran a second capture
@@ -374,6 +423,29 @@ class TestPortProbe(unittest.TestCase):
                 desktop.main()
         self.assertEqual(stop.exception.code, 2)
         self.assertIn("--port 70000 is not a port number", error.call_args[0][0])
+
+    def test_normal_priority_reaches_the_server_thread(self):
+        # The server thread set itself to below-normal priority and EcoQoS even with
+        # --normal-priority (code review 2026-10-30)
+        import time
+        from ffvii_companion import desktop
+        for argv, expected in ((["--normal-priority"], []), ([], [mock.call(efficient=True, below_normal=True)])):
+            with self.subTest(argv=argv):
+                with mock.patch.object(sys, "argv", ["FFVII_Companion", "--no-capture", *argv]), \
+                        mock.patch.object(desktop, "setup_file_logging"), \
+                        mock.patch.object(desktop.win_qos, "apply_process_efficiency_mode", return_value=False), \
+                        mock.patch.object(desktop.win_qos, "set_current_thread_qos") as thread_qos, \
+                        mock.patch.object(desktop, "is_port_in_use", return_value=False), \
+                        mock.patch.object(desktop, "wait_for_server", return_value=True), \
+                        mock.patch.object(desktop.uvicorn, "Server") as server, \
+                        mock.patch.object(desktop.webview, "create_window", side_effect=AssertionError("window")):
+                    with self.assertRaises(AssertionError):
+                        desktop.main()
+                    deadline = time.monotonic() + 5
+                    while not server.return_value.run.called and time.monotonic() < deadline:
+                        time.sleep(0.01)
+                    self.assertTrue(server.return_value.run.called)
+                    self.assertEqual(thread_qos.call_args_list, expected)
 
     def test_desktop_window_opens_the_dashboard_marked_as_desktop(self):
         # PIN pins the window on the PC: the dashboard shows it only when opened with ?desktop=1,

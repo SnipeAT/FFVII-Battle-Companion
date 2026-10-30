@@ -20,7 +20,11 @@ from ffvii_companion.paths import get_user_data_dir
 REPORTS_DIRNAME = "reports"
 MAX_EXPECTED_CHARS = 500
 MAX_NOTE_CHARS = 1000
-RE_EXPECTED_ITEM = re.compile(r"[x×*] ?(\d+)$", re.IGNORECASE)
+RE_EXPECTED_ITEM = re.compile(r"[x×*] ?(\d+)$", re.IGNORECASE)              # "Devil Ride x2"
+# "2x Devil Ride" (the dashboard's form), "2 x Devil Ride", "2 Devil Ride", on items whose spaces are
+# already single. One literal space per place: runs of \s on both sides of the optional "x" backtracked
+# against each other (polynomial time on "0" and many spaces).
+RE_EXPECTED_PREFIX = re.compile(r"^(\d+)(?: ?[x×*])? (\S.*)$", re.IGNORECASE)
 
 
 class ReportError(ValueError):
@@ -33,8 +37,9 @@ def reports_dir() -> Path:
 
 def parse_expected(text: Optional[str]) -> Tuple[Dict[str, int], List[str]]:
     """
-    Parses what the user says is on screen, e.g. "Devil Ride x2, Kalm Fang", into canonical
-    enemy names with counts. Returns (enemies, unresolved items).
+    Parses what the user says is on screen, e.g. "Devil Ride x2, Kalm Fang" or "2x Devil Ride",
+    into canonical enemy names with counts. Returns (enemies, unresolved items); an item with a
+    count of 0 is unresolved.
     """
     enemies: Dict[str, int] = {}
     unresolved: List[str] = []
@@ -42,12 +47,17 @@ def parse_expected(text: Optional[str]) -> Tuple[Dict[str, int], List[str]]:
         item = " ".join(raw_item.split())
         if not item:
             continue
-        m = RE_EXPECTED_ITEM.search(item)
-        if m:
-            name, count = item[:m.start()].strip(), int(m.group(1))
+        suffix = RE_EXPECTED_ITEM.search(item)
+        prefix = RE_EXPECTED_PREFIX.match(item)
+        if compendium.get_by_normalized_name(item):
+            name, count = item, 1  # a name with a number of its own ("8 Eye" is not eight Eyes)
+        elif suffix:
+            name, count = item[:suffix.start()].strip(), int(suffix.group(1))
+        elif prefix:
+            name, count = prefix.group(2), int(prefix.group(1))
         else:
             name, count = item, 1
-        enemy = compendium.match_enemy(name) if name else None
+        enemy = compendium.match_enemy(name) if name and count > 0 else None
         if enemy:
             enemies[enemy["name"]] = max(enemies.get(enemy["name"], 0), min(count, 8))
         else:
