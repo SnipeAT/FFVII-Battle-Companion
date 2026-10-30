@@ -2,6 +2,11 @@
 
 What changed in each release, newest first. The downloads and the full release notes are on the [Releases page](https://github.com/SnipeAT/FFVII-Battle-Companion/releases). Versions follow `MAJOR.MINOR.PATCH`: a minor version adds features, a patch fixes things or corrects data.
 
+## Unreleased
+
+### Detection
+- Switching away from the game during a battle (Alt+Tab out of fullscreen minimizes it) no longer clears the battle from the dashboard after about a second. The battle now stays for `idle_timeout_seconds` (6 s by default), as it does after a victory; it took up to 17 s while the companion was still identifying enemies.
+
 ## 2.2.5 - 2026-10-23
 
 ### Dashboard

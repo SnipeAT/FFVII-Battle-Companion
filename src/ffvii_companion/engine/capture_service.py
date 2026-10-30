@@ -11,7 +11,8 @@ rate of the phase the step ended in. Nothing is grabbed between samples.
 
 Phases: idle (idle_fps); hunting (active_fps) while the battle HUD shows without a registered
 enemy, and for HUNTING_BURST_FRAMES after a new enemy; settled (settled_fps) once enemies are
-registered. The battle clears after idle_timeout_seconds without enemies or HUD. MAX_GATED_SKIPS
+registered. The battle clears after idle_timeout_seconds without enemies or HUD, or without the
+game window (closed or minimized: the loop then waits at the phase's rate too). MAX_GATED_SKIPS
 forces OCR after that many skipped frames. The thread runs at below-normal priority, with EcoQoS
 (eco_mode) except while hunting.
 
@@ -749,9 +750,15 @@ class CaptureService:
                             if self._note_window_missing(max_empty_frames):
                                 self._sync_current_fps(cfg)
                                 self._fire_cleared()
-                        # FFVII is not running: sleep on stop event
-                        scan_int = getattr(self.window_finder, "_scan_interval", 1.0)
-                        if stop_event.wait(scan_int):
+                        # No game window (closed, or minimized by an alt-tab out of fullscreen).
+                        # During a battle, wait like a sampling step, so its max_empty_frames
+                        # samples span idle_timeout_seconds here too (waiting for the finder's
+                        # backed-off scan interval cleared a settled battle after about 1.3 s and
+                        # a hunting one after 17 s); otherwise until the finder's next scan.
+                        with self._state_lock:
+                            in_battle = bool(self.current_enemies) or self.combat_phase != "idle"
+                            fps = self._phase_fps(cfg, self.combat_phase)
+                        if stop_event.wait(1.0 / fps if in_battle else self.window_finder.scan_interval):
                             break
                         continue
 

@@ -555,6 +555,43 @@ class TestCaptureLoopLifecycle(unittest.TestCase):
             service.stop()
         self.assertEqual(held, [True])
 
+    def test_battle_without_game_window_clears_after_idle_timeout(self):
+        # The loop waited for the finder's scan interval (1.0 s, backing off to 2.5 s) between
+        # samples that count toward max_empty_frames at the phase's rate: a settled battle cleared
+        # about 1.3 s after an alt-tab minimized the game, a hunting one after 17 s (code review
+        # 2026-10-30)
+        from ffvii_companion.engine import capture_service as module
+
+        for phase, fps in (("settled", 0.35), ("hunting", 1.5)):
+            with self.subTest(phase=phase):
+                service = CaptureService()
+                service.window_finder.find_ffvii_window = lambda: None
+                service.current_enemies = [dict(compendium.get_by_name("Prowler"))]
+                service.combat_phase = phase
+                cleared = []
+                service.on_battle_cleared = lambda: cleared.append(True)
+
+                class Waits(threading.Event):
+                    timeouts = []
+
+                    def wait(self, timeout=None):
+                        if cleared or len(self.timeouts) > 50:
+                            self.set()
+                            return True
+                        self.timeouts.append(timeout)
+                        return False
+
+                stop = Waits()
+                stop.timeouts = []
+                cfg = make_config(mode="auto_window", idle_timeout_seconds=6.0)
+                with mock.patch.object(calibration_manager, "get_config", return_value=cfg), \
+                        mock.patch.object(module.win_qos, "set_current_thread_qos"):
+                    service._loop(stop)
+                self.assertEqual(cleared, [True])
+                for timeout in stop.timeouts:
+                    self.assertAlmostEqual(timeout, 1.0 / fps, places=3)
+                # The waits between the missing samples, plus the interval since the last sighting
+                self.assertAlmostEqual(len(stop.timeouts) * (1.0 / fps) + 1.0 / fps, 6.0, delta=1.0 / fps)
 
 
 class TestDocumentedLoopBehavior(unittest.TestCase):

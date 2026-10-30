@@ -61,6 +61,12 @@ class FFVIIWindowFinder:
         self._attached_threads: Set[int] = set()
         self._ensure_desktop_attached()
 
+    @property
+    def scan_interval(self) -> float:
+        """Seconds between full scans while no window is cached: 1.0, backing off by 0.3 per
+        scan that finds nothing, up to 2.5."""
+        return self._scan_interval
+
     @classmethod
     def is_ffvii_process_name(cls, process_name: str) -> bool:
         """True for known FFVII executables (ff7_en.exe, ff7.exe, ...) or any ff7*/ffvii* executable."""
