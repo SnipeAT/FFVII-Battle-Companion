@@ -79,7 +79,7 @@ The package has three layers, and imports only go downward:
 
 | Thread | Started by | Runs | Priority |
 | :--- | :--- | :--- | :--- |
-| Main | Python | `webview.start()`: the window until it closes, then shutdown | Efficiency mode (process-wide: below normal, EcoQoS) |
+| Main | Python | `webview.start()`: the window until it closes, then shutdown | Efficiency mode (process-wide: below normal, EcoQoS; off with `--normal-priority`) |
 | `UvicornServerThread` | `desktop.main()` | The asyncio event loop: REST requests, `/ws`, broadcasts | below normal, EcoQoS (normal with `--normal-priority`) |
 | `FFVIICaptureLoop` | `CaptureService.start()` | `CaptureService._loop()`: one sampling step, then sleep at the phase's rate | below normal; EcoQoS (`eco_mode`) except while hunting |
 | Worker threads | `asyncio.to_thread` | `CaptureService.clear_battle()` for the dashboard's CLEAR and `CaptureService.add_enemy()` for a partner added to the capture loop's battle, which can wait for a sampling step | process default |
