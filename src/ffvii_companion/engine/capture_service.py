@@ -22,9 +22,9 @@ was cleared, on_phase_changed() for a phase change without an encounter change. 
 _state_lock but inside _capture_lock, which a sampling step, clear_battle() and add_enemy() hold,
 so a CLEAR or an added partner never interleaves with a step's broadcast.
 
-Locks: _capture_lock serializes the grabber, the OCR session and the text gate, which are not
-thread-safe (a sampling step, capture_snapshot(), save_detection_report(), clear_battle(),
-add_enemy());
+Locks: _capture_lock serializes the window finder, the monitor selection, the grabber, the OCR
+session and the text gate, which are not thread-safe (a sampling step from the window search on,
+capture_snapshot(), save_detection_report(), clear_battle(), add_enemy());
 _state_lock guards the battle state fields the server reads; _lock guards start() and stop().
 
 After changing the loop, compare CPU and detection times with tools/benchmark_loop.py on a real
@@ -359,11 +359,10 @@ class CaptureService:
         """Captures a single frame, runs OCR, and returns diagnostic results with performance metrics."""
         t0 = time.perf_counter()
 
-        t_bbox = time.perf_counter()
-        bbox = self._calculate_capture_bbox()
-        window_find_ms = (time.perf_counter() - t_bbox) * 1000.0
-
         with self._capture_lock:
+            t_bbox = time.perf_counter()
+            bbox = self._calculate_capture_bbox()
+            window_find_ms = (time.perf_counter() - t_bbox) * 1000.0
             # The capture loop is the usual place that syncs these; it may be stopped
             self._sync_detector_settings(calibration_manager.get_config())
             t_grab = time.perf_counter()
@@ -435,9 +434,8 @@ class CaptureService:
 
         current_frame = None
         try:
-            bbox = self._calculate_capture_bbox()
             with self._capture_lock:
-                current_frame = self._prepare_ocr_frame(self._grab(bbox))
+                current_frame = self._prepare_ocr_frame(self._grab(self._calculate_capture_bbox()))
         except Exception as ex:
             logger.warning(f"Misdetection report: could not grab the capture region: {ex}")
 
@@ -761,42 +759,38 @@ class CaptureService:
             try:
                 t_loop0 = time.perf_counter()
 
-                # If in auto_window mode, check for FFVII window first
-                if mode == "auto_window":
-                    t_bbox = time.perf_counter()
-                    win = self.window_finder.find_ffvii_window()
-                    window_find_ms = (time.perf_counter() - t_bbox) * 1000.0
-
-                    if not win:
-                        # Under _capture_lock like every other clear, so it never interleaves
-                        # with a CLEAR from the dashboard (clear_battle)
-                        with self._capture_lock:
-                            if self._note_window_missing(max_empty_frames):
-                                self._sync_current_fps(cfg)
-                                self._fire_cleared()
-                        # No game window (closed, or minimized by an alt-tab out of fullscreen).
-                        # During a battle, wait like a sampling step, so its max_empty_frames
-                        # samples span idle_timeout_seconds here too (waiting for the finder's
-                        # backed-off scan interval cleared a settled battle after about 1.3 s and
-                        # a hunting one after 17 s); otherwise until the finder's next scan.
-                        with self._state_lock:
-                            in_battle = bool(self.current_enemies) or self.combat_phase != "idle"
-                            fps = self._phase_fps(cfg, self.combat_phase)
-                        if stop_event.wait(1.0 / fps if in_battle else self.window_finder.scan_interval):
-                            break
-                        continue
-
-                    bbox = self._calculate_capture_bbox(win)
-                else:
-                    t_bbox = time.perf_counter()
-                    bbox = self._calculate_capture_bbox()
-                    window_find_ms = (time.perf_counter() - t_bbox) * 1000.0
-
+                # The window search and the capture region are under _capture_lock like the grab:
+                # capture_snapshot() and save_detection_report() use the same finder and capture
+                # engine from request threads. A clear of a missing window never interleaves with
+                # a CLEAR from the dashboard (clear_battle) either.
                 with self._capture_lock:
-                    t_grab = time.perf_counter()
-                    frame_bgra = self._grab(bbox)
-                    grab_ms = (time.perf_counter() - t_grab) * 1000.0
-                    outcome = self.process_frame(frame_bgra, cfg, max_empty_frames)
+                    t_bbox = time.perf_counter()
+                    win = self.window_finder.find_ffvii_window() if mode == "auto_window" else None
+                    window_missing = mode == "auto_window" and not win
+                    if window_missing:
+                        if self._note_window_missing(max_empty_frames):
+                            self._sync_current_fps(cfg)
+                            self._fire_cleared()
+                    else:
+                        bbox = self._calculate_capture_bbox(win)
+                        window_find_ms = (time.perf_counter() - t_bbox) * 1000.0
+                        t_grab = time.perf_counter()
+                        frame_bgra = self._grab(bbox)
+                        grab_ms = (time.perf_counter() - t_grab) * 1000.0
+                        outcome = self.process_frame(frame_bgra, cfg, max_empty_frames)
+
+                if window_missing:
+                    # No game window (closed, or minimized by an alt-tab out of fullscreen).
+                    # During a battle, wait like a sampling step, so its max_empty_frames
+                    # samples span idle_timeout_seconds here too (waiting for the finder's
+                    # backed-off scan interval cleared a settled battle after about 1.3 s and
+                    # a hunting one after 17 s); otherwise until the finder's next scan.
+                    with self._state_lock:
+                        in_battle = bool(self.current_enemies) or self.combat_phase != "idle"
+                        fps = self._phase_fps(cfg, self.combat_phase)
+                    if stop_event.wait(1.0 / fps if in_battle else self.window_finder.scan_interval):
+                        break
+                    continue
 
                 total_frame_ms = (time.perf_counter() - t_loop0) * 1000.0
                 cpu_now = time.thread_time()

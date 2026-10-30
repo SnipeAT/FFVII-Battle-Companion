@@ -367,6 +367,36 @@ class TestDiagnosticSnapshot(unittest.TestCase):
             snap = service.capture_snapshot()
         self.assertGreater(snap["performance"]["ocr_total_ms"], 0)
 
+    def test_capture_region_is_found_under_the_capture_lock(self):
+        # The snapshot, the report and the loop's own window search used the capture loop's
+        # window finder and capture engine (monitor selection) without _capture_lock, so a request
+        # thread could run them alongside the loop (code review 2026-10-30)
+        service = CaptureService()
+        held = []
+
+        def bbox(win=None):
+            held.append(service._capture_lock.locked())
+            return {"top": 0, "left": 0, "width": 1, "height": 1}
+
+        service._calculate_capture_bbox = bbox
+        service._grab = lambda bbox: load_fixture_bgra("prowler.png")
+        service.capture_snapshot()
+        with tempfile.TemporaryDirectory() as tmp:
+            service.save_detection_report(base_dir=Path(tmp))
+        self.assertEqual(held, [True, True])
+
+        class OneStep(threading.Event):
+            def wait(self, timeout=None):
+                self.set()
+                return True
+
+        from ffvii_companion.engine import capture_service as module
+        service.window_finder.find_ffvii_window = lambda: held.append(service._capture_lock.locked())
+        with mock.patch.object(calibration_manager, "get_config", return_value=make_config(mode="auto_window")), \
+                mock.patch.object(module.win_qos, "set_current_thread_qos"):
+            service._loop(OneStep())
+        self.assertEqual(held, [True, True, True])
+
 
 class TestMisdetectionReport(unittest.TestCase):
     def setUp(self):

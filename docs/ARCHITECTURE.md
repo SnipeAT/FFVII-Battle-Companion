@@ -86,7 +86,7 @@ The package has three layers, and imports only go downward:
 
 Locks:
 
-- `CaptureService._capture_lock` serializes everything that uses the screen grabber, the OCR session and the text gate, which are not thread-safe: a sampling step (grab plus `process_frame()`), `capture_snapshot()`, `save_detection_report()`, `clear_battle()` and `add_enemy()`.
+- `CaptureService._capture_lock` serializes everything that uses the window finder, the monitor selection, the screen grabber, the OCR session and the text gate, which are not thread-safe: a sampling step (window search, grab and `process_frame()`), `capture_snapshot()`, `save_detection_report()`, `clear_battle()` and `add_enemy()`.
 - `CaptureService._state_lock` guards the battle state fields (`current_enemies`, `combat_phase`, `current_fps`, ...), which the server reads from its thread.
 - `server/main.py`'s `battle_lock` guards `current_battle`, the state the dashboards see.
 - `EnemyCompendium._match_lock` guards the cache of `match_enemy()`, which the capture thread and request threads (search, simulations, reports) share.
