@@ -82,15 +82,15 @@ The package has three layers, and imports only go downward:
 | Main | Python | `webview.start()`: the window until it closes, then shutdown | Efficiency mode (process-wide: below normal, EcoQoS) |
 | `UvicornServerThread` | `desktop.main()` | The asyncio event loop: REST requests, `/ws`, broadcasts | below normal, EcoQoS (normal with `--normal-priority`) |
 | `FFVIICaptureLoop` | `CaptureService.start()` | `CaptureService._loop()`: one sampling step, then sleep at the phase's rate | below normal; EcoQoS (`eco_mode`) except while hunting |
-| Worker threads | `asyncio.to_thread` | `CaptureService.clear_battle()` for the dashboard's CLEAR, which can wait for a sampling step | process default |
+| Worker threads | `asyncio.to_thread` | `CaptureService.clear_battle()` for the dashboard's CLEAR and `CaptureService.add_enemy()` for a partner added to the capture loop's battle, which can wait for a sampling step | process default |
 
 Locks:
 
-- `CaptureService._capture_lock` serializes everything that uses the screen grabber, the OCR session and the text gate, which are not thread-safe: a sampling step (grab plus `process_frame()`), `capture_snapshot()`, `save_detection_report()` and `clear_battle()`.
+- `CaptureService._capture_lock` serializes everything that uses the screen grabber, the OCR session and the text gate, which are not thread-safe: a sampling step (grab plus `process_frame()`), `capture_snapshot()`, `save_detection_report()`, `clear_battle()` and `add_enemy()`.
 - `CaptureService._state_lock` guards the battle state fields (`current_enemies`, `combat_phase`, `current_fps`, ...), which the server reads from its thread.
 - `server/main.py`'s `battle_lock` guards `current_battle`, the state the dashboards see.
 - `EnemyCompendium._match_lock` guards the cache of `match_enemy()`, which the capture thread and request threads (search, simulations, reports) share.
-- The callbacks fire outside `_state_lock` but inside `_capture_lock`, which a sampling step and `clear_battle()` both hold, so a CLEAR never interleaves with a step's broadcast. They run on the capture thread (or the worker thread of a CLEAR), so they hand messages to the event loop with `ConnectionManager.threadsafe_broadcast()` (`asyncio.run_coroutine_threadsafe`) instead of sending themselves.
+- The callbacks fire outside `_state_lock` but inside `_capture_lock`, which a sampling step, `clear_battle()` and `add_enemy()` hold, so a CLEAR or an added partner never interleaves with a step's broadcast. They run on the capture thread (or the worker thread of a CLEAR or an added partner), so they hand messages to the event loop with `ConnectionManager.threadsafe_broadcast()` (`asyncio.run_coroutine_threadsafe`) instead of sending themselves.
 
 Module-level singletons, created on import: `capture_service`, `compendium`, `calibration_manager`, `player_profile` and `perf_tracker`. Importing them reads files but writes nothing; folders and log files are created on the first write, so tools and tests can import the server freely.
 
