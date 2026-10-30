@@ -1462,21 +1462,22 @@ function scanGameWindow() {
   // Also sync config on load
   configRequest
     .then(data => {
-      const rawPreset = data.config.target_menu_preset;
-      // Legacy alias written by older builds
-      const preset = rawPreset === "bottom_left_targets" ? "center_target_box" : rawPreset;
-      presetSelectGrid.querySelectorAll(".btn-preset-calib").forEach(b => {
-        b.classList.remove("active");
-        if (b.getAttribute("data-preset") === preset) {
-          b.classList.add("active");
-        }
-      });
+      showSavedPreset(data.config);
       renderSamplingRates(data.config);
     })
     .catch(err => console.error("Error fetching config:", err));
 
   // Load performance metrics
   loadPerformanceMetrics();
+}
+
+// Highlights the capture region preset the settings hold
+function showSavedPreset(config) {
+  const rawPreset = config.target_menu_preset;
+  // Legacy alias written by older builds
+  const preset = rawPreset === "bottom_left_targets" ? "center_target_box" : rawPreset;
+  presetSelectGrid.querySelectorAll(".btn-preset-calib").forEach(b =>
+    b.classList.toggle("active", b.getAttribute("data-preset") === preset));
 }
 
 // Fill the adaptive sampling description with the configured per-phase rates
@@ -1559,25 +1560,28 @@ if (togglePerfLogsBtn && perfLogsContainer) {
   });
 }
 
-// Preset selection with event delegation
+// Preset selection with event delegation. Only the latest click's answer counts: the answer to an
+// earlier click can arrive after it.
+let presetClickSeq = 0;
+
 if (presetSelectGrid) {
   presetSelectGrid.addEventListener("click", (e) => {
     const btn = e.target.closest(".btn-preset-calib");
-    if (!btn) return;
-    const markActive = (active) => presetSelectGrid.querySelectorAll(".btn-preset-calib")
-      .forEach(b => b.classList.toggle("active", b === active));
-    const previous = presetSelectGrid.querySelector(".btn-preset-calib.active");
-    markActive(btn);
-    const presetKey = btn.getAttribute("data-preset");
-    if (presetKey) {
-      fetch(`/api/calibration/preset/${encodeURIComponent(presetKey)}`, { method: "POST" })
-        .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
-        .catch(err => {
-          console.error("Error setting preset:", err);
-          // Not saved (e.g. the settings file is locked): the capture keeps the old region
-          markActive(previous);
-        });
-    }
+    const presetKey = btn && btn.getAttribute("data-preset");
+    if (!presetKey) return;
+    presetSelectGrid.querySelectorAll(".btn-preset-calib").forEach(b => b.classList.toggle("active", b === btn));
+    const seq = ++presetClickSeq;
+    fetch(`/api/calibration/preset/${encodeURIComponent(presetKey)}`, { method: "POST" })
+      .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
+      .catch(err => {
+        console.error("Error setting preset:", err);
+        if (seq !== presetClickSeq) return;
+        // Not saved (e.g. the settings file is locked): highlight the preset the capture still uses
+        return fetch("/api/calibration/config")
+          .then(res => res.json())
+          .then(data => showSavedPreset(data.config));
+      })
+      .catch(err => console.error("Error reading the saved preset:", err));
   });
 }
 
