@@ -436,6 +436,14 @@ class TestMisdetectionReport(unittest.TestCase):
         self.assertEqual(parse_expected("2 Xcannon"), ({"Xcannon": 2}, []))
         self.assertEqual(parse_expected("3x Xcannon"), ({"Xcannon": 3}, []))
 
+    def test_count_prefix_pattern_runs_in_linear_time(self):
+        # CodeQL py/polynomial-redos on the first version of the pattern: "\s*[x]?\s+" backtracked
+        # quadratically on "0" followed by many spaces (20000 took seconds)
+        from ffvii_companion.engine.detection_report import RE_EXPECTED_PREFIX
+        t0 = time.perf_counter()
+        self.assertIsNone(RE_EXPECTED_PREFIX.match("0" + " " * 20000))
+        self.assertLess(time.perf_counter() - t0, 0.5)
+
 
 class TestSettledSamplingRate(unittest.TestCase):
     def test_settled_grabs_only_at_settled_fps(self):

@@ -21,7 +21,10 @@ REPORTS_DIRNAME = "reports"
 MAX_EXPECTED_CHARS = 500
 MAX_NOTE_CHARS = 1000
 RE_EXPECTED_ITEM = re.compile(r"[x×*] ?(\d+)$", re.IGNORECASE)              # "Devil Ride x2"
-RE_EXPECTED_PREFIX = re.compile(r"^(\d+)\s*[x×*]?\s+(\S.*)$", re.IGNORECASE)  # "2x Devil Ride" (the dashboard's form), "2 Devil Ride"
+# "2x Devil Ride" (the dashboard's form), "2 x Devil Ride", "2 Devil Ride", on items whose spaces are
+# already single. One literal space per place: runs of \s on both sides of the optional "x" backtracked
+# against each other (polynomial time on "0" and many spaces).
+RE_EXPECTED_PREFIX = re.compile(r"^(\d+)(?: ?[x×*])? (\S.*)$", re.IGNORECASE)
 
 
 class ReportError(ValueError):
