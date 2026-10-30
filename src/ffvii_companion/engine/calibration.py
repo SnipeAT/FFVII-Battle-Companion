@@ -133,6 +133,18 @@ def _coerce_roi(value: Any) -> Dict[str, float]:
     return roi
 
 
+def roi_bbox(rect: Dict[str, int], roi: Dict[str, float]) -> Dict[str, int]:
+    """The capture region of a game window or monitor (left, top, width, height): the roi
+    setting's fractions of it, at least 64 px each way. left/top may be negative: monitors left
+    of or above the primary one have negative virtual-screen coordinates, which mss accepts."""
+    return {
+        "top": int(rect["top"] + rect["height"] * roi["top_pct"]),
+        "left": int(rect["left"] + rect["width"] * roi["left_pct"]),
+        "width": max(64, int(rect["width"] * roi["width_pct"])),
+        "height": max(64, int(rect["height"] * roi["height_pct"])),
+    }
+
+
 def _coerce_hosts(value: Any) -> list:
     if not isinstance(value, list) or len(value) > MAX_HOST_NAMES:
         raise ConfigValidationError(f"dashboard_host_names must be a list of at most {MAX_HOST_NAMES} host names")

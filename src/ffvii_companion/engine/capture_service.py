@@ -41,7 +41,7 @@ import cv2
 from ffvii_companion.engine.capture import ScreenCaptureEngine
 from ffvii_companion.engine.detector import BattleDetector, ITEM_NAMED_ENEMIES
 from ffvii_companion.engine.window_finder import FFVIIWindowFinder
-from ffvii_companion.engine.calibration import calibration_manager
+from ffvii_companion.engine.calibration import calibration_manager, roi_bbox
 from ffvii_companion.engine.profiler import perf_tracker
 from ffvii_companion.engine.text_gate import TextChangeGate
 from ffvii_companion.engine import win_qos
@@ -236,10 +236,9 @@ class CaptureService:
         return cv2.cvtColor(frame_bgra, cv2.COLOR_BGRA2BGR)
 
     def _calculate_capture_bbox(self, win: Optional[Dict[str, Any]] = None) -> Dict[str, int]:
-        # left/top may be negative: monitors left of or above the primary one have negative
-        # virtual-screen coordinates, which mss accepts.
+        """The capture region in the passed window, the FFVII window (auto_window mode) or else
+        the monitor the settings name (caller holds _capture_lock)."""
         cfg = calibration_manager.get_config()
-        roi = cfg["roi"]
 
         # Use passed window or try to locate FFVII window
         target_win = win
@@ -249,11 +248,7 @@ class CaptureService:
         if target_win:
             with self._state_lock:
                 self.last_game_window = target_win
-            top = int(target_win["top"] + target_win["height"] * roi["top_pct"])
-            left = int(target_win["left"] + target_win["width"] * roi["left_pct"])
-            width = max(64, int(target_win["width"] * roi["width_pct"]))
-            height = max(64, int(target_win["height"] * roi["height_pct"]))
-            return {"top": top, "left": left, "width": width, "height": height}
+            return roi_bbox(target_win, cfg["roi"])
 
         # Fallback to monitor coordinates, of the monitor the settings name now (the setting can
         # change while the companion runs)
@@ -261,12 +256,7 @@ class CaptureService:
             self.last_game_window = None
         if self.capture_engine.requested_monitor != cfg["monitor_index"]:
             self.capture_engine.select_monitor(cfg["monitor_index"])
-        mon = self.capture_engine.monitors[self.capture_engine.monitor_index]
-        top = int(mon["top"] + mon["height"] * roi["top_pct"])
-        left = int(mon["left"] + mon["width"] * roi["left_pct"])
-        width = max(64, int(mon["width"] * roi["width_pct"]))
-        height = max(64, int(mon["height"] * roi["height_pct"]))
-        return {"top": top, "left": left, "width": width, "height": height}
+        return roi_bbox(self.capture_engine.monitors[self.capture_engine.monitor_index], cfg["roi"])
 
     def _grab(self, bbox: Dict[str, int]) -> np.ndarray:
         """Grabs a screen region as a BGRA array (caller must hold _capture_lock)."""

@@ -323,6 +323,13 @@ class TestCaptureStateMachine(unittest.TestCase):
 
 
 class TestCaptureBbox(unittest.TestCase):
+    def test_roi_bbox(self):
+        # One formula for the game window, the monitor and tools/record_frames.py
+        from ffvii_companion.engine.calibration import roi_bbox
+        roi = {"top_pct": 0.5, "left_pct": 0.25, "width_pct": 0.5, "height_pct": 0.01}
+        self.assertEqual(roi_bbox({"left": 100, "top": -1080, "width": 1920, "height": 1080}, roi),
+                         {"top": -540, "left": 580, "width": 960, "height": 64})
+
     def test_negative_monitor_origin_is_kept(self):
         # GEMINI-20261007-04: a monitor left of / above the primary has negative coordinates
         service = CaptureService()

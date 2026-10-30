@@ -24,7 +24,7 @@ import mss  # noqa: E402
 import numpy as np  # noqa: E402
 
 from ffvii_companion.engine import win_qos  # noqa: E402
-from ffvii_companion.engine.calibration import calibration_manager  # noqa: E402
+from ffvii_companion.engine.calibration import calibration_manager, roi_bbox  # noqa: E402
 from ffvii_companion.engine.window_finder import FFVIIWindowFinder  # noqa: E402
 
 
@@ -53,12 +53,7 @@ def main() -> None:
             t0 = time.time()
             win = finder.find_ffvii_window()
             if win:
-                bbox = {
-                    "top": int(win["top"] + win["height"] * roi["top_pct"]),
-                    "left": int(win["left"] + win["width"] * roi["left_pct"]),
-                    "width": max(64, int(win["width"] * roi["width_pct"])),
-                    "height": max(64, int(win["height"] * roi["height_pct"])),
-                }
+                bbox = roi_bbox(win, roi)
                 shot = sct.grab(bbox)
                 frame = np.frombuffer(shot.raw, dtype=np.uint8).reshape(shot.height, shot.width, 4)
                 name = f"roi_{count:04d}.png"
