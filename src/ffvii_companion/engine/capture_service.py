@@ -36,10 +36,9 @@ import threading
 import logging
 from typing import Optional, Dict, Any, List, Callable, Tuple
 import numpy as np
-import cv2
 
 from ffvii_companion.engine.capture import ScreenCaptureEngine
-from ffvii_companion.engine.detector import BattleDetector, ITEM_NAMED_ENEMIES
+from ffvii_companion.engine.detector import BattleDetector, ITEM_NAMED_ENEMIES, prepare_ocr_frame
 from ffvii_companion.engine.window_finder import FFVIIWindowFinder
 from ffvii_companion.engine.calibration import calibration_manager, roi_bbox
 from ffvii_companion.engine.profiler import perf_tracker
@@ -223,18 +222,6 @@ class CaptureService:
             logger.error(message)
             self._last_error = (message, now)
 
-    def _prepare_ocr_frame(self, frame_bgra: np.ndarray) -> np.ndarray:
-        """Centralized 1280x720 scaling and BGRA-to-BGR color conversion."""
-        h, w = frame_bgra.shape[:2]
-        max_w, max_h = 1280, 720
-        if w > max_w or h > max_h:
-            scale = min(max_w / w, max_h / h)
-            target_w = int(w * scale)
-            target_h = int(h * scale)
-            small_bgra = cv2.resize(frame_bgra, (target_w, target_h), interpolation=cv2.INTER_AREA)
-            return cv2.cvtColor(small_bgra, cv2.COLOR_BGRA2BGR)
-        return cv2.cvtColor(frame_bgra, cv2.COLOR_BGRA2BGR)
-
     def _calculate_capture_bbox(self, win: Optional[Dict[str, Any]] = None) -> Dict[str, int]:
         """The capture region in the passed window, the FFVII window (auto_window mode) or else
         the monitor the settings name (caller holds _capture_lock)."""
@@ -368,7 +355,7 @@ class CaptureService:
             grab_ms = (time.perf_counter() - t_grab) * 1000.0
 
             t_cvt = time.perf_counter()
-            frame = self._prepare_ocr_frame(frame_bgra)
+            frame = prepare_ocr_frame(frame_bgra)
             cvt_color_ms = (time.perf_counter() - t_cvt) * 1000.0
 
             t_ocr = time.perf_counter()
@@ -433,7 +420,7 @@ class CaptureService:
         current_frame = None
         try:
             with self._capture_lock:
-                current_frame = self._prepare_ocr_frame(self._grab(self._calculate_capture_bbox()))
+                current_frame = prepare_ocr_frame(self._grab(self._calculate_capture_bbox()))
         except Exception as ex:
             logger.warning(f"Misdetection report: could not grab the capture region: {ex}")
 
@@ -683,7 +670,7 @@ class CaptureService:
         ocr_timing = {"det_ms": 0.0, "rec_ms": 0.0, "boxes": 0, "recognized": 0, "reused": 0}
         if run_ocr:
             t_cvt = time.perf_counter()
-            frame = self._prepare_ocr_frame(frame_bgra)
+            frame = prepare_ocr_frame(frame_bgra)
             cvt_color_ms = (time.perf_counter() - t_cvt) * 1000.0
             t_ocr = time.perf_counter()
             lines = self.detector.detect_text_lines(frame, use_cache=True)

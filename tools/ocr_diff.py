@@ -4,7 +4,7 @@ to the OCR pipeline beyond the test fixtures.
 
 `record` runs every frame of one or more frame folders (recordings made with
 tools/record_frames.py, or tests/fixtures/real) through the capture loop's OCR path: the
-1280x720 downscale of CaptureService._prepare_ocr_frame(), then the detector with the default
+1280x720 downscale of detector.prepare_ocr_frame(), then the detector with the default
 settings and every box recognized (no recognition cache, so each frame stands alone). Per frame
 it writes the raw OCR lines (text, score, box), the lines the detector keeps, and what they
 mean: the enemies matched (name, count, instance letter) and whether the battle HUD shows, out
@@ -80,6 +80,10 @@ def record(frames_by_folder: Dict[str, List[str]], progress=None) -> Dict[str, A
     # Built from the current settings, as the capture loop's detector is
     svc = CaptureService()
     detector = svc.detector
+    # The capture loop's OCR input: detector.prepare_ocr_frame(), a CaptureService method in trees
+    # from before it moved
+    from ffvii_companion.engine import detector as detector_module
+    prepare = getattr(detector_module, "prepare_ocr_frame", None) or svc._prepare_ocr_frame
 
     # The raw lines of the pass detect_text_lines() runs, before it filters them
     last = {}
@@ -98,7 +102,7 @@ def record(frames_by_folder: Dict[str, List[str]], progress=None) -> Dict[str, A
             bgr = cv2.imread(path, cv2.IMREAD_COLOR)
             if bgr is None:
                 raise ValueError(f"Cannot read {path}")
-            frame = svc._prepare_ocr_frame(cv2.cvtColor(bgr, cv2.COLOR_BGR2BGRA))
+            frame = prepare(cv2.cvtColor(bgr, cv2.COLOR_BGR2BGRA))
             kept = detector.detect_text_lines(frame, use_cache=False)
             enemies = detector.identify_enemies_from_lines(kept)
             frames[f"{key}/{os.path.basename(path)}"] = {
