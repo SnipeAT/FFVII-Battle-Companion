@@ -356,6 +356,17 @@ class TestDiagnosticSnapshot(unittest.TestCase):
         self.assertEqual(service.detector.confidence_threshold, 0.35)
         self.assertIn("Prowler", [e["name"] for e in snap["matched_enemies"]])
 
+    def test_snapshot_stays_out_of_the_loop_statistics(self):
+        # Snapshots went into the capture loop's history, raising its measured sampling rate and
+        # OCR share in the performance panel (code review 2026-10-30); the dialog shows their timings
+        from ffvii_companion.engine.profiler import perf_tracker
+        service = CaptureService()
+        service._calculate_capture_bbox = lambda win=None: {"top": 0, "left": 0, "width": 1, "height": 1}
+        service._grab = lambda bbox: load_fixture_bgra("prowler.png")
+        with mock.patch.object(perf_tracker, "record_frame", side_effect=AssertionError("recorded")):
+            snap = service.capture_snapshot()
+        self.assertGreater(snap["performance"]["ocr_total_ms"], 0)
+
 
 class TestMisdetectionReport(unittest.TestCase):
     def setUp(self):

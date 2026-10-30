@@ -13,6 +13,7 @@ What changed in each release, newest first. The downloads and the full release n
 - The steal calculator always shows the odds for the level in its box. Typing a two-digit level on a slow network could leave the odds of its first digit on screen.
 - When a capture region preset cannot be saved, the calibration box keeps the saved preset highlighted instead of the one that was clicked.
 - **REPORT** understands counts written first, as the dashboard writes them ("2x Devil Ride", also "2 Devil Ride"). The first was not recognized, and the second was saved as one Devil Ride. A count of 0 is no longer saved as an expected enemy.
+- The diagnostic snapshot no longer counts toward the performance panel's sampling rate and OCR share, which describe the capture loop; its own timings stay in the snapshot's result.
 
 ### Settings and startup
 - The companion starts on PCs that use a proxy server set in the Windows settings. It checked through that proxy whether its own server had started; a proxy on another machine cannot reach this PC's server, so the companion reported that it "did not start" and closed.

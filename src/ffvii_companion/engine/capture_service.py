@@ -397,27 +397,8 @@ class CaptureService:
             "total_frame_ms": round(total_frame_ms, 2),
             "effective_fps": round(1000.0 / total_frame_ms, 2) if total_frame_ms > 0 else 0.0
         }
-
-        cfg = calibration_manager.get_config()
-        preset_name = cfg["target_menu_preset"]
-        perf_tracker.record_frame(
-            window_find_ms=window_find_ms,
-            grab_ms=grab_ms,
-            cvt_color_ms=cvt_color_ms,
-            ocr_det_ms=ocr_timing.get("det_ms", 0.0),
-            ocr_rec_ms=ocr_timing.get("rec_ms", 0.0),
-            ocr_total_ms=ocr_total_ms,
-            match_ms=match_ms,
-            total_frame_ms=total_frame_ms,
-            width=frame.shape[1],
-            height=frame.shape[0],
-            lines_count=len(lines),
-            enemies_count=len(enemies),
-            in_combat=len(enemies) > 0,
-            preset_name=preset_name,
-            ocr_ran=True,
-            phase="snapshot",
-        )
+        # Not recorded in perf_tracker: its statistics describe the capture loop's samples (a
+        # snapshot raised their sampling rate and OCR share); the dialog shows these timings
 
         return {
             "bbox": bbox,
