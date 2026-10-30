@@ -10,6 +10,8 @@ What changed in each release, newest first. The downloads and the full release n
 ### Dashboard
 - An enemy added from the **Formation Partners** bar during a detected battle stays on the dashboard. The next change the companion read (a second enemy of the same kind, for example) removed its card again.
 - Partners added automatically (`auto_add_scene_partners`) or from the partners bar show how many of them the battle holds when every possible formation agrees: Grangalan's battle shows three Grangalan Jr.Jr., not one.
+- The steal calculator always shows the odds for the level in its box. Typing a two-digit level on a slow network could leave the odds of its first digit on screen.
+- When a capture region preset cannot be saved, the calibration box keeps the saved preset highlighted instead of the one that was clicked.
 
 ### Settings and startup
 - The companion starts on PCs that use a proxy server set in the Windows settings. It checked through that proxy whether its own server had started; a proxy on another machine cannot reach this PC's server, so the companion reported that it "did not start" and closed.

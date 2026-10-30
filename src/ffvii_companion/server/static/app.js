@@ -1304,6 +1304,10 @@ sneakGloveCheckbox.addEventListener("change", () => {
   saveProfile({ sneak_glove: sneakGloveCheckbox.checked });
 });
 
+// Only the latest calculation answers: typing "45" asks for level 4, then 45, and a slower answer
+// for 4 would replace the newer result
+let stealCalcAbortController = null;
+
 function performStealCalc() {
   const steals = currentEnemyForSteal ? (currentEnemyForSteal.steals || []) : [];
   if (!steals[currentStealSlot]) return;
@@ -1316,10 +1320,14 @@ function performStealCalc() {
     earlier_base_chances: steals.slice(0, currentStealSlot).map(s => Number(s.base_chance) || 0)
   };
 
+  if (stealCalcAbortController) stealCalcAbortController.abort();
+  const controller = new AbortController();
+  stealCalcAbortController = controller;
   fetch("/api/steal-calc", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
+    signal: controller.signal
   })
     .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
     .then(data => {
@@ -1329,6 +1337,7 @@ function performStealCalc() {
         : data.formula_note;
     })
     .catch(err => {
+      if (err.name === "AbortError") return;
       console.error("Steal calc error:", err);
       calcResultPercent.textContent = "--";
       calcResultFormula.textContent = `Could not calculate the odds (${err.message || err}).`;
@@ -1555,13 +1564,19 @@ if (presetSelectGrid) {
   presetSelectGrid.addEventListener("click", (e) => {
     const btn = e.target.closest(".btn-preset-calib");
     if (!btn) return;
-    presetSelectGrid.querySelectorAll(".btn-preset-calib").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
+    const markActive = (active) => presetSelectGrid.querySelectorAll(".btn-preset-calib")
+      .forEach(b => b.classList.toggle("active", b === active));
+    const previous = presetSelectGrid.querySelector(".btn-preset-calib.active");
+    markActive(btn);
     const presetKey = btn.getAttribute("data-preset");
     if (presetKey) {
       fetch(`/api/calibration/preset/${encodeURIComponent(presetKey)}`, { method: "POST" })
-        .then(res => res.json())
-        .catch(err => console.error("Error setting preset:", err));
+        .then(res => res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
+        .catch(err => {
+          console.error("Error setting preset:", err);
+          // Not saved (e.g. the settings file is locked): the capture keeps the old region
+          markActive(previous);
+        });
     }
   });
 }
