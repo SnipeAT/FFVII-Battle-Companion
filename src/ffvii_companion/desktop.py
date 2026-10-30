@@ -333,13 +333,15 @@ def main():
     )
     server = uvicorn.Server(server_config)
 
-    def run_server_with_efficiency():
-        # Below-normal priority + EcoQoS for the web server thread
-        win_qos.set_current_thread_qos(efficient=True, below_normal=True)
+    def run_server():
+        # Below-normal priority + EcoQoS for the web server thread, as for the whole process
+        # (--normal-priority leaves both at the defaults)
+        if not args.normal_priority:
+            win_qos.set_current_thread_qos(efficient=True, below_normal=True)
         server.run()
 
     server_thread = threading.Thread(
-        target=run_server_with_efficiency,
+        target=run_server,
         name="UvicornServerThread",
         daemon=True
     )

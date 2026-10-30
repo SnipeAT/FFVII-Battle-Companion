@@ -17,6 +17,7 @@ What changed in each release, newest first. The downloads and the full release n
 
 ### Settings and startup
 - The companion starts on PCs that use a proxy server set in the Windows settings. It checked through that proxy whether its own server had started; a proxy on another machine cannot reach this PC's server, so the companion reported that it "did not start" and closed.
+- `--normal-priority` also applies to the companion's web server, which kept running at below-normal priority on efficiency cores.
 
 ## 2.2.5 - 2026-10-23
 

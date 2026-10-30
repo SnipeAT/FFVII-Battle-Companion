@@ -42,7 +42,7 @@ The rates and the timeout are settings: see [Configuration](CONFIGURATION.md#set
 
 The companion is designed to run next to the game without competing with it:
 
-- **Windows Efficiency mode** for the whole companion process: below-normal priority plus EcoQoS, so its threads run on efficiency cores and the WebView2 UI inherits the lower priority. The capture thread opts out of EcoQoS only while *hunting*, so new enemies are still identified at full speed. Disable with `--normal-priority`.
+- **Windows Efficiency mode** for the whole companion process: below-normal priority plus EcoQoS, so its threads run on efficiency cores and the WebView2 UI inherits the lower priority. The capture thread opts out of EcoQoS only while *hunting*, so new enemies are still identified at full speed. Disable with `--normal-priority`; the capture thread then keeps its own below-normal priority, and EcoQoS outside *hunting* as long as `eco_mode` is on.
 - **OCR only when the text changes** (text-change gate) and **only for the boxes that changed** (recognition cache).
 - **Single-threaded OCR without spin-waiting.** RapidOCR's default sessions kept idle worker threads busy-waiting after every frame, which cost more CPU than the OCR itself.
 - **Detection at the configured size.** `det_limit_side_len` (640) is honored; the previous RapidOCR call path silently detected at up to 1500 px.

@@ -424,6 +424,29 @@ class TestPortProbe(unittest.TestCase):
         self.assertEqual(stop.exception.code, 2)
         self.assertIn("--port 70000 is not a port number", error.call_args[0][0])
 
+    def test_normal_priority_reaches_the_server_thread(self):
+        # The server thread set itself to below-normal priority and EcoQoS even with
+        # --normal-priority (code review 2026-10-30)
+        import time
+        from ffvii_companion import desktop
+        for argv, expected in ((["--normal-priority"], []), ([], [mock.call(efficient=True, below_normal=True)])):
+            with self.subTest(argv=argv):
+                with mock.patch.object(sys, "argv", ["FFVII_Companion", "--no-capture", *argv]), \
+                        mock.patch.object(desktop, "setup_file_logging"), \
+                        mock.patch.object(desktop.win_qos, "apply_process_efficiency_mode", return_value=False), \
+                        mock.patch.object(desktop.win_qos, "set_current_thread_qos") as thread_qos, \
+                        mock.patch.object(desktop, "is_port_in_use", return_value=False), \
+                        mock.patch.object(desktop, "wait_for_server", return_value=True), \
+                        mock.patch.object(desktop.uvicorn, "Server") as server, \
+                        mock.patch.object(desktop.webview, "create_window", side_effect=AssertionError("window")):
+                    with self.assertRaises(AssertionError):
+                        desktop.main()
+                    deadline = time.monotonic() + 5
+                    while not server.return_value.run.called and time.monotonic() < deadline:
+                        time.sleep(0.01)
+                    self.assertTrue(server.return_value.run.called)
+                    self.assertEqual(thread_qos.call_args_list, expected)
+
     def test_desktop_window_opens_the_dashboard_marked_as_desktop(self):
         # PIN pins the window on the PC: the dashboard shows it only when opened with ?desktop=1,
         # which only the desktop window does (phones and tablets on the LAN showed it too)
