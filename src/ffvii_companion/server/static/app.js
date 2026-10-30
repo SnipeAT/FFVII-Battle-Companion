@@ -304,10 +304,13 @@ function renderBattleState(state) {
   const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const dialogOpen = document.querySelector("dialog[open]") !== null;
   if (document.startViewTransition && !prefersReducedMotion && isPageVisible && battleChanged && !dialogOpen) {
-    // A transition is skipped when the next battle update starts its own first (or the page is
-    // hidden): its ready promise rejects, which logged "Uncaught (in promise) AbortError". The
-    // update itself still runs; an error thrown by updateDOM still reaches the console.
-    document.startViewTransition(updateDOM).ready.catch(() => {});
+    // A transition is skipped when the next battle update starts its own first: its ready promise
+    // rejects with an AbortError, which logged "Uncaught (in promise)". The update itself still
+    // runs (finished fulfills). Other rejections, such as an InvalidStateError for a duplicate
+    // view-transition-name, and errors thrown by updateDOM still reach the console.
+    document.startViewTransition(updateDOM).ready.catch(err => {
+      if (err.name !== "AbortError") throw err;
+    });
   } else {
     updateDOM();
   }
