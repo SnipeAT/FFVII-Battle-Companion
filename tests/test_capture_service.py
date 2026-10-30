@@ -412,6 +412,16 @@ class TestMisdetectionReport(unittest.TestCase):
         self.assertEqual(unresolved, ["Zzyzx Qwerty"])
         self.assertEqual(parse_expected(None), ({}, []))
 
+    def test_expected_enemies_with_the_count_first(self):
+        # "2x Devil Ride", the form of the dashboard's title and battle summary, was unresolved,
+        # "2 Devil Ride" became one Devil Ride, and "x0" recorded a count of 0 (code review 2026-10-30)
+        self.assertEqual(parse_expected("2x Devil Ride, 2 x Kalm Fang, 3 Prowler"),
+                         ({"Devil Ride": 2, "Kalm Fang": 2, "Prowler": 3}, []))
+        # A name with a number of its own
+        self.assertEqual(parse_expected("8 Eye; 2x 8 Eye"), ({"8 Eye": 2}, []))
+        self.assertEqual(parse_expected("8 Eye x3, 1st Ray"), ({"8 Eye": 3, "1st Ray": 1}, []))
+        self.assertEqual(parse_expected("Devil Ride x0"), ({}, ["Devil Ride x0"]))
+
 
 class TestSettledSamplingRate(unittest.TestCase):
     def test_settled_grabs_only_at_settled_fps(self):
