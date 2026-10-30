@@ -79,7 +79,7 @@ class TestPersistence(unittest.TestCase):
         from unittest import mock
         profile = PlayerProfile(self.path)
         profile.update({"party_level": 20})
-        with mock.patch("ffvii_companion.engine.player_profile.os.replace",
+        with mock.patch("ffvii_companion.paths.os.replace",
                         side_effect=PermissionError("held by another program")):
             with self.assertRaises(OSError):
                 profile.update({"party_level": 60})

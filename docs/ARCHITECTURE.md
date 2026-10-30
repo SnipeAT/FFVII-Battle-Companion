@@ -26,7 +26,7 @@ FFVII-Battle-Companion/
 ├── src/ffvii_companion/          # The application package (what the EXE contains)
 │   ├── __main__.py               # python -m ffvii_companion; entry script of the EXE
 │   ├── desktop.py                # Native desktop host (pywebview + embedded FastAPI server, PMv2 DPI, Efficiency mode)
-│   ├── paths.py                  # Bundled resources vs. the writable data folder (EXE folder, .dev_home, tests)
+│   ├── paths.py                  # Bundled resources vs. the writable data folder (EXE folder, .dev_home, tests); its JSON reads and atomic writes
 │   ├── compendium.py             # Compendium: matching, formations, partners, variants, steal formula, battle summary, AI box data
 │   ├── data/
 │   │   ├── ai_scripts.json       # Enemy attacks and decompiled AI scripts
@@ -40,7 +40,7 @@ FFVII-Battle-Companion/
 │   │   ├── detector.py           # OCR line parsing, HUD detection, enemy matching
 │   │   ├── capture.py            # mss screen capture and monitor selection
 │   │   ├── window_finder.py      # Win32 FFVII window / process discovery
-│   │   ├── calibration.py        # Settings, defaults, presets, validation, atomic persistence
+│   │   ├── calibration.py        # Settings, defaults, presets, validation, persistence
 │   │   ├── player_profile.py     # Party level, Sneak Glove, learned Enemy Skills
 │   │   ├── detection_report.py   # Misdetection reports in the test-fixture format
 │   │   ├── profiler.py           # Stage timings, sampling rate, OCR share, capture CPU, rotating log
