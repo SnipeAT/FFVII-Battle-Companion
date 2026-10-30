@@ -9,7 +9,7 @@ What changed in each release, newest first. The downloads and the full release n
 
 ### Dashboard
 - An enemy added from the **Formation Partners** bar during a detected battle stays on the dashboard. The next change the companion read (a second enemy of the same kind, for example) removed its card again.
-- Partners added automatically (`auto_add_scene_partners`) or from the partners bar show how many of them the battle holds when every possible formation agrees: Grangalan's battle shows three Grangalan Jr.Jr., not one.
+- Partners added automatically (`auto_add_scene_partners`) or from the partners bar show how many of them the battle holds when every possible formation agrees: Grangalan's battle shows three Grangalan Jr.Jr., not one, also after you target one of them.
 - The steal calculator always shows the odds for the level in its box. Typing a two-digit level on a slow network could leave the odds of its first digit on screen.
 - When a capture region preset cannot be saved, the calibration box keeps the saved preset highlighted instead of the one that was clicked.
 - **REPORT** understands counts written first, as the dashboard writes them ("2x Devil Ride", also "2 Devil Ride"). The first was not recognized, and the second was saved as one Devil Ride. A count of 0 is no longer saved as an expected enemy.

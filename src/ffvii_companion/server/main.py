@@ -381,8 +381,11 @@ async def websocket_endpoint(websocket: WebSocket):
                         # A partner of the capture loop's battle joins its encounter, so the loop's
                         # next update keeps it (it replaced current_battle without it); its
                         # on_battle_detected (handle_live_battle_detected) broadcasts the battle.
-                        # In a worker thread: add_enemy waits for a sampling step in progress.
-                        if live and await asyncio.to_thread(capture_service.add_enemy, enemy_data):
+                        # When that battle ended meanwhile, the click is dropped: added here, the
+                        # partner would revive the cleared battle on its own. In a worker thread:
+                        # add_enemy waits for a sampling step in progress.
+                        if live:
+                            await asyncio.to_thread(capture_service.add_enemy, enemy_data)
                             continue
                         enemy_obj = Enemy(**enemy_data)
                         with battle_lock:

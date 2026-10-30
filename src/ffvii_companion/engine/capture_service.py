@@ -23,7 +23,8 @@ _state_lock but inside _capture_lock, which a sampling step, clear_battle() and 
 so a CLEAR or an added partner never interleaves with a step's broadcast.
 
 Locks: _capture_lock serializes the grabber, the OCR session and the text gate, which are not
-thread-safe (a sampling step, capture_snapshot(), save_detection_report(), clear_battle());
+thread-safe (a sampling step, capture_snapshot(), save_detection_report(), clear_battle(),
+add_enemy());
 _state_lock guards the battle state fields the server reads; _lock guards start() and stop().
 
 After changing the loop, compare CPU and detection times with tools/benchmark_loop.py on a real
@@ -546,6 +547,7 @@ class CaptureService:
                             current_names = set()
 
                     # Update observed enemy instance counts
+                    previous_counts = dict(self.observed_counts)
                     for e in detected_enemies:
                         name = e["name"]
                         detected_count = e.get("count", 1)
@@ -594,9 +596,12 @@ class CaptureService:
                             continue
                         seen = detected_by_name.get(e["name"])
                         if (seen is not None and seen.get("count", 1) == count
-                                and (count != e.get("count") or e.get("instance_letter") is None)):
+                                and (count != previous_counts.get(e["name"]) or e.get("instance_letter") is None)):
                             e["instance_letter"] = seen.get("instance_letter")
-                        e["count"] = count
+                        # A partner shown with its formations' count keeps it once one of them is
+                        # read ("Grangalan Jr.Jr. A" is one of three); counts never fall within
+                        # an encounter, as observation only narrows the matching formations
+                        e["count"] = max(count, e.get("count", 1))
 
                     title = self._battle_title_locked()
 

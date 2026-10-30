@@ -432,6 +432,9 @@ class TestMisdetectionReport(unittest.TestCase):
         self.assertEqual(parse_expected("8 Eye; 2x 8 Eye"), ({"8 Eye": 2}, []))
         self.assertEqual(parse_expected("8 Eye x3, 1st Ray"), ({"8 Eye": 3, "1st Ray": 1}, []))
         self.assertEqual(parse_expected("Devil Ride x0"), ({}, ["Devil Ride x0"]))
+        # The space after the count is required: "2 Xcannon" is two Xcannons, not a "cannon"
+        self.assertEqual(parse_expected("2 Xcannon"), ({"Xcannon": 2}, []))
+        self.assertEqual(parse_expected("3x Xcannon"), ({"Xcannon": 3}, []))
 
 
 class TestSettledSamplingRate(unittest.TestCase):
@@ -678,6 +681,13 @@ class TestDocumentedLoopBehavior(unittest.TestCase):
         self.assertEqual(counts, {"Grangalan": 1, "Grangalan Jr.": 1, "Grangalan Jr.Jr.": 3})
         self.assertEqual(self.service.current_battle_title, "Battle: Grangalan, Grangalan Jr., 3x Grangalan Jr.Jr.")
         self.assertIsNone(compendium.get_by_name("Grangalan Jr.Jr.").get("count"), "compendium entries stay untouched")
+        # Reading one of them ("Grangalan Jr.Jr. A") keeps the three (Gemini review of the fix)
+        enemies = self.service.detector.identify_enemies_from_lines(["Grangalan Jr.Jr. A", "Attack", "HP", "MP"])
+        self.service._update_battle_state(enemies, True, True, cfg, 3)
+        jr_jr = next(e for e in self.service.current_enemies if e["name"] == "Grangalan Jr.Jr.")
+        self.assertEqual((jr_jr["count"], jr_jr["instance_letter"]), (3, "A"))
+        self.assertEqual(self.service.observed_counts["Grangalan Jr.Jr."], 1, "the deduction still uses what was read")
+        self.assertEqual(self.service.current_battle_title, "Battle: Grangalan, Grangalan Jr., 3x Grangalan Jr.Jr.")
 
     def test_added_partner_stays_in_the_encounter(self):
         # A partner added from the dashboard lived only in the server's battle: the next encounter
