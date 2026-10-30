@@ -291,6 +291,25 @@ class TestWindowFinder(unittest.TestCase):
         for name in ("7th Heaven.exe", "chrome.exe", "python.exe", "steam.exe"):
             self.assertFalse(FFVIIWindowFinder.is_ffvii_process_name(name), name)
 
+    def test_companion_process_is_not_the_game(self):
+        # The packaged FFVII_Companion.exe matches the ffvii prefix: with the game closed, the
+        # finder enumerated the companion's own windows on every scan instead of backing off, and
+        # only the "COMPANION" title exclusion kept it from capturing itself (code review 2026-10-30)
+        import psutil
+        from ffvii_companion.engine import window_finder as module
+
+        class Proc:
+            info = {"pid": os.getpid(), "name": "FFVII_Companion.exe"}
+
+        user32 = mock.Mock()
+        user32.FindWindowW.return_value = 0
+        finder = FFVIIWindowFinder()
+        with mock.patch.object(module, "USER32", user32), \
+                mock.patch.object(psutil, "process_iter", return_value=[Proc()]):
+            self.assertIsNone(finder.find_ffvii_window(force_scan=True))
+        user32.EnumWindows.assert_not_called()
+        self.assertGreater(finder.scan_interval, 1.0, "backs off: no game process")
+
 
 @unittest.skipUnless(sys.platform == "win32", "Windows scheduling APIs")
 class TestPortProbe(unittest.TestCase):
