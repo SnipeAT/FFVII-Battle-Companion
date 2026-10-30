@@ -7,6 +7,9 @@ What changed in each release, newest first. The downloads and the full release n
 ### Detection
 - Switching away from the game during a battle (Alt+Tab out of fullscreen minimizes it) no longer clears the battle from the dashboard after about a second. The battle now stays for `idle_timeout_seconds` (6 s by default), as it does after a victory; it took up to 17 s while the companion was still identifying enemies.
 
+### Settings and startup
+- The companion starts on PCs that use a proxy server set in the Windows settings. It checked through that proxy whether its own server had started; a proxy on another machine cannot reach this PC's server, so the companion reported that it "did not start" and closed.
+
 ## 2.2.5 - 2026-10-23
 
 ### Dashboard

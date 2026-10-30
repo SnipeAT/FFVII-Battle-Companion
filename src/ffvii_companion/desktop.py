@@ -146,12 +146,18 @@ def find_available_port(start_port: int = 59314, host: str = "127.0.0.1") -> Opt
             return port
     return None
 
+# Requests to the companion's own server never go through a proxy: urllib applies the Windows proxy
+# settings, whose "<local>" exception does not cover 127.0.0.1, so with a system proxy the health
+# check went to the proxy and the start failed
+LOCAL_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
+
 def wait_for_server(url: str, timeout: float = 6.0) -> bool:
     """Polls url until it answers HTTP 200 or the timeout expires."""
     start = time.time()
     while time.time() - start < timeout:
         try:
-            with urllib.request.urlopen(url, timeout=0.5) as resp:
+            with LOCAL_OPENER.open(url, timeout=0.5) as resp:
                 if resp.status == 200:
                     return True
         except Exception:

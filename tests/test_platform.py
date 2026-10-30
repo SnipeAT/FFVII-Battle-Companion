@@ -326,6 +326,36 @@ class TestPortProbe(unittest.TestCase):
                 self.assertTrue(is_port_in_use(port, "::1"))
                 self.assertTrue(is_port_in_use(port, "::"))
 
+    def test_health_check_bypasses_proxies(self):
+        # urllib sent the health check of 127.0.0.1 to the proxy of the Windows settings (their
+        # "<local>" exception does not cover it), so with a system proxy the start failed after 6 s
+        # (code review 2026-10-30). A proxy from the environment takes the same path.
+        import http.server
+        import socket
+        from ffvii_companion.desktop import wait_for_server
+
+        class Health(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.end_headers()
+
+            def log_message(self, *args):
+                pass
+
+        with socket.socket() as probe:
+            probe.bind(("127.0.0.1", 0))
+            dead_proxy = f"http://127.0.0.1:{probe.getsockname()[1]}"
+        server = http.server.HTTPServer(("127.0.0.1", 0), Health)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            url = f"http://127.0.0.1:{server.server_address[1]}/api/health"
+            with mock.patch.dict(os.environ, {"HTTP_PROXY": dead_proxy, "NO_PROXY": ""}):
+                self.assertTrue(wait_for_server(url, timeout=2.0))
+        finally:
+            server.shutdown()
+            server.server_close()
+
     def test_second_launch_exits_when_a_companion_answers(self):
         # GEMINI-20261007-06: a second launch took the next free port and ran a second capture
         # loop on the same game window (failing at the next port also keeps a broken main() from
