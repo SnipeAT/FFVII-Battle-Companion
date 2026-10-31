@@ -404,12 +404,17 @@ class TestDiagnosticSnapshot(unittest.TestCase):
                 self.set()
                 return True
 
+        def find():
+            held.append(service._capture_lock.locked())
+            return {"left": 0, "top": 0, "width": 640, "height": 480}
+
         from ffvii_companion.engine import capture_service as module
-        service.window_finder.find_ffvii_window = lambda: held.append(service._capture_lock.locked())
+        service.window_finder.find_ffvii_window = find
         with mock.patch.object(calibration_manager, "get_config", return_value=make_config(mode="auto_window")), \
                 mock.patch.object(module.win_qos, "set_current_thread_qos"):
             service._loop(OneStep())
-        self.assertEqual(held, [True, True, True])
+        # snapshot, report, then the loop's window search and its capture region
+        self.assertEqual(held, [True, True, True, True])
 
 
 class TestMisdetectionReport(unittest.TestCase):
