@@ -35,6 +35,23 @@ from ffvii_companion.engine.ocr_engine import OCREngine, OCRResult
 
 OVERLAY_KEYWORDS = ("FPS", "CPU", "GPU")
 
+# Largest OCR input: bigger frames are scaled down to fit, for a 2.5x-3x speedup that keeps the
+# game's font readable
+OCR_MAX_SIZE = (1280, 720)
+
+
+def prepare_ocr_frame(frame: np.ndarray) -> np.ndarray:
+    """The OCR input of a captured frame: scaled down to fit OCR_MAX_SIZE, BGRA converted to BGR.
+    A frame that needs neither is returned as it is."""
+    h, w = frame.shape[:2]
+    max_w, max_h = OCR_MAX_SIZE
+    if w > max_w or h > max_h:
+        scale = min(max_w / w, max_h / h)
+        frame = cv2.resize(frame, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+    if frame.ndim == 3 and frame.shape[2] == 4:
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
+    return frame
+
 BATTLE_STOP_WORDS = {
     # Battle Menu Commands
     "ATTACK", "MAGIC", "SUMMON", "ITEM", "MUG", "STEAL", "SENSE", "E.SKILL", "ENEMY SKILL",
@@ -298,17 +315,11 @@ class BattleDetector:
         Runs OCR on the input frame or ROI and returns list of recognized text strings.
         Also records granular stage timings (detection, recognition) and box statistics.
         Game HUD/battle text is strictly horizontal, so no angle classification runs.
-        Adaptively scales oversized frames down to 1280x720 at most
-        for a 2.5x-3x speedup while preserving font clarity.
-        use_cache=True reuses recognized text for unchanged text boxes.
+        The frame goes through prepare_ocr_frame() first (nothing to do for one it already
+        prepared, as the capture loop's). use_cache=True reuses recognized text for unchanged
+        text boxes.
         """
-        h, w = image_np.shape[:2]
-        max_w, max_h = 1280, 720
-        if w > max_w or h > max_h:
-            scale = min(max_w / w, max_h / h)
-            image_np = cv2.resize(image_np, (0, 0), fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
-        if image_np.ndim == 3 and image_np.shape[2] == 4:
-            image_np = cv2.cvtColor(image_np, cv2.COLOR_BGRA2BGR)
+        image_np = prepare_ocr_frame(image_np)
 
         result: OCRResult = self._ocr.run(image_np, use_cache=use_cache)
         self.last_ocr_timing = {

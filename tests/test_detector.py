@@ -208,6 +208,15 @@ class TestDetectorGuards(unittest.TestCase):
         with mock.patch.object(det._ocr, "run", return_value=result):
             self.assertEqual(det.detect_text_lines(np.zeros((8, 8, 3), np.uint8)), ["Prowler"])
 
+    def test_ocr_frame_preparation(self):
+        # One downscale for the capture loop and the detector, which each had their own
+        import numpy as np
+        from ffvii_companion.engine.detector import prepare_ocr_frame
+        self.assertEqual(prepare_ocr_frame(np.zeros((2160, 3840, 4), np.uint8)).shape, (720, 1280, 3))
+        self.assertEqual(prepare_ocr_frame(np.zeros((1440, 1000, 4), np.uint8)).shape, (720, 500, 3))
+        small = np.zeros((300, 400, 3), np.uint8)
+        self.assertIs(prepare_ocr_frame(small), small, "an OCR input needs no copy")
+
 
 class TestCombatHud(unittest.TestCase):
     def test_hud_detection(self):

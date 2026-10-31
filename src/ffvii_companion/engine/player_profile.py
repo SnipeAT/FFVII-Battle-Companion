@@ -5,13 +5,12 @@ on the LAN show the same odds and checklist.
 """
 import json
 import logging
-import os
 import threading
 from pathlib import Path
 from typing import Any, Dict
 
 from ffvii_companion.compendium import ENEMY_SKILLS
-from ffvii_companion.paths import get_user_data_dir
+from ffvii_companion.paths import get_user_data_dir, read_json, write_json_atomic
 
 logger = logging.getLogger("ffvii-profile")
 
@@ -77,9 +76,7 @@ class PlayerProfile:
         data = json.loads(json.dumps(DEFAULT_PROFILE))
         if self.file_path.exists():
             try:
-                # utf-8-sig: Notepad ("UTF-8 with BOM") and PowerShell 5.1 write a byte order mark
-                with open(self.file_path, "r", encoding="utf-8-sig") as f:
-                    stored = json.load(f)
+                stored = read_json(self.file_path)
                 if isinstance(stored, dict):
                     data.update(validate_profile(stored, clamp=True))
             except Exception as e:
@@ -87,17 +84,9 @@ class PlayerProfile:
         return data
 
     def _save(self, data: Dict[str, Any]):
-        """Writes the profile atomically (temp file + replace). Raises OSError when the file
-        cannot be written (for example while another program holds it)."""
-        self.file_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = self.file_path.with_suffix(".json.tmp")
-        try:
-            with open(tmp, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
-            os.replace(tmp, self.file_path)
-        except OSError:
-            tmp.unlink(missing_ok=True)
-            raise
+        """Writes the profile atomically. Raises OSError when the file cannot be written (for
+        example while another program holds it)."""
+        write_json_atomic(self.file_path, data)
 
     def get(self) -> Dict[str, Any]:
         with self._lock:

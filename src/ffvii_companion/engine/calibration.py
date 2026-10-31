@@ -11,11 +11,10 @@ region presets.
 """
 import json
 import logging
-import os
 import threading
 from pathlib import Path
 from typing import Dict, Any, Optional
-from ffvii_companion.paths import get_user_data_dir
+from ffvii_companion.paths import get_user_data_dir, read_json, write_json_atomic
 
 logger = logging.getLogger("ffvii-calibration")
 
@@ -134,6 +133,18 @@ def _coerce_roi(value: Any) -> Dict[str, float]:
     return roi
 
 
+def roi_bbox(rect: Dict[str, int], roi: Dict[str, float]) -> Dict[str, int]:
+    """The capture region of a game window or monitor (left, top, width, height): the roi
+    setting's fractions of it, at least 64 px each way. left/top may be negative: monitors left
+    of or above the primary one have negative virtual-screen coordinates, which mss accepts."""
+    return {
+        "top": int(rect["top"] + rect["height"] * roi["top_pct"]),
+        "left": int(rect["left"] + rect["width"] * roi["left_pct"]),
+        "width": max(64, int(rect["width"] * roi["width_pct"])),
+        "height": max(64, int(rect["height"] * roi["height_pct"])),
+    }
+
+
 def _coerce_hosts(value: Any) -> list:
     if not isinstance(value, list) or len(value) > MAX_HOST_NAMES:
         raise ConfigValidationError(f"dashboard_host_names must be a list of at most {MAX_HOST_NAMES} host names")
@@ -204,9 +215,7 @@ class CalibrationManager:
     def _load(self) -> Dict[str, Any]:
         if self.file_path.exists():
             try:
-                # utf-8-sig: Notepad ("UTF-8 with BOM") and PowerShell 5.1 write a byte order mark
-                with open(self.file_path, "r", encoding="utf-8-sig") as f:
-                    data = json.load(f)
+                data = read_json(self.file_path)
                 if not isinstance(data, dict):
                     raise ValueError("the file does not hold an object")
                 for old, new in RENAMED_KEYS.items():
@@ -221,17 +230,9 @@ class CalibrationManager:
         return {}
 
     def _write(self, saved: Dict[str, Any]):
-        """Writes the saved values atomically (temp file + replace) to avoid torn files. Raises
-        OSError when the file cannot be written (for example while another program holds it)."""
-        self.file_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp = self.file_path.with_suffix(".json.tmp")
-        try:
-            with open(tmp, "w", encoding="utf-8") as f:
-                json.dump(saved, f, indent=2)
-            os.replace(tmp, self.file_path)
-        except OSError:
-            tmp.unlink(missing_ok=True)
-            raise
+        """Writes the saved values atomically. Raises OSError when the file cannot be written
+        (for example while another program holds it)."""
+        write_json_atomic(self.file_path, saved)
 
     def _apply(self, changes: Dict[str, Any]):
         """Saves the changes, then applies them: when the save fails (OSError), nothing changes."""

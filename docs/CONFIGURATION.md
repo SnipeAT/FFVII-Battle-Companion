@@ -53,7 +53,7 @@ The calibration dialog saves to `data\calibration.json` in the data folder (see 
 | `mode` | `auto_window` | `auto_window` captures relative to the game window; other values capture relative to the monitor. |
 | `monitor_index` | `2` | Monitor captured when `mode` is not `auto_window` (mss numbering, 1-based). In `auto_window` mode the capture loop waits for the game window; only the diagnostic snapshot and REPORT capture this monitor when the window is not found. |
 | `idle_fps` / `active_fps` / `settled_fps` | `0.5` / `1.5` / `0.35` | Sampling rate per phase (see [How it works](HOW_IT_WORKS.md#adaptive-sampling-three-phases)). |
-| `idle_timeout_seconds` | `6.0` | Seconds without battle text before the battle is cleared. |
+| `idle_timeout_seconds` | `6.0` | Seconds without battle text before the battle is cleared (the first sample after that time clears it). |
 | `roi` | center target box | `top_pct`, `left_pct`, `width_pct`, `height_pct` of the capture region (fractions of the window). Every preset includes the battle window's HP and MP headers; keep them in a custom region too: outside a battle, the battle screen is recognized only with one of them (or by an enemy name). |
 | `target_menu_preset` | `center_target_box` | Name of the active preset. |
 | `confidence_threshold` | `0.45` | Minimum OCR recognition score for a text line. |

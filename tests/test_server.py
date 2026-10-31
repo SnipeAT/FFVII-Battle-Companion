@@ -676,7 +676,7 @@ class TestWebSocket(unittest.TestCase):
 
         def read(count):
             prowler = dict(compendium.get_by_name("Prowler"), count=count)
-            snapshot, title, _ = capture_service._update_battle_state([prowler], True, True, cfg, 3)
+            snapshot, title, _ = capture_service._update_battle_state([prowler], True, True, cfg)
             main.handle_live_battle_detected(snapshot, title)
 
         with TestClient(app, base_url=BASE_URL) as client, client.websocket_connect(WS_URL) as ws:

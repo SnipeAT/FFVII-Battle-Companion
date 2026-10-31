@@ -98,7 +98,7 @@ class TestCalibrationManager(unittest.TestCase):
         mgr = CalibrationManager(self.path)
         mgr.update_config({"idle_fps": 1.0})
         before = json.loads(json.dumps(mgr.get_config()))
-        with mock.patch("ffvii_companion.engine.calibration.os.replace",
+        with mock.patch("ffvii_companion.paths.os.replace",
                         side_effect=PermissionError("held by another program")):
             with self.assertRaises(OSError):
                 mgr.update_config({"idle_fps": 2.0})
